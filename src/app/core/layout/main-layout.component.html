@@ -1,0 +1,45 @@
+<mat-sidenav-container class="h-screen w-screen">
+  <mat-sidenav #sidenav mode="side" opened class="w-64 bg-gray-800 text-white">
+    <div class="p-4 text-2xl font-bold border-b border-gray-700">
+      ERP SaaS
+    </div>
+    <mat-nav-list>
+      <a mat-list-item
+         routerLink="/dashboard"
+         routerLinkActive="bg-gray-700 font-bold">
+        <mat-icon matListItemIcon class="text-white">dashboard</mat-icon>
+        <span matListItemTitle>Dashboard</span>
+      </a>
+      <a mat-list-item
+         routerLink="/inventory"
+         routerLinkActive="bg-gray-700 font-bold">
+        <mat-icon matListItemIcon class="text-white">inventory</mat-icon>
+        <span matListItemTitle>Inventario</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="bg-gray-100">
+    <mat-toolbar class="bg-white shadow-md">
+      <button (click)="sidenav.toggle()" mat-icon-button>
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="flex-auto"></span>
+      <div class="flex items-center space-x-4">
+        @if(session.currentCompany(); as company) {
+          <div class="text-right">
+            <div class="text-sm font-semibold">{{ company.name }}</div>
+            <div class="text-xs text-gray-500">{{ session.currentTenant()?.name }}</div>
+          </div>
+        }
+        <button (click)="changeCompany()" mat-stroked-button color="primary">
+          Cambiar Empresa
+        </button>
+        <span class="text-sm font-medium">Usuario@email.com</span>
+      </div>
+    </mat-toolbar>
+    <main class="p-6">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
