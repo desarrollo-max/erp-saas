@@ -1,13 +1,8 @@
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { SessionService } from '../../core/services/session.service';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
+import { HeaderComponent } from './header/header.component';
+import { AssistantSphereComponent } from '../../shared/components/assistant-sphere/assistant-sphere.component';
 
 @Component({
   selector: 'app-main-layout',
@@ -15,22 +10,30 @@ import { MatButtonModule } from '@angular/material/button';
   imports: [
     CommonModule,
     RouterOutlet,
-    RouterLink,
-    RouterLinkActive,
-    MatSidenavModule,
-    MatListModule,
-    MatIconModule,
-    MatToolbarModule,
-    MatButtonModule
+    HeaderComponent,
+    AssistantSphereComponent
   ],
-  templateUrl: './main-layout.component.html',
-  styleUrls: ['./main-layout.component.scss']
-})
-export class MainLayoutComponent {
-  session = inject(SessionService);
-  router = inject(Router);
+  template: `
+    <div class="min-h-screen bg-gray-50 flex flex-col">
+      <!-- HEADER FIXO -->
+      <app-header></app-header>
 
-  changeCompany(): void {
-    this.router.navigate(['/companies']);
-  }
-}
+      <!-- CONTENIDO PRINCIPAL (Una sola columna) -->
+      <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+        <!-- El Router Outlet renderiza el módulo actual aquí -->
+        <router-outlet></router-outlet>
+        
+        <!-- Esfera flotante siempre disponible -->
+        <app-assistant-sphere></app-assistant-sphere>
+      </main>
+
+      <!-- OPTIONAL FOOTER can go here -->
+    </div>
+  `,
+  styles: [`
+    :host {
+      display: block;
+    }
+  `]
+})
+export class MainLayoutComponent { }

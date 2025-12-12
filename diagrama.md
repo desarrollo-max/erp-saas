@@ -5,17 +5,17 @@ Este diagrama visualiza la arquitectura de la base de datos del ERP, mostrando l
 ```mermaid
 erDiagram
     %% ==================================
-    %%         CORE & TENANCY
+    %%         NÚCLEO Y ARRENDAMIENTO
     %% ==================================
     tenants {
-        uuid id PK "Tenant ID"
+        uuid id PK "ID Inquilino"
         varchar slug UK
         varchar name
         boolean is_active
         varchar csubscription_status
     }
     companies {
-        uuid id PK "Company ID"
+        uuid id PK "ID Empresa"
         uuid tenant_id FK
         varchar code
         varchar name
@@ -23,17 +23,17 @@ erDiagram
     }
     users_tenants {
         uuid id PK
-        uuid user_id FK "Auth User ID"
+        uuid user_id FK "ID Usuario Auth"
         uuid tenant_id FK
         varchar role
     }
     plans {
-        uuid id PK "Plan ID"
+        uuid id PK "ID Plan"
         varchar code UK
         varchar name
     }
     modules {
-        uuid id PK "Module ID"
+        uuid id PK "ID Módulo"
         varchar code UK
         varchar name
     }
@@ -58,7 +58,7 @@ erDiagram
     }
 
     %% ==================================
-    %%            FINANCE (FIN)
+    %%            FINANZAS (FIN)
     %% ==================================
     fin_account_types {
         uuid id PK
@@ -98,7 +98,7 @@ erDiagram
     }
 
     %% ==================================
-    %%     SUPPLY CHAIN MGMT (SCM)
+    %%     GESTIÓN DE CADENA DE SUMINISTRO (SCM)
     %% ==================================
     scm_suppliers {
         uuid id PK
@@ -149,7 +149,7 @@ erDiagram
     }
 
     %% ==================================
-    %%           SALES / CRM
+    %%           VENTAS / CRM
     %% ==================================
     sales_companies {
         uuid id PK
@@ -204,65 +204,125 @@ erDiagram
         varchar activity_type
     }
 
+
     %% ==================================
-    %%           RELATIONSHIPS
+    %%           PRODUCCIÓN (PROD)
     %% ==================================
-    %% --- Core Relationships ---
-    tenants ||--|{ companies : "has"
-    tenants ||--|{ users_tenants : "has"
-    tenants ||--|{ tenant_subscriptions : "has"
-    plans ||--|{ tenant_subscriptions : "uses"
-    tenants ||--|{ tenant_licenses : "has"
-    modules ||--|{ tenant_licenses : "for"
-    tenant_subscriptions }o--o| tenant_licenses : "covers"
-    tenants ||--|{ audit_logs : "records"
+    prod_processes {
+        uuid id PK
+        uuid tenant_id FK
+        varchar name
+        varchar description
+        numeric standard_cost
+        integer estimated_time_minutes
+    }
+    prod_work_orders {
+        uuid id PK
+        uuid tenant_id FK
+        uuid sales_order_id FK
+        uuid product_id FK
+        varchar order_number
+        varchar status "planeada, en_progreso, completada, cancelada"
+        timestamp start_date
+        timestamp due_date
+        integer quantity
+    }
+    prod_kanban_columns {
+        uuid id PK
+        uuid tenant_id FK
+        varchar name
+        integer position
+        varchar color
+    }
+    prod_tracking {
+        uuid id PK
+        uuid work_order_id FK
+        uuid process_id FK
+        uuid kanban_column_id FK
+        timestamp timestamp
+        uuid operator_id FK
+        varchar status
+    }
+    prod_finished_goods {
+        uuid id PK
+        uuid tenant_id FK
+        uuid product_id FK
+        uuid warehouse_id FK
+        integer quantity_available
+        varchar batch_number
+    }
 
-    %% --- Finance Relationships ---
-    tenants ||--|{ fin_accounts : "owns"
-    companies ||--|{ fin_accounts : "belongs_to"
-    fin_account_types ||--|{ fin_accounts : "classifies"
-    fin_accounts }o--o{ fin_accounts : "is_parent_of"
-    tenants ||--|{ fin_cost_centers : "owns"
-    companies ||--|{ fin_cost_centers : "belongs_to"
-    tenants ||--|{ fin_journal_entries : "owns"
-    companies ||--|{ fin_journal_entries : "for"
-    fin_journal_entries ||--|{ fin_journal_lines : "contains"
-    fin_accounts ||--|{ fin_journal_lines : "posts_to"
-    fin_cost_centers }o--o{ fin_journal_lines : "allocates_to"
+    %% ==================================
+    %%           RELACIONES
+    %% ==================================
+    %% --- Relaciones del Núcleo ---
+    tenants ||--|{ companies : "tiene"
+    tenants ||--|{ users_tenants : "tiene"
+    tenants ||--|{ tenant_subscriptions : "tiene"
+    plans ||--|{ tenant_subscriptions : "usa"
+    tenants ||--|{ tenant_licenses : "tiene"
+    modules ||--|{ tenant_licenses : "para"
+    tenant_subscriptions }o--o| tenant_licenses : "cubre"
+    tenants ||--|{ audit_logs : "registra"
 
-    %% --- SCM Relationships ---
-    tenants ||--|{ scm_suppliers : "manages"
-    tenants ||--|{ scm_warehouses : "manages"
-    companies ||--|{ scm_warehouses : "contains"
-    tenants ||--|{ scm_product_categories : "defines"
-    scm_product_categories }o--o{ scm_product_categories : "is_parent_of"
-    tenants ||--|{ scm_products : "manages"
-    scm_product_categories }o--|| scm_products : "contains"
-    tenants ||--|{ scm_purchase_orders : "issues"
-    companies ||--|{ scm_purchase_orders : "for"
-    scm_suppliers ||--|{ scm_purchase_orders : "to"
-    scm_purchase_orders ||--|{ scm_po_lines : "details"
-    scm_products ||--o{ scm_po_lines : "references"
-    tenants ||--|{ scm_stock_levels : "tracks"
-    scm_products ||--|{ scm_stock_levels : "for_product"
-    scm_warehouses ||--|{ scm_stock_levels : "in_warehouse"
+    %% --- Relaciones de Finanzas ---
+    tenants ||--|{ fin_accounts : "posee"
+    companies ||--|{ fin_accounts : "pertenece_a"
+    fin_account_types ||--|{ fin_accounts : "clasifica"
+    fin_accounts }o--o{ fin_accounts : "padre_de"
+    tenants ||--|{ fin_cost_centers : "posee"
+    companies ||--|{ fin_cost_centers : "pertenece_a"
+    tenants ||--|{ fin_journal_entries : "posee"
+    companies ||--|{ fin_journal_entries : "para"
+    fin_journal_entries ||--|{ fin_journal_lines : "contiene"
+    fin_accounts ||--|{ fin_journal_lines : "se_asienta_en"
+    fin_cost_centers }o--o{ fin_journal_lines : "se_asigna_a"
 
-    %% --- Sales/CRM Relationships ---
-    tenants ||--|{ sales_companies : "manages"
-    sales_companies }o--|| sales_contacts : "has"
-    tenants ||--|{ sales_pipelines : "defines"
-    sales_pipelines ||--|{ sales_stages : "contains"
-    tenants ||--|{ sales_opportunities : "tracks"
-    sales_pipelines ||--|{ sales_opportunities : "in"
-    sales_stages ||--|{ sales_opportunities : "at"
-    sales_companies ||--|{ sales_opportunities : "for"
-    tenants ||--|{ sales_orders : "manages"
-    companies ||--|{ sales_orders : "processes"
-    sales_opportunities }o--o{ sales_orders : "from"
-    sales_companies }o--o{ sales_orders : "to_customer"
-    sales_orders ||--|{ sales_order_lines : "contains"
-    scm_products }o--o{ sales_order_lines : "references"
-    tenants ||--|{ sales_activities : "logs"
-    sales_opportunities }o--o{ sales_activities : "related_to"
-    sales_contacts }o--o{ sales_activities : "with"
+    %% --- Relaciones SCM ---
+    tenants ||--|{ scm_suppliers : "gestiona"
+    tenants ||--|{ scm_warehouses : "gestiona"
+    companies ||--|{ scm_warehouses : "contiene"
+    tenants ||--|{ scm_product_categories : "define"
+    scm_product_categories }o--o{ scm_product_categories : "padre_de"
+    tenants ||--|{ scm_products : "gestiona"
+    scm_product_categories }o--|| scm_products : "contiene"
+    tenants ||--|{ scm_purchase_orders : "emite"
+    companies ||--|{ scm_purchase_orders : "para"
+    scm_suppliers ||--|{ scm_purchase_orders : "a"
+    scm_purchase_orders ||--|{ scm_po_lines : "detalla"
+    scm_products ||--o{ scm_po_lines : "referencia"
+    tenants ||--|{ scm_stock_levels : "rastrea"
+    scm_products ||--|{ scm_stock_levels : "para_producto"
+    scm_warehouses ||--|{ scm_stock_levels : "en_almacen"
+
+    %% --- Relaciones Ventas/CRM ---
+    tenants ||--|{ sales_companies : "gestiona"
+    sales_companies }o--|| sales_contacts : "tiene"
+    tenants ||--|{ sales_pipelines : "define"
+    sales_pipelines ||--|{ sales_stages : "contiene"
+    tenants ||--|{ sales_opportunities : "rastrea"
+    sales_pipelines ||--|{ sales_opportunities : "en"
+    sales_stages ||--|{ sales_opportunities : "en"
+    sales_companies ||--|{ sales_opportunities : "para"
+    tenants ||--|{ sales_orders : "gestiona"
+    companies ||--|{ sales_orders : "procesa"
+    sales_opportunities }o--o{ sales_orders : "desde"
+    sales_companies }o--o{ sales_orders : "a_cliente"
+    sales_orders ||--|{ sales_order_lines : "contiene"
+    scm_products }o--o{ sales_order_lines : "referencia"
+    tenants ||--|{ sales_activities : "registra"
+    sales_opportunities }o--o{ sales_activities : "relacionado_con"
+    sales_contacts }o--o{ sales_activities : "con"
+
+    %% --- Relaciones Producción ---
+    tenants ||--|{ prod_processes : "define"
+    tenants ||--|{ prod_work_orders : "gestiona"
+    sales_orders ||--o{ prod_work_orders : "genera"
+    scm_products ||--|{ prod_work_orders : "para_producir"
+    tenants ||--|{ prod_kanban_columns : "configura"
+    prod_work_orders ||--|{ prod_tracking : "rastreado_via"
+    prod_processes ||--|{ prod_tracking : "paso"
+    prod_kanban_columns ||--|{ prod_tracking : "en_etapa"
+    tenants ||--|{ prod_finished_goods : "almacena"
+    scm_products ||--|{ prod_finished_goods : "inventario_de"
 ```

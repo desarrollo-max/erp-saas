@@ -1,0 +1,19 @@
+.wiki-container {
+    width: 350px;
+    height: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', sans-serif;
+}
+
+.topic-card {
+    background-color: #fff;
+}
+
+/* Material Icon override for input */
+.mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}

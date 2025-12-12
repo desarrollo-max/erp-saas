@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { SessionService } from '../../../core/services/session.service';
-import { ScmProduct } from '../../../core/models/erp.types';
-import { NotificationService } from '../../../core/services/notification.service';
-import { ProductRepository } from '../../../core/repositories/product.repository';
+import { SessionService } from '@core/services/session.service';
+import { ScmProduct } from '@core/models/erp.types';
+import { NotificationService } from '@core/services/notification.service';
+import { ProductRepository } from '@core/repositories/product.repository';
+import { CsvProcessorService } from '@core/services/csv-processor.service';
+import { SupabaseService } from '@core/services/supabase.service';
 
 @Component({
   selector: 'app-csv-importer',
@@ -142,7 +144,7 @@ export class CsvImporterComponent {
   importStats = signal<{ added: number; updated: number; failed: number; errors: any[] }>({ added: 0, updated: 0, failed: 0, errors: [] });
 
   systemFields: (keyof ScmProduct)[] = [
-    'sku', 'name', 'description', 'category_id', 'purchase_price', 'sale_price', 'cost_price', 'unit_type'
+    'sku', 'name', 'description', 'category_id', 'purchase_price', 'sale_price', 'cost_price', 'unit_type', 'is_manufacturable'
   ];
 
   // =================================================================================
@@ -155,41 +157,74 @@ export class CsvImporterComponent {
   private session = inject(SessionService);
   private notification = inject(NotificationService);
   private router = inject(Router);
+  private csvProcessor = inject(CsvProcessorService);
+  private supabase = inject(SupabaseService);  // Injected for category check
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = reader.result as string;
-      const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
-      if (lines.length < 2) return;
 
-      const headers = lines[0].split(',').map(h => h.trim());
-      this.csvHeaders.set(headers);
+    const file = input.files[0];
 
-      const data = lines.slice(1).map(line => line.split(',').map(f => f.trim()));
-      this.csvData.set(data);
+    this.csvProcessor.parse(file).then(data => {
+      this.csvHeaders.set(data.headers);
+      this.csvData.set(data.rows);
       this.step.set(2);
-    };
-    reader.readAsText(input.files[0]);
+    }).catch(error => {
+      this.notification.error(error.message);
+      console.error('Error parsing CSV:', error);
+    });
   }
 
   updateMapping(field: keyof ScmProduct, csvHeader: string): void {
     this.mappedColumns.update(map => {
-      // CORRECCIÓN: 'as string' añadido para TypeScript estricto
       csvHeader === "" ? map.delete(field as string) : map.set(field as string, csvHeader);
       return new Map(map);
     });
   }
 
+  // Helper method to ensure default category exists
+  private async getOrCreateDefaultCategory(tenantId: string): Promise<string> {
+    try {
+      // 1. Try to find existing "Sin Categoría"
+      const { data, error } = await this.supabase.client
+        .from('scm_product_categories')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('name', 'Sin Categoría')
+        .maybeSingle(); // Use maybeSingle to avoid 406 error if not found
+
+      if (data) return data.id;
+
+      // 2. Create if not exists
+      const newCat = {
+        tenant_id: tenantId,
+        name: 'Sin Categoría',
+        code: 'UNCAT',
+        description: 'Categoría por defecto creada automáticamente',
+        is_active: true
+      };
+
+      const { data: created, error: createError } = await this.supabase.client
+        .from('scm_product_categories')
+        .insert(newCat)
+        .select('id')
+        .single();
+
+      if (createError) throw createError;
+      return created.id;
+    } catch (err: any) {
+      console.error('Error fetching/creating default category:', err);
+      this.notification.warning('No se pudo verificar la categoría por defecto. Se usará NULL.');
+      return ''; // Fallback to null/empty if critical failure
+    }
+  }
 
   async saveData(): Promise<void> {
     this.step.set(3);
     this.isLoading.set(true);
     this.importSuccess.set(false);
 
-    // 🟢 CAMBIO FINAL: Ya no usamos el ID fijo. Usamos la sesión real.
     const tenantId = this.session.currentTenant()?.id;
 
     if (!tenantId) {
@@ -199,12 +234,16 @@ export class CsvImporterComponent {
       return;
     }
 
-    const productsToInsert: Partial<ScmProduct>[] = [];
-    const headerMap = new Map<string, number>();
-    this.csvHeaders().forEach((h, i) => headerMap.set(h, i));
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
     try {
+      // 🛑 DYNAMIC CATEGORY FETCH
+      // This ensures we insert the "Sin Categoría" for ANY tenant, including existing ones.
+      const defaultCategoryId = await this.getOrCreateDefaultCategory(tenantId);
+
+      const productsToInsert: Partial<ScmProduct>[] = [];
+      const headerMap = new Map<string, number>();
+      this.csvHeaders().forEach((h, i) => headerMap.set(h, i));
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
       for (const row of this.csvData()) {
         const product: Partial<ScmProduct> = {
           tenant_id: tenantId,
@@ -219,12 +258,15 @@ export class CsvImporterComponent {
             const key = systemField as keyof ScmProduct;
             let value: any = row[colIndex];
 
-            // CORRECCIÓN: 'as string' añadido para .includes() en TS estricto
             if (['purchase_price', 'sale_price', 'cost_price'].includes(key as string)) {
               value = parseFloat(value) || 0;
             }
+            if (key === 'is_manufacturable') {
+              value = (String(value).toLowerCase() === 'true' || String(value) === '1');
+            }
+            // Check if user provided category ID is valid
             if (key === 'category_id') {
-              if (!value || !uuidRegex.test(value)) value = this.DEFAULT_CATEGORY_ID;
+              if (!value || !uuidRegex.test(value)) value = defaultCategoryId;
             }
             if (key === 'unit_type' && (!value || value === '')) value = 'PIECE';
 
@@ -233,8 +275,8 @@ export class CsvImporterComponent {
           }
         }
 
-        // Si no se asignó categoría, usar la default
-        if (!(product as any).category_id) (product as any).category_id = this.DEFAULT_CATEGORY_ID;
+        // Si no se asignó categoría manualmente (o era inválida), usar la default recuperada
+        if (!(product as any).category_id) (product as any).category_id = defaultCategoryId;
 
         if (hasData && (product.sku || product.name)) {
           productsToInsert.push(product);
@@ -245,7 +287,6 @@ export class CsvImporterComponent {
 
       console.log(`Insertando ${productsToInsert.length} productos para Tenant: ${tenantId}`);
 
-      // Llamada a través del Repositorio (Desacoplado)
       const result = await this.productRepo.createBulk(productsToInsert, this.updateExisting);
 
       this.importStats.set(result);

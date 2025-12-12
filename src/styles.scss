@@ -1,6 +1,107 @@
 @use "tailwindcss";
 
-/* You can add global styles to this file, and also import other style files */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
+:root {
+    /* Default (Light Mode) */
+    --app-bg: #f8fafc;
+    /* Light Grey */
+    --app-text: #334155;
+    /* Slate 700 */
+    --app-text-muted: #64748b;
+    /* Slate 500 */
 
-html, body { height: 100%; margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+    --sidebar-bg: #ffffff;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+
+    --subtle-bg: #f1f5f9;
+    /* Slate 100 */
+    --hover-bg: #f8fafc;
+
+    /* Semantic Card Colors (Light) */
+    --card-prod-bg: #eff6ff;
+    /* Blue 50 */
+    --card-prod-border: #dbeafe;
+    --card-prod-text: #1e40af;
+
+    --card-inv-bg: #ecfdf5;
+    /* Emerald 50 */
+    --card-inv-border: #d1fae5;
+    --card-inv-text: #065f46;
+
+    --card-mkt-bg: #eef2ff;
+    /* Indigo 50 */
+    --card-mkt-border: #e0e7ff;
+    --card-mkt-text: #3730a3;
+
+    --card-pos-bg: #fff7ed;
+    /* Orange 50 */
+    --card-pos-border: #ffedd5;
+    --card-pos-text: #9a3412;
+
+    --card-buy-bg: #ecfeff;
+    /* Cyan 50 */
+    --card-buy-border: #cffafe;
+    --card-buy-text: #155e75;
+
+    /* Fixed Identity Colors (Do NOT change these on theme switch) */
+    --ai-core-primary: #06b6d4;
+    /* Neon Cyan */
+    --ai-core-secondary: #8b5cf6;
+    /* Neon Violet */
+    --ai-core-glow: rgba(6, 182, 212, 0.6);
+}
+
+[data-theme="dark"] {
+    /* Dark Mode Overrides */
+    --app-bg: #0f172a;
+    /* Midnight Blue */
+    --app-text: #f1f5f9;
+    /* Off-white */
+    --app-text-muted: #94a3b8;
+    /* Slate 400 */
+
+    --sidebar-bg: #1e293b;
+    /* Slate 800 */
+    --card-bg: #1e293b;
+    --border-color: #334155;
+
+    --subtle-bg: #334155;
+    /* Slate 700 */
+    --hover-bg: #293548;
+
+    /* Semantic Card Colors (Dark) */
+    /* Use transparent tints for dark mode to blend with card-bg or stand alone */
+    --card-prod-bg: rgba(30, 58, 138, 0.3);
+    --card-prod-border: #1e3a8a;
+    --card-prod-text: #bfdbfe;
+
+    --card-inv-bg: rgba(6, 78, 59, 0.3);
+    --card-inv-border: #064e3b;
+    --card-inv-text: #6ee7b7;
+
+    --card-mkt-bg: rgba(49, 46, 129, 0.3);
+    --card-mkt-border: #312e81;
+    --card-mkt-text: #c7d2fe;
+
+    --card-pos-bg: rgba(124, 45, 18, 0.3);
+    --card-pos-border: #7c2d12;
+    --card-pos-text: #fdba74;
+
+    --card-buy-bg: rgba(22, 78, 99, 0.3);
+    --card-buy-border: #164e63;
+    --card-buy-text: #67e8f9;
+
+    /* Re-map standard colors to dark equivalents if needed for standard elements */
+    color: var(--app-text);
+    background-color: var(--app-bg);
+}
+
+/* Global resets specifically for theme application */
+body {
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    height: 100%;
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}

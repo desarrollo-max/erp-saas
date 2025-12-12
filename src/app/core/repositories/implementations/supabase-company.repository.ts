@@ -1,7 +1,7 @@
 import { Injectable, inject } from "@angular/core";
-import { Company } from "../../models/erp.types";
-import { SupabaseService } from "../../services/supabase.service";
-import { CompanyRepository } from "../company.repository";
+import { Company } from "@core/models/erp.types";
+import { SupabaseService } from "@core/services/supabase.service";
+import { CompanyRepository } from "@core/repositories/company.repository";
 
 @Injectable({
     providedIn: 'root'

@@ -1,0 +1,49 @@
+<div class="wiki-container bg-white shadow-xl rounded-lg overflow-hidden flex flex-col">
+    <div class="header bg-blue-600 text-white p-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <mat-icon>menu_book</mat-icon>
+            <h3 class="text-lg font-semibold m-0">Wiki / Ayuda</h3>
+        </div>
+    </div>
+
+    <div class="p-4 border-b border-gray-200">
+        <div class="relative">
+            <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar ayuda..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+            <mat-icon class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">search</mat-icon>
+        </div>
+    </div>
+
+    <div class="content flex-1 overflow-y-auto p-4 space-y-3 max-h-[400px]">
+        <!-- Contextual Help -->
+        <div *ngIf="context && !searchQuery" class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-4">
+            <h4 class="font-semibold text-indigo-900 mb-1 flex items-center gap-2">
+                <mat-icon class="text-sm h-4 w-4">info</mat-icon> {{ context.title }}
+            </h4>
+            <p class="text-sm text-indigo-800 mb-2">{{ context.description }}</p>
+            <ul class="list-disc list-inside text-xs text-indigo-700 space-y-1">
+                <li *ngFor="let tip of context.tips">{{ tip }}</li>
+            </ul>
+        </div>
+
+        <h5 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Artículos Relacionados</h5>
+
+        <div *ngFor="let topic of filteredTopics"
+            class="topic-card p-3 rounded-lg border border-gray-100 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer group">
+            <div class="flex justify-between items-start mb-1">
+                <h4 class="font-medium text-gray-800 group-hover:text-blue-700">{{ topic.title }}</h4>
+                <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{{ topic.category }}</span>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2">{{ topic.description }}</p>
+        </div>
+
+        <div *ngIf="filteredTopics.length === 0" class="text-center py-8 text-gray-500">
+            <mat-icon class="text-4xl mb-2 text-gray-300">search_off</mat-icon>
+            <p>No se encontraron temas.</p>
+        </div>
+    </div>
+
+    <div class="footer p-3 bg-gray-50 border-t border-gray-200 text-center">
+        <button mat-button color="primary" class="w-full">Ver toda la documentación</button>
+    </div>
+</div>

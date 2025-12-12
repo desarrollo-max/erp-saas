@@ -1,0 +1,7 @@
+SKU,Nombre,Descripción,Precio Venta,Precio Compra,Costo,Unidad,Activo,Manufacturable
+PROD-001,Laptop Gamer X1,Laptop de alto rendimiento para juegos,1500.00,1000.00,1050.00,PIECE,TRUE,FALSE
+PROD-002,Mouse Inalámbrico,Mouse ergonómico con batería de larga duración,25.50,10.00,12.00,PIECE,TRUE,FALSE
+PROD-003,Teclado Mecánico,Teclado RGB con switches azules,89.99,45.00,48.00,PIECE,TRUE,FALSE
+PROD-004,Monitor 27 4K,Monitor IPS de alta resolución,350.00,200.00,210.00,PIECE,TRUE,FALSE
+PROD-005,Cable HDMI 2m,Cable reforzado de alta velocidad,9.99,2.00,2.50,PIECE,TRUE,FALSE
+SERV-001,Mantenimiento Preventivo,Servicio de limpieza y optimización,50.00,0.00,10.00,SERVICE,TRUE,FALSE

@@ -268,14 +268,38 @@ export interface ScmProduct {
   purchase_price: number | null;
   sale_price: number | null;
   cost_price: number | null;
-  reorder_point: number;
-  reorder_quantity: number;
+  last_purchase_cost?: number; // Costo de la última compra
+  reorder_point: number; // Stock mínimo
+  reorder_quantity: number; // Cantidad a pedir por defecto
   lead_time_days: number;
   is_active: boolean;
   requires_serial_number: boolean;
   requires_batch_tracking: boolean;
+  image_url?: string; // Main image
+  images?: string[]; // Multiple images
+  is_manufacturable?: boolean; // Identifies if this product is produced internally
+
+  // Size Management for 'PAIR' unit type
+  size_config?: {
+    min?: number;
+    max?: number;
+    step?: number; // 0.5 or 1
+  };
+
   created_at: string;
   updated_at: string;
+}
+
+// Image Management Interface
+export interface ScmProductImage {
+  id: string;
+  product_id: string;
+  media_type: string;
+  file_url: string;
+  description: string | null;
+  is_primary: boolean;
+  sort_order: number;
+  created_at: string;
 }
 
 export interface ScmSupplier {
@@ -475,6 +499,9 @@ export interface SalesOpportunity {
   reason_lost: string | null;
   created_at: string;
   updated_at: string;
+  sales_companies?: { name: string } | null;
+  sales_contacts?: { first_name: string; last_name: string } | null;
+  sales_stages?: { name: string } | null;
 }
 
 export interface SalesOrder {
@@ -499,6 +526,7 @@ export interface SalesOrder {
   created_by: string;
   created_at: string;
   updated_at: string;
+  sales_companies?: { name: string } | null;
 }
 
 export interface SalesOrderLine {
@@ -556,3 +584,90 @@ export interface ImportPreview<T> {
   totalRows: number;             // El número total de filas en el archivo.
   errors: string[];              // Errores de parsing o mapeo.
 }
+// ======================================================
+//       Human Resources (HR) Interfaces
+// ======================================================
+
+export interface HrEmployee {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  position: string | null;
+  department: string | null;
+  hire_date: string | null;
+  status: string;
+  manager_id: string | null;
+  user_id: string | null;
+  contract_type?: 'weekly' | 'bi-weekly' | 'piece-rate' | 'freelance';
+  custom_fields?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+// ======================================================
+//       Manufacturing (MFG) Interfaces
+// ======================================================
+
+export interface MfgProcess {
+  id: string;
+  tenant_id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  standard_duration_minutes?: number | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface MfgStage {
+  id: string;
+  process_id: string;
+  name: string;
+  description: string | null;
+  order_index: number;
+  is_quality_control_point: boolean; // Punto de control
+  created_at: string;
+}
+
+export interface MfgBillOfMaterials {
+  id: string;
+  tenant_id: string;
+  finished_product_id: string; // References ScmProduct
+  name: string;
+  version: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface MfgBomItem {
+  id: string;
+  bom_id: string;
+  component_product_id: string; // References ScmProduct (Raw Material)
+  quantity: number;
+  wastage_percent: number;
+  created_at: string;
+}
+
+export interface MfgProductionOrder {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  order_number: string;
+  product_id: string; // Finished good to produce
+  quantity: number;
+  process_id: string;
+  current_stage_id: string;
+  warehouse_id?: string; // Warehouse to deduct materials from
+  status: 'DRAFT' | 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  start_date: string | null;
+  due_date: string | null;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

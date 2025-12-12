@@ -13,12 +13,14 @@ export class GlobalErrorHandler implements ErrorHandler {
     const notifier = this.injector.get(NotificationService);
 
     const message = error.message ? error.message : error.toString();
-    
+
     logger.error('Error global capturado:', error);
 
-    // Usar NgZone para asegurar que la notificación se muestre correctamente en el ciclo de Angular
+    // Usar NgZone para asegurar que la notificación se muestre correctamente en el ciclo de detección de cambios de Angular
     this.ngZone.run(() => {
-      notifier.error('Ocurrió un error inesperado. Por favor, intente de nuevo.');
+      // DEBUG: Mostrar mensaje real para identificar el problema
+      notifier.error(`Error: ${message}`);
+      // notifier.error('Ocurrió un error inesperado. Por favor, intente de nuevo.');
     });
   }
 }

@@ -25,4 +25,13 @@ export class NotificationService {
       verticalPosition: 'top',
     });
   }
+
+  warning(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
+      duration: 4000,
+      panelClass: ['warning-snackbar'],
+      horizontalPosition: 'right',
+      verticalPosition: 'top',
+    });
+  }
 }

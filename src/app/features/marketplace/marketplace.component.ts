@@ -1,8 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ModuleRepository } from '../../core/repositories/module.repository';
-import { Module } from '../../core/models/module.model';
+import { ModuleRepository } from '@core/repositories/module.repository';
+import { Module } from '@core/models/module.model';
+import { LucideAngularModule } from 'lucide-angular';
 
 interface GroupedModules {
   [category: string]: Module[];
@@ -11,7 +12,7 @@ interface GroupedModules {
 @Component({
   selector: 'app-marketplace',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LucideAngularModule],
   templateUrl: './marketplace.component.html',
   styleUrls: ['./marketplace.component.scss'],
 })
@@ -53,5 +54,20 @@ export class MarketplaceComponent implements OnInit {
     if (module.route_path) {
       this.router.navigate([module.route_path]);
     }
+  }
+
+  getIconName(module: Module): string {
+    if (module.icon) return module.icon;
+
+    const code = module.code || '';
+    if (code.includes('FIN')) return 'calculator';
+    if (code.includes('HR')) return 'users';
+    if (code.includes('SALES')) return 'trending-up';
+    if (code.includes('SC')) return 'package';
+    if (code.includes('MKT')) return 'megaphone';
+    if (code.includes('PROD')) return 'clipboard-check';
+    if (code.includes('SVC')) return 'headphones';
+
+    return 'box';
   }
 }

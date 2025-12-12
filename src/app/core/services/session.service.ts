@@ -1,159 +1,176 @@
-import { Injectable, signal, WritableSignal, isDevMode, inject } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Company, Tenant } from '../models/erp.types';
 import { SupabaseService } from './supabase.service';
+
+// Definición de tipos para Tenant (Asumiendo que Tenant se importa o se define aquí)
+interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  // ... otras propiedades de Tenant
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class SessionService {
-  public currentTenant = signal<Tenant | null>(null);
-  public currentCompany = signal<Company | null>(null);
-  public availableCompanies: WritableSignal<Company[]> = signal([]);
-  public availableModules = signal<string[]>([]);
-
   private supabase = inject(SupabaseService);
+  private router = inject(Router);
 
-  constructor(private router: Router) { }
+  // Signals for Session Context
+  public currentTenantId = signal<string | null>(null);
+  public currentTenantName = signal<string | null>(null);
+  public currentUserRole = signal<string | null>(null);
+  public currentUserId = signal<string | null>(null);
 
-  private isDevelopmentMode(): boolean {
-    return isDevMode();
+  // Signal para el usuario autenticado (Para HeaderComponent)
+  public user = signal<{ email?: string } | null>(null);
+
+  // Signal para el objeto completo del tenant
+  public currentTenant = signal<Tenant | null>(null);
+  public currentCompany = signal<any | null>(null);
+
+  // Computed Signal for Admin Check
+  private _isAdmin = computed(() => {
+    const role = this.currentUserRole();
+    return role === 'owner'; // Solo el owner es super admin
+  });
+
+  // Método de acceso simple para usar en el if (this.session.isAdmin())
+  public isAdmin(): boolean {
+    return this._isAdmin();
   }
 
-  async initSession(): Promise<void> {
-    try {
-      const { data: { session } } = await this.supabase.client.auth.getSession();
+  // Método de acceso para el estado de login (Usado por el AuthGuard)
+  // Devuelve TRUE solo si el CONTEXTO (Tenant ID) ha sido cargado.
+  public isLoggedIn(): boolean {
+    return !!this.currentTenantId();
+  }
 
-      if (session?.user) {
-        console.log('User authenticated, fetching tenant info...');
-        // 1. Buscar relación User -> Tenant
-        const { data: userTenants, error: utError } = await this.supabase.client
-          .from('users_tenants')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .limit(1);
+  constructor() {
+    // Intentar recuperar contexto del LocalStorage al inicio
+    const storedTenantId = localStorage.getItem('erp_tenant_id');
+    const storedRole = localStorage.getItem('erp_user_role');
+    const storedName = localStorage.getItem('erp_tenant_name');
 
-        if (utError) console.error('Error fetching users_tenants:', utError);
-
-        if (userTenants && userTenants.length > 0) {
-          const tenantId = userTenants[0].tenant_id;
-
-          // 2. Obtener datos del Tenant
-          const { data: tenantData, error: tError } = await this.supabase.client
-            .from('tenants')
-            .select('*')
-            .eq('id', tenantId)
-            .single();
-
-          if (tError) console.error('Error fetching tenant:', tError);
-
-          if (tenantData) {
-            console.log('Tenant found:', tenantData.name);
-            this.currentTenant.set(tenantData as Tenant);
-
-            // 3. Obtener Companies del Tenant
-            const { data: companiesData, error: cError } = await this.supabase.client
-              .from('companies')
-              .select('*')
-              .eq('tenant_id', tenantId);
-
-            if (cError) console.error('Error fetching companies:', cError);
-
-            if (companiesData) {
-              this.availableCompanies.set(companiesData as Company[]);
-            }
-            return; // Éxito, salimos.
-          } else { // If tenantData is null, meaning tenant not found for the tenantId
-            console.warn('Tenant not found for user. Auto-provisioning...');
-            await this.createDefaultTenant(session.user.id, session.user.email);
-          }
-        } else {
-          console.warn('User has no linked tenant. Creating default tenant...');
-          await this.createDefaultTenant(session.user.id, session.user.email);
-        }
-      }
-    } catch (err) {
-      console.error('Error initializing session:', err);
+    if (storedTenantId && storedRole) {
+      this.currentTenantId.set(storedTenantId);
+      this.currentUserRole.set(storedRole);
+      if (storedName) this.currentTenantName.set(storedName);
     }
   }
 
-  private async createDefaultTenant(userId: string, email: string | undefined): Promise<void> {
-    console.log('Creating default tenant for user...');
+  // --- MÉTODOS DE CONTEXTO ---
 
-    // 1. Crear Tenant
-    const newTenant: Partial<Tenant> = {
-      name: 'Mi Organización',
-      slug: `org-${Date.now()}`,
-      industry: 'Technology',
-      primary_color: '#4f46e5',
-      is_active: true,
-      subscription_status: 'free_trial',
-      trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 días
-      max_users: 5,
-      max_companies: 1,
-      storage_gb: 1,
-      metadata: { created_via: 'auto-provision' }
-    };
+  /**
+   * Setea el contexto actual del Tenant seleccionado y lo persiste.
+   * Contiene la lógica de redirección post-selección.
+   */
+  setTenantContext(tenantId: string, role: string, name: string): void {
+    this.currentTenantId.set(tenantId);
+    this.currentUserRole.set(role);
+    this.currentTenantName.set(name);
 
-    const { data: tenant, error: tError } = await this.supabase.client
-      .from('tenants')
-      .insert(newTenant)
-      .select()
-      .single();
+    // Persist to LocalStorage
+    localStorage.setItem('erp_tenant_id', tenantId);
+    localStorage.setItem('erp_user_role', role);
+    localStorage.setItem('erp_tenant_name', name);
 
-    if (tError) {
-      console.error('Error creating tenant:', tError);
-      return;
-    }
-
-    // 2. Vincular Usuario con Tenant
-    const newUserTenant = {
-      user_id: userId,
-      tenant_id: tenant.id,
-      role: 'owner',
-      is_active: true,
-      joined_at: new Date().toISOString()
-    };
-
-    const { error: utError } = await this.supabase.client
-      .from('users_tenants')
-      .insert(newUserTenant);
-
-    if (utError) {
-      console.error('Error linking user to tenant:', utError);
-      // Podríamos intentar borrar el tenant huérfano aquí, pero por ahora solo logueamos
-      return;
-    }
-
-    console.log('Tenant auto-provisioned:', tenant);
-    this.currentTenant.set(tenant as Tenant);
-    this.availableCompanies.set([]);
-  }
-
-  private initializeMockSession(): void {
-    // Mock session disabled to ensure DB integrity. Please ensure you have a valid Tenant in Supabase.
-    console.warn('Mock Session is disabled to ensure DB integrity. Please ensure you have a valid Tenant in Supabase.');
-  }
-
-  selectCompany(company: Company): void {
-    this.currentCompany.set(company);
-
-    // Simulate permission loading
-    if (company.id === '4d29e92a-6943-4ed3-9613-c6c9d23354c4') { // Matriz S.A.
-      this.availableModules.set(['dashboard', 'inventory', 'marketplace', 'settings']);
-    } else { // Sucursal Norte
-      this.availableModules.set(['dashboard', 'inventory']);
-    }
-
+    // Redirección post-selección:
+    // Tanto Admin como User van al Launcher al seleccionar una empresa.
     this.router.navigate(['/launcher']);
+
+    // Buscar y setear el objeto completo del tenant
+    this.loadFullTenantDetails(tenantId);
   }
 
+  /**
+   * Carga los detalles completos del tenant.
+   */
+  private async loadFullTenantDetails(tenantId: string) {
+    const { data } = await this.supabase.client
+      .from('tenants')
+      .select('*')
+      .eq('id', tenantId)
+      .single();
+    if (data) {
+      this.currentTenant.set(data as Tenant);
+    }
+  }
+
+  /**
+   * Main method to initialize the session (Called by AuthGuard).
+   */
+  async loadSession(forceReload: boolean = false): Promise<void> {
+    try {
+      const { data: { session }, error } = await this.supabase.client.auth.getSession();
+
+      if (error || !session) {
+        // No hay sesión activa en Supabase (token expiró o no existe)
+        return;
+      }
+
+      // Si ya hay contexto (Tenant ID en Signals) y NO estamos forzando recarga, no hacemos nada más.
+      if (this.currentTenantId() && !forceReload) {
+        return;
+      }
+
+      // Si no hay contexto, lo cargamos desde la BD (esto pasa en el inicio de la app)
+      const userId = session.user.id;
+      this.currentUserId.set(userId);
+      this.user.set({ email: session.user.email }); // Populate user signal
+
+      // Fetch user's tenants
+      const { data: userTenants, error: utError } = await this.supabase.client
+        .from('users_tenants')
+        .select(`
+          tenant_id,
+          role,
+          tenants (
+            id,
+            name,
+            slug
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+      if (utError) throw utError;
+
+      if (!userTenants || userTenants.length === 0) {
+        // No logout! Allow user to proceed to Company Selector to create a company.
+        // this.logout(); 
+        return;
+      }
+
+      // Multiple Tenants OR Owner (always sees list) -> Go to Company/Tenant Selector
+      // REMOVED REDIRECT: Let AuthGuard or LoginComponent handle navigation to avoid loops.
+      // this.router.navigate(['/companies']);
+
+    } catch (err) {
+      console.error('Unexpected error loading session:', err);
+      this.logout();
+    }
+  }
+
+  /**
+   * Clears session and redirects to login.
+   */
   async logout(): Promise<void> {
     await this.supabase.client.auth.signOut();
+
+    // Clear Signals
+    this.currentTenantId.set(null);
+    this.currentTenantName.set(null);
+    this.currentUserRole.set(null);
     this.currentTenant.set(null);
-    this.currentCompany.set(null);
-    this.availableCompanies.set([]);
-    this.availableModules.set([]);
+    this.currentUserId.set(null);
+
+    // Clear LocalStorage
+    localStorage.removeItem('erp_tenant_id');
+    localStorage.removeItem('erp_user_role');
+    localStorage.removeItem('erp_tenant_name');
+
     this.router.navigate(['/login']);
   }
 }

@@ -1,26 +1,50 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { SessionService } from '../../core/services/session.service';
-import { ModuleRepository } from '../../core/repositories/module.repository';
-import { Module } from '../../core/models/module.model';
+import { SessionService } from '@core/services/session.service';
+import { ModuleRepository } from '@core/repositories/module.repository';
+import { Module } from '@core/models/module.model';
+import { ThemeService } from '@core/services/theme.service';
+import { MarketplaceModalComponent } from '../marketplace/marketplace-modal.component';
+import { AssistantSphereComponent } from '../../shared/components/assistant-sphere/assistant-sphere.component';
+import { NgIconsModule, provideIcons } from '@ng-icons/core';
+import * as heroIcons from '@ng-icons/heroicons/solid';
 
 @Component({
-    selector: 'app-launcher',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col">
+  selector: 'app-launcher',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MarketplaceModalComponent,
+    AssistantSphereComponent,
+    NgIconsModule
+  ],
+  viewProviders: [provideIcons(heroIcons)],
+  template: `
+    <div class="min-h-screen flex flex-col transition-colors duration-300" style="background-color: var(--app-bg); color: var(--app-text);">
       <!-- HEADER -->
-      <div class="bg-white shadow-sm">
+      <div class="shadow-sm transition-colors duration-300" style="background-color: var(--card-bg); border-bottom: 1px solid var(--border-color);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between h-16 items-center">
-            <h1 class="text-xl font-bold text-gray-800">
-              Empresa: <span class="text-indigo-600">{{ sessionService.currentCompany()?.name || 'Seleccionar...' }}</span>
-            </h1>
-            <button (click)="logout()" class="text-sm text-gray-500 hover:text-gray-700">
-              Cerrar Sesión
-            </button>
+            <div class="flex items-center gap-4">
+              <h1 class="text-xl font-bold">
+                Empresa: <span class="text-indigo-600 dark:text-indigo-400">{{ sessionService.currentTenantName() || 'Seleccionar...' }}</span>
+              </h1>
+              <button (click)="changeCompany()" class="text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full transition">
+                Cambiar
+              </button>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <!-- Theme Switcher -->
+              <button (click)="toggleTheme()" class="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition focus:outline-none">
+                <ng-icon [name]="themeService.isDark() ? 'heroSunSolid' : 'heroMoonSolid'" class="w-5 h-5"></ng-icon>
+              </button>
+
+              <button (click)="logout()" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                Cerrar Sesión
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -33,42 +57,127 @@ import { Module } from '../../core/models/module.model';
             
             <!-- CARD 1: SETTINGS (Fixed) -->
             <div (click)="navigateTo('/settings')" 
-                 class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border border-transparent hover:border-gray-200 h-48">
-              <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-gray-100 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border border-transparent hover:border-gray-200 h-48"
+                 style="background-color: var(--card-bg);">
+              <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3 transition-colors"
+                   style="background-color: var(--subtle-bg);">
+                <ng-icon name="heroCog6ToothSolid" class="w-7 h-7" style="color: var(--app-text-muted);"></ng-icon>
               </div>
-              <h3 class="text-base font-semibold text-gray-900">Configuración</h3>
+              <h3 class="text-base font-semibold" style="color: var(--app-text);">Configuración</h3>
             </div>
 
-            <!-- CARD 2: MARKETPLACE (Fixed) -->
-            <div (click)="navigateTo('/marketplace')" 
-                 class="bg-indigo-50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border border-indigo-100 hover:border-indigo-300 h-48">
-              <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+            <!-- CARD 2: PRODUCTION -->
+            <div (click)="navigateTo('/manufactura')" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48"
+                 style="background-color: var(--card-prod-bg); border-color: var(--card-prod-border);">
+              <div class="w-14 h-14 bg-white dark:bg-blue-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                 <!-- Note: Forcing icon color via style to ensure contrast on the specific colored bg -->
+                <ng-icon name="heroBuildingOffice2Solid" class="w-7 h-7" style="color: var(--card-prod-text);"></ng-icon>
               </div>
-              <h3 class="text-base font-semibold text-indigo-900">Marketplace</h3>
-              <p class="text-xs text-indigo-600 mt-1">Añadir Módulos</p>
+              <h3 class="text-base font-semibold" style="color: var(--card-prod-text);">Producción</h3>
+              <p class="text-xs mt-1 opacity-80" style="color: var(--card-prod-text);">Gestión de Órdenes</p>
+            </div>
+            
+            <!-- CARD 3: INVENTORY -->
+            <div (click)="navigateTo('/cadena-suministro/inventario')" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48"
+                 style="background-color: var(--card-inv-bg); border-color: var(--card-inv-border);">
+              <div class="w-14 h-14 bg-white dark:bg-emerald-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ng-icon name="heroArchiveBoxSolid" class="w-7 h-7" style="color: var(--card-inv-text);"></ng-icon>
+              </div>
+              <h3 class="text-base font-semibold" style="color: var(--card-inv-text);">Inventario</h3>
+              <p class="text-xs mt-1 opacity-80" style="color: var(--card-inv-text);">Existencias y MP</p>
+            </div>
+
+            <!-- CARD: MARKETPLACE -->
+            <div (click)="openMarketplace()" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48"
+                 style="background-color: var(--card-mkt-bg); border-color: var(--card-mkt-border);">
+              <div class="w-14 h-14 bg-white dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ng-icon name="heroBuildingStorefrontSolid" class="w-7 h-7" style="color: var(--card-mkt-text);"></ng-icon>
+              </div>
+              <h3 class="text-base font-semibold" style="color: var(--card-mkt-text);">Marketplace</h3>
+              <p class="text-xs mt-1 opacity-80" style="color: var(--card-mkt-text);">Explorar Módulos</p>
+            </div>
+
+            <!-- CARD: PURCHASES (Compras) -->
+            <div (click)="navigateTo('/cadena-suministro/compras')" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48"
+                 style="background-color: var(--card-buy-bg); border-color: var(--card-buy-border);">
+              <div class="w-14 h-14 bg-white dark:bg-cyan-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ng-icon name="heroShoppingCartSolid" class="w-7 h-7" style="color: var(--card-buy-text);"></ng-icon>
+              </div>
+              <h3 class="text-base font-semibold" style="color: var(--card-buy-text);">Compras</h3>
+              <p class="text-xs mt-1 opacity-80" style="color: var(--card-buy-text);">Abastecimiento</p>
+            </div>
+
+            <!-- CARD: POS (Punto de Venta) -->
+            <div (click)="navigateTo('/pos')" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48"
+                 style="background-color: var(--card-pos-bg); border-color: var(--card-pos-border);">
+              <div class="w-14 h-14 bg-white dark:bg-orange-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ng-icon name="heroCurrencyDollarSolid" class="w-7 h-7" style="color: var(--card-pos-text);"></ng-icon>
+              </div>
+              <h3 class="text-base font-semibold" style="color: var(--card-pos-text);">Punto de Venta</h3>
+              <p class="text-xs mt-1 opacity-80" style="color: var(--card-pos-text);">Ventas Mostrador</p>
+            </div>
+
+            <!-- CARD: LOGISTICS (Movimientos) -->
+            <div (click)="navigateTo('/cadena-suministro/movimientos')" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48 bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800">
+              <div class="w-14 h-14 bg-white dark:bg-purple-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ng-icon name="heroTruckSolid" class="w-7 h-7 text-purple-600 dark:text-purple-300"></ng-icon>
+              </div>
+              <h3 class="text-base font-semibold text-purple-900 dark:text-purple-100">Logística</h3>
+              <p class="text-xs mt-1 opacity-80 text-purple-600 dark:text-purple-300">Movimientos</p>
+            </div>
+
+            <!-- CARD: WHOLESALE (Mayoreo) -->
+            <div (click)="navigateTo('/ventas/mayoreo')" 
+                 class="rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border h-48 bg-teal-50 dark:bg-teal-900/20 border-teal-100 dark:border-teal-800">
+              <div class="w-14 h-14 bg-white dark:bg-teal-900/50 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ng-icon name="heroBriefcaseSolid" class="w-7 h-7 text-teal-600 dark:text-teal-300"></ng-icon>
+              </div>
+              <h3 class="text-base font-semibold text-teal-900 dark:text-teal-100">Mayoreo</h3>
+              <p class="text-xs mt-1 opacity-80 text-teal-600 dark:text-teal-300">Cotizaciones</p>
             </div>
 
             <!-- DYNAMIC MODULES -->
             <div *ngFor="let module of installedModules()" 
-                 (click)="onModuleClick(module)"
-                 class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-6 flex flex-col items-center justify-center group border border-transparent hover:border-blue-100 h-48">
+                 (click)="goToModule(module)"
+                 [ngClass]="{
+                   'opacity-60 cursor-not-allowed hover:shadow-md': !module.route_path,
+                   'cursor-pointer hover:shadow-xl': module.route_path
+                 }"
+                 class="rounded-xl shadow-md transition-all duration-300 p-6 flex flex-col items-center justify-center group border border-transparent h-48 relative"
+                 style="background-color: var(--card-bg);">
+              
+              <!-- Badge "Próximamente" -->
+              <span *ngIf="!module.route_path" class="absolute top-2 right-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-[10px] font-bold px-2 py-1 rounded-full">
+                PRÓXIMAMENTE
+              </span>
+
               <div 
                 class="w-14 h-14 rounded-full flex items-center justify-center mb-3 transition-colors"
-                [style.background-color]="module.color ? module.color + '20' : '#EFF6FF'"
+                [style.background-color]="themeService.isDark() ? (module.color ? module.color + '30' : '#334155') : (module.color ? module.color + '20' : '#EFF6FF')"
                 [style.color]="module.color || '#3B82F6'"
               >
-                <!-- Icon Placeholder: First letter if no icon -->
-                <span class="text-xl font-bold">{{ module.name.charAt(0) }}</span>
+                <!-- Dynamic Icon -->
+                <ng-container *ngIf="module.icon; else fallbackIcon">
+                  <ng-icon 
+                    [name]="getSafeIcon(module.icon)" 
+                    class="w-8 h-8"
+                    [color]="module.color || '#3B82F6'"
+                  ></ng-icon>
+                </ng-container>
+                
+                <!-- Fallback: First letter -->
+                <ng-template #fallbackIcon>
+                  <span class="text-xl font-bold">{{ module.name.charAt(0) }}</span>
+                </ng-template>
               </div>
-              <h3 class="text-base font-semibold text-gray-900 text-center">{{ module.name }}</h3>
-              <p class="text-xs text-gray-500 mt-1 text-center truncate w-full px-2">{{ module.description }}</p>
+              <h3 class="text-base font-semibold text-center" style="color: var(--app-text);">{{ module.name }}</h3>
+              <p class="text-xs mt-1 text-center truncate w-full px-2" style="color: var(--app-text-muted);">{{ module.description }}</p>
             </div>
 
             <!-- LOADING STATE -->
@@ -79,53 +188,131 @@ import { Module } from '../../core/models/module.model';
           </div>
         </div>
       </div>
+      
+      <!-- MARKETPLACE MODAL -->
+      <app-marketplace-modal 
+        *ngIf="showMarketplace()" 
+        (closeModal)="showMarketplace.set(false)"
+        (moduleInstalled)="onModuleInstalled($event)">
+      </app-marketplace-modal>
+
+      <!-- ESFERA FLOTANTE -->
+      <app-assistant-sphere></app-assistant-sphere>
     </div>
   `
 })
 export class LauncherComponent implements OnInit {
-    sessionService = inject(SessionService);
-    private router = inject(Router);
-    private moduleRepo = inject(ModuleRepository);
+  sessionService = inject(SessionService);
+  themeService = inject(ThemeService);
+  private router = inject(Router);
+  private moduleRepo = inject(ModuleRepository);
 
-    installedModules = signal<Module[]>([]);
-    isLoading = signal<boolean>(true);
+  toggleTheme() {
+    this.themeService.toggleTheme();
+  }
 
-    async ngOnInit() {
-        await this.loadInstalledModules();
+  installedModules = signal<Module[]>([]);
+  isLoading = signal<boolean>(true);
+  showMarketplace = signal<boolean>(false);
+
+  // Signal derivado para el ID del Tenant
+  currentTenantId = computed(() => this.sessionService.currentTenantId());
+
+  constructor() {
+    effect(() => {
+      const tenantId = this.currentTenantId();
+      if (tenantId) {
+        this.loadInstalledModules(tenantId);
+      }
+    });
+
+    // We need to ensure NgIconsModule is configured. Since we are in standalone, we passed it in imports map below. 
+    // Just to be safe, I'm verifying the imports key in the decorator.
+  }
+
+  ngOnInit() {
+    // La carga se maneja via effect, pero podemos dejar validaciones aquí
+    if (!this.sessionService.currentTenant()) {
+      // Si entramos y no hay tenant, tal vez recargar o redirigir
     }
+  }
 
-    async loadInstalledModules() {
-        const tenant = this.sessionService.currentTenant();
-        if (!tenant) {
-            console.warn('No tenant found in session.');
-            this.isLoading.set(false);
-            return;
-        }
-
-        try {
-            this.isLoading.set(true);
-            const modules = await this.moduleRepo.getInstalledModules(tenant.id);
-            this.installedModules.set(modules);
-        } catch (error) {
-            console.error('Error loading installed modules:', error);
-        } finally {
-            this.isLoading.set(false);
-        }
+  async loadInstalledModules(tenantId: string) {
+    try {
+      this.isLoading.set(true);
+      const modules = await this.moduleRepo.getInstalledModules(tenantId);
+      this.installedModules.set(modules);
+    } catch (error) {
+      console.error('Error loading installed modules:', error);
+    } finally {
+      this.isLoading.set(false);
     }
+  }
 
-    navigateTo(path: string) {
-        this.router.navigate([path]);
-    }
+  goToSettings() {
+    this.router.navigate(['/settings']);
+  }
 
-    onModuleClick(module: Module) {
-        if (module.route_path) {
-            this.router.navigate([module.route_path]);
-        } else {
-            console.warn('Module has no route path:', module.name);
-        }
-    }
+  goToModule(module: Module) {
+    if (!module.route_path) return; // Prevent navigation if disabled
 
-    logout() {
-        this.sessionService.logout();
+    // START HOTFIX: Manejo especial de rutas que pueden venir inconsistentes de la BD
+    if (module.code === 'inventory' || module.code === 'scm-inventory') {
+      this.router.navigate(['/cadena-suministro/inventario']);
+      return;
     }
+    // END HOTFIX
+
+    if (module.route_path) {
+      this.router.navigate([module.route_path]);
+    } else {
+      console.warn('Module has no route path:', module.name);
+    }
+  }
+
+  navigateTo(path: string) {
+    this.router.navigate([path]);
+  }
+
+  openMarketplace() {
+    this.showMarketplace.set(true);
+  }
+
+  onModuleInstalled(module: Module) {
+    const current = this.installedModules();
+    if (!current.find(m => m.id === module.id)) {
+      this.installedModules.set([...current, module]);
+    }
+  }
+
+  changeCompany() {
+    this.router.navigate(['/companies']);
+  }
+
+  logout() {
+    this.sessionService.logout();
+  }
+
+  getSafeIcon(iconName: string | undefined): string {
+    if (!iconName) return 'heroCubeSolid';
+
+    // Fallback/Mapper if the DB is not yet updated or has old Lucide names
+    if (iconName === 'settings') return 'heroCog6ToothSolid';
+    if (iconName === 'factory') return 'heroBuildingOffice2Solid';
+    if (iconName === 'package') return 'heroArchiveBoxSolid';
+    if (iconName === 'store') return 'heroBuildingStorefrontSolid';
+    if (iconName === 'edit-3') return 'heroPencilSquareSolid';
+    if (iconName === 'users') return 'heroUsersSolid';
+    if (iconName === 'search') return 'heroMagnifyingGlassSolid';
+    if (iconName === 'plus') return 'heroPlusSolid';
+    if (iconName === 'trash') return 'heroTrashSolid';
+    if (iconName === 'home') return 'heroHomeSolid';
+    if (iconName === 'shopping-cart') return 'heroShoppingCartSolid';
+    if (iconName === 'user') return 'heroUserSolid';
+    if (iconName === 'file-text') return 'heroDocumentTextSolid';
+    if (iconName === 'truck') return 'heroTruckSolid';
+
+    return iconName;
+  }
 }
+
