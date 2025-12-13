@@ -2,13 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
-// Definición de tipos para Tenant (Asumiendo que Tenant se importa o se define aquí)
-interface Tenant {
-  id: string;
-  name: string;
-  slug: string;
-  // ... otras propiedades de Tenant
-}
+import { Tenant } from '../models/erp.types';
 
 @Injectable({
   providedIn: 'root'

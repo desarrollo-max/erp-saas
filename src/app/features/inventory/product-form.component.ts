@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { NgIconsModule, provideIcons } from '@ng-icons/core';
@@ -24,6 +25,13 @@ import { SupabaseService } from '@core/services/supabase.service';
             <h1 class="text-2xl font-bold text-gray-900">
               {{ isEditing ? 'Editar Producto' : 'Nuevo Producto' }}
             </h1>
+            <div class="flex gap-2">
+            <button
+                type="button"
+                (click)="importAgaveProducts()"
+                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
+                Importar Agave (JSON)
+            </button>
             <button 
               type="button" 
               (click)="cancel()"
@@ -303,6 +311,7 @@ export class ProductFormComponent implements OnInit {
   private session = inject(SessionService);
   private notification = inject(NotificationService);
   private supabase = inject(SupabaseService);
+  private http = inject(HttpClient);
 
   images = signal<ScmProductImage[]>([]);
   pendingFiles = signal<{ file: File; preview: string }[]>([]);
@@ -575,6 +584,95 @@ export class ProductFormComponent implements OnInit {
       this.notification.success('Imagen eliminada');
     } catch (e) {
       this.notification.error('Error al eliminar imagen');
+    }
+  }
+
+  async importAgaveProducts() {
+    this.notification.loading('Importando productos...');
+    try {
+      const data: any = await new Promise(resolve => {
+        this.http.get('/agave_products.json').subscribe({
+          next: (d) => resolve(d),
+          error: (e) => resolve(null)
+        });
+      });
+
+      if (!data || !data.products) {
+        this.notification.error('Error: No se cargó /agave_products.json');
+        return;
+      }
+
+      const tenantId = this.session.currentTenantId();
+      if (!tenantId) {
+        this.notification.error('No hay empresa seleccionada');
+        return;
+      }
+
+      let count = 0;
+      let errors = 0;
+
+      for (const p of data.products) {
+        const sku = (p.variants?.[0]?.sku) || 'SKU-' + p.id;
+
+        // Check if exists
+        const { data: exists } = await this.supabase.client.from('scm_products').select('id').eq('sku', sku).eq('tenant_id', tenantId).maybeSingle();
+        if (exists) {
+          console.log('Skipping existing SKU', sku);
+          continue;
+        }
+
+        const price = parseFloat(p.variants?.[0]?.price || '0');
+        // Find first valid image
+        const image = p.images?.[0]?.src;
+
+        const productData: Partial<ScmProduct> = {
+          tenant_id: tenantId,
+          name: p.title,
+          sku: sku,
+          description: p.body_html?.replace(/<[^>]*>?/gm, '') || p.title,
+          unit_type: 'PAIR',
+          sale_price: price,
+          cost_price: price * 0.5,
+          is_active: true,
+          category_id: this.categories()[0]?.id,
+          // Size Config
+          size_config: { min: 22, max: 30, step: 0.5 }
+        };
+
+        try {
+          // Create
+          await this.productRepo.create(productData);
+
+          // Get ID
+          const { data: created } = await this.supabase.client
+            .from('scm_products')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('sku', sku)
+            .single();
+
+          if (created && image) {
+            await this.productRepo.addImage({
+              product_id: created.id,
+              file_url: image,
+              media_type: 'image',
+              is_primary: true,
+              sort_order: 0
+            });
+            await this.productRepo.update(created.id, { image_url: image });
+          }
+          count++;
+        } catch (err) {
+          errors++;
+          console.error('Error importing product', p.title, err);
+        }
+      }
+      this.notification.success(`Importación finalizada. Creados: ${count}. Errores: ${errors}`);
+      this.router.navigate(['/inventory']);
+
+    } catch (e) {
+      console.error(e);
+      this.notification.error('Error crítico al importar');
     }
   }
 }

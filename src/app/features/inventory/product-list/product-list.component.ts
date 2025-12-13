@@ -32,13 +32,13 @@ import { ScmProduct } from '@core/models/erp.types';
             <div class="mt-4 flex md:mt-0 md:ml-4 gap-2">
               <button 
                 (click)="navigateToImport()"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                class="inline-flex items-center px-4 py-3 sm:py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <ng-icon name="heroArrowUpTraySolid" class="h-5 w-5 mr-2 text-gray-500"></ng-icon>
                 Importar
               </button>
               <button 
                 (click)="navigateToNew()"
-                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                class="inline-flex items-center px-4 py-3 sm:py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <ng-icon name="heroPlusSolid" class="h-5 w-5 mr-2"></ng-icon>
                 Nuevo Producto
               </button>
@@ -59,7 +59,7 @@ import { ScmProduct } from '@core/models/erp.types';
             </div>
             <input 
               id="search" 
-              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+              class="block w-full pl-10 pr-3 py-3 sm:py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
               placeholder="Buscar por nombre o SKU..." 
               type="search"
               [formControl]="searchControl">
@@ -67,7 +67,7 @@ import { ScmProduct } from '@core/models/erp.types';
         </div>
 
         <!-- TABLE WITH LOADING STATE -->
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200 min-h-[400px]">
+        <div class="bg-white shadow sm:rounded-lg border border-gray-200 min-h-[400px] overflow-hidden">
           
           <div *ngIf="isLoading()" class="h-64 flex flex-col items-center justify-center">
              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
@@ -87,59 +87,62 @@ import { ScmProduct } from '@core/models/erp.types';
               </button>
           </div>
 
-          <table *ngIf="!isLoading() && filteredProducts().length > 0" class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto / SKU</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precios</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th scope="col" class="relative px-6 py-3">
-                  <span class="sr-only">Acciones</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let product of filteredProducts()" class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-lg overflow-hidden flex items-center justify-center text-indigo-600 font-bold text-xs uppercase">
-                      <img *ngIf="product.image_url" [src]="product.image_url" alt="" class="h-full w-full object-cover">
-                      <ng-icon *ngIf="!product.image_url" name="heroCubeTransparentSolid" class="h-6 w-6"></ng-icon>
+          <!-- WRAPPER FOR HORIZONTAL SCROLL -->
+          <div *ngIf="!isLoading() && filteredProducts().length > 0" class="w-full overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto / SKU</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precios</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                  <th scope="col" class="relative px-6 py-3">
+                    <span class="sr-only">Acciones</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let product of filteredProducts()" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-lg overflow-hidden flex items-center justify-center text-indigo-600 font-bold text-xs uppercase">
+                        <img *ngIf="product.image_url" [src]="product.image_url" alt="" class="h-full w-full object-cover">
+                        <ng-icon *ngIf="!product.image_url" name="heroCubeTransparentSolid" class="h-6 w-6"></ng-icon>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
+                        <div class="text-xs text-gray-500">SKU: {{ product.sku }}</div>
+                      </div>
                     </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
-                      <div class="text-xs text-gray-500">SKU: {{ product.sku }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div class="flex flex-col">
+                      <span class="text-gray-900 font-semibold">{{ product.sale_price | currency }}</span>
+                      <span class="text-xs text-gray-400">Costo Est.: {{ product.cost_price | currency }}</span>
                     </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div class="flex flex-col">
-                    <span class="text-gray-900 font-semibold">{{ product.sale_price | currency }}</span>
-                    <span class="text-xs text-gray-400">Costo Est.: {{ product.cost_price | currency }}</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span [ngClass]="{
-                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
-                    'bg-green-100 text-green-800': product.is_active,
-                    'bg-red-100 text-red-800': !product.is_active
-                  }">
-                    {{ product.is_active ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex justify-end gap-2">
-                    <button (click)="navigateToEdit(product.id)" class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded" title="Editar">
-                      <ng-icon name="heroPencilSquareSolid" class="h-5 w-5"></ng-icon>
-                    </button>
-                    <button (click)="deleteProduct(product.id)" class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded" title="Eliminar">
-                      <ng-icon name="heroTrashSolid" class="h-5 w-5"></ng-icon>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span [ngClass]="{
+                      'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
+                      'bg-green-100 text-green-800': product.is_active,
+                      'bg-red-100 text-red-800': !product.is_active
+                    }">
+                      {{ product.is_active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end gap-3">
+                      <button (click)="navigateToEdit(product.id)" class="text-indigo-600 hover:text-indigo-900 p-2 hover:bg-indigo-50 rounded-full transition-colors" title="Editar">
+                        <ng-icon name="heroPencilSquareSolid" class="h-6 w-6"></ng-icon>
+                      </button>
+                      <button (click)="deleteProduct(product.id)" class="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-full transition-colors" title="Eliminar">
+                        <ng-icon name="heroTrashSolid" class="h-6 w-6"></ng-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           
           <div *ngIf="!isLoading() && filteredProducts().length > 0" class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
              <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">

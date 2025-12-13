@@ -33,10 +33,10 @@ interface TenantWithRole {
          </button>
       </div>
 
-      <div class="w-full max-w-lg shadow-xl rounded-xl p-8 text-center relative transition-colors duration-300" style="background-color: var(--card-bg);">
+      <div class="w-full max-w-lg shadow-xl rounded-xl p-6 sm:p-8 text-center relative transition-colors duration-300" style="background-color: var(--card-bg);">
         
-        <h1 class="text-3xl font-extrabold mb-2" style="color: var(--app-text);">Selecciona una Empresa</h1>
-        <p class="mb-8" style="color: var(--app-text-muted);">Elige la empresa con la que deseas trabajar para establecer el contexto.</p>
+        <h1 class="text-2xl sm:text-3xl font-extrabold mb-2" style="color: var(--app-text);">Selecciona una Empresa</h1>
+        <p class="mb-8 text-sm sm:text-base" style="color: var(--app-text-muted);">Elige la empresa con la que deseas trabajar para establecer el contexto.</p>
 
         <div *ngIf="isLoading()" class="py-10 text-center">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -49,13 +49,13 @@ interface TenantWithRole {
             <!-- Tarjetas de Selección de Empresa -->
             <div *ngFor="let company of userCompanies()" 
                  (click)="selectCompany(company)"
-                 class="group p-4 rounded-lg border-2 border-transparent hover:border-indigo-500 transition cursor-pointer relative"
+                 class="group p-4 sm:p-6 rounded-lg border-2 border-transparent hover:border-indigo-500 transition cursor-pointer relative min-h-[140px] flex flex-col items-center justify-center"
                  style="background-color: var(--subtle-bg);">
               
               <div class="text-2xl font-bold mb-1" style="color: var(--ai-core-secondary);">
                 {{ company.name.charAt(0) }}
               </div>
-              <p class="font-semibold" style="color: var(--app-text);">{{ company.name }}</p>
+              <p class="font-semibold text-base" style="color: var(--app-text);">{{ company.name }}</p>
               <p class="text-xs" style="color: var(--app-text-muted);">{{ company.code }}</p>
 
               <!-- ACL Button Removed (Super Admin module deleted) -->
@@ -63,7 +63,7 @@ interface TenantWithRole {
 
             <!-- Botón para Agregar Nueva Empresa (Modal) -->
             <div (click)="openCreateModal()"
-                 class="group border-2 border-dashed border-gray-400 dark:border-gray-600 bg-transparent p-4 rounded-lg transition cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                 class="group border-2 border-dashed border-gray-400 dark:border-gray-600 bg-transparent p-4 sm:p-6 rounded-lg transition cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 min-h-[140px] flex flex-col items-center justify-center">
               
               <div class="text-2xl font-bold text-gray-400 dark:text-gray-500 mb-1">
                 +

@@ -14,20 +14,18 @@ import { AssistantSphereComponent } from '../../shared/components/assistant-sphe
     AssistantSphereComponent
   ],
   template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col">
-      <!-- HEADER FIXO -->
+    <div class="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+      <!-- HEADER (SINGLE COLUMN TOP) -->
       <app-header></app-header>
 
-      <!-- CONTENIDO PRINCIPAL (Una sola columna) -->
-      <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
-        <!-- El Router Outlet renderiza el módulo actual aquí -->
+      <!-- MAIN CONTENT (SINGLE COLUMN BODY, 100% WIDTH) -->
+      <main class="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 relative">
+        <!-- Route content renders here -->
         <router-outlet></router-outlet>
         
-        <!-- Esfera flotante siempre disponible -->
+        <!-- Floating Assistant -->
         <app-assistant-sphere></app-assistant-sphere>
       </main>
-
-      <!-- OPTIONAL FOOTER can go here -->
     </div>
   `,
   styles: [`
