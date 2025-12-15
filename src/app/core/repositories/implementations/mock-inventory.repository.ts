@@ -37,7 +37,7 @@ export class MockInventoryRepository extends InventoryRepository {
         {
             id: 'sl1',
             tenant_id: 't1',
-            product_id: 'raw_leather_01', // Example Raw Material
+            variant_id: 'raw_leather_01', // Example Raw Material
             warehouse_id: 'wh1',
             quantity_on_hand: 500,
             quantity_available: 450,
@@ -50,7 +50,7 @@ export class MockInventoryRepository extends InventoryRepository {
         {
             id: 'sl2',
             tenant_id: 't1',
-            product_id: 'raw_thread_01',
+            variant_id: 'raw_thread_01',
             warehouse_id: 'wh1',
             quantity_on_hand: 1000,
             quantity_available: 1000,
@@ -64,8 +64,8 @@ export class MockInventoryRepository extends InventoryRepository {
 
     private movements: ScmStockMovement[] = [];
 
-    async getStockLevel(productId: string, warehouseId: string): Promise<ScmStockLevel | null> {
-        return this.stockLevels.find(sl => sl.product_id === productId && sl.warehouse_id === warehouseId) || null;
+    async getStockLevel(variantId: string, warehouseId: string): Promise<ScmStockLevel | null> {
+        return this.stockLevels.find(sl => sl.variant_id === variantId && sl.warehouse_id === warehouseId) || null;
     }
 
     async getAllStockLevels(tenantId: string): Promise<ScmStockLevel[]> {
@@ -76,14 +76,11 @@ export class MockInventoryRepository extends InventoryRepository {
         this.movements.push({
             id: Math.random().toString(36).substring(7),
             tenant_id: movement.tenant_id || 't1',
-            product_id: movement.product_id!,
+            variant_id: movement.variant_id!,
             warehouse_id: movement.warehouse_id!,
             movement_type: movement.movement_type || 'ADJUSTMENT',
             quantity: movement.quantity || 0,
-            unit_cost: 0,
-            reference_type: movement.reference_type || null,
             reference_id: movement.reference_id || null,
-            reference_number: movement.reference_number || null,
             movement_date: new Date().toISOString(),
             notes: movement.notes || null,
             created_by: 'system',
@@ -92,14 +89,14 @@ export class MockInventoryRepository extends InventoryRepository {
 
         // Update Stock Levels
         // In a real DB this would be transactional.
-        let level = this.stockLevels.find(sl => sl.product_id === movement.product_id && sl.warehouse_id === movement.warehouse_id);
+        let level = this.stockLevels.find(sl => sl.variant_id === movement.variant_id && sl.warehouse_id === movement.warehouse_id);
 
         if (!level) {
             // Create stock level if not exists
             level = {
                 id: 'sl-' + Date.now(),
                 tenant_id: movement.tenant_id || 't1',
-                product_id: movement.product_id!,
+                variant_id: movement.variant_id!,
                 warehouse_id: movement.warehouse_id!,
                 quantity_on_hand: 0,
                 quantity_available: 0,
@@ -112,7 +109,7 @@ export class MockInventoryRepository extends InventoryRepository {
             this.stockLevels.push(level);
         }
 
-        if (movement.quantity) {
+        if (movement.quantity && level) {
             // Simplified logic: IN increases, OUT decreases
             // PRODUCTION_OUTPUT also increases
             if (['PURCHASE_RECEIPT', 'RETURN_IN', 'ADJUSTMENT_IN', 'PRODUCTION_OUTPUT'].includes(movement.movement_type || '')) {

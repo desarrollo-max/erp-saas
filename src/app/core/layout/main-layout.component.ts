@@ -1,37 +1,39 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { HeaderComponent } from './header/header.component';
 import { AssistantSphereComponent } from '../../shared/components/assistant-sphere/assistant-sphere.component';
+import { OnboardingTourComponent } from '../../shared/components/onboarding-tour/onboarding-tour.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
   imports: [
     CommonModule,
-    RouterOutlet,
+    RouterModule,
     HeaderComponent,
-    AssistantSphereComponent
+    AssistantSphereComponent,
+    OnboardingTourComponent
   ],
   template: `
-    <div class="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
-      <!-- HEADER (SINGLE COLUMN TOP) -->
+    <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+      
+      <!-- Top Navigation Header -->
       <app-header></app-header>
-
-      <!-- MAIN CONTENT (SINGLE COLUMN BODY, 100% WIDTH) -->
-      <main class="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 relative">
-        <!-- Route content renders here -->
+      
+      <!-- Main Content Area -->
+      <!-- Added pt-4 to ensure content doesn't butt up strictly against the header if it has no internal padding -->
+      <main class="flex-1 w-full relative">
         <router-outlet></router-outlet>
-        
-        <!-- Floating Assistant -->
-        <app-assistant-sphere></app-assistant-sphere>
       </main>
+
+      <!-- Floating Assistant -->
+      <app-assistant-sphere></app-assistant-sphere>
+
+      <!-- Global Onboarding Tour Overlay -->
+      <app-onboarding-tour></app-onboarding-tour>
+      
     </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  `
 })
 export class MainLayoutComponent { }

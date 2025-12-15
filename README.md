@@ -14,7 +14,7 @@ Un sistema integral de Planificación de Recursos Empresariales (ERP) construido
 - **Autenticación y Autorización**: Inicio de sesión seguro con Supabase Auth y Control de Acceso Basado en Roles (RBAC) utilizando Guards.
 - **Aprovisionamiento de Super Administrador**: Panel dedicado para crear inquilinos y gestionar licencias de módulos.
 - **Diseño Modular**:
-  - **Inventario**: Gestión de productos, seguimiento de stock e importaciones CSV.
+  - **Inventario**: Gestión de productos, seguimiento de stock, importaciones CSV y validación estricta de auditoría en movimientos.
   - **Ventas**: CRM, Cotizaciones, Pedidos, POS (Retail y Restaurante) y Suscripciones.
   - **Cadena de Suministro**: Manufactura, PLM, Compras (Abastecimiento y Órdenes), Control de Calidad y Logística (Transferencias).
   - **Ventas**: CRM, Cotizaciones, Pedidos, POS (Punto de Venta) y Suscripciones.

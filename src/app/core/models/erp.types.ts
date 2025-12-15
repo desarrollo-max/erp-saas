@@ -259,6 +259,8 @@ export interface ScmProductCategory {
 export interface ScmProduct {
   id: string;
   tenant_id: string;
+  company_id: string;
+  // client_id removed
   sku: string;
   barcode: string | null;
   name: string;
@@ -279,15 +281,26 @@ export interface ScmProduct {
   images?: string[]; // Multiple images
   is_manufacturable?: boolean; // Identifies if this product is produced internally
 
-  // Size Management for 'PAIR' unit type
-  size_config?: {
-    min?: number;
-    max?: number;
-    step?: number; // 0.5 or 1
-  };
+  // Size Management
+  size_config?: any; // NOW ANY: Stores { min, max, step } or simple string array
 
   created_at: string;
   updated_at: string;
+}
+
+// Product Variant Interface (Strictly used for Stock uniqueness)
+export interface ScmProductVariant {
+  id: string;
+  product_id: string;
+  tenant_id: string;
+  company_id: string;
+  sku: string; // SKU-SIZE (e.g., T-SHIRT-M)
+  attribute_name: string; // "Size", "Color"
+  attribute_value: string; // "M", "Red", "25.0 MX"
+  price_adjustment?: number; // Optional override
+  cost_adjustment?: number;  // Optional override
+  is_active: boolean;
+  created_at: string;
 }
 
 // Image Management Interface
@@ -328,6 +341,7 @@ export interface ScmWarehouse {
   id: string;
   tenant_id: string;
   company_id: string;
+  // client_id removed
   code: string;
   name: string;
   address: string | null;
@@ -339,7 +353,7 @@ export interface ScmWarehouse {
 export interface ScmStockLevel {
   id: string;
   tenant_id: string;
-  product_id: string;
+  variant_id: string; // Migrated from product_id
   warehouse_id: string;
   quantity_on_hand: number;
   quantity_available: number;
@@ -353,15 +367,15 @@ export interface ScmStockLevel {
 export interface ScmStockMovement {
   id: string;
   tenant_id: string;
-  product_id: string;
+  // client_id removed
   warehouse_id: string;
-  movement_type: string;
+  product_id?: string; // Optional (or Required depending on schema, but DB can likely handle null if variant is primary, but app code sends it)
+  variant_id: string;
+  movement_type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'TRANSFER' | 'PRODUCTION_CONSUMPTION' | 'PRODUCTION_OUTPUT';
   quantity: number;
-  unit_cost: number | null;
+  movement_date: string;
   reference_type: string | null;
   reference_id: string | null;
-  reference_number: string | null;
-  movement_date: string;
   notes: string | null;
   created_by: string;
   created_at: string;
@@ -671,3 +685,48 @@ export interface MfgProductionOrder {
   updated_at: string;
 }
 
+
+// ======================================================
+//       Warehouse & Stock Interfaces (New Standard)
+// ======================================================
+
+export interface Warehouse {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  // client_id removed
+  code: string;
+  name: string;
+  address: string | null;
+  is_active: boolean;
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface StockMovement {
+  id: string;
+  tenant_id: string;
+  // client_id removed
+  warehouse_id: string;
+  product_id?: string; // Optional if variant_id is primary
+  variant_id?: string; // New field
+  movement_type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'TRANSFER' | 'PRODUCTION_CONSUMPTION' | 'PRODUCTION_OUTPUT';
+  quantity: number;
+  movement_date: string;
+  reference_type: string | null;
+  reference_id: string | null;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface StockOnHand {
+  warehouse_id: string;
+  warehouse_name: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  quantity_on_hand: number;
+  quantity_reserved: number;
+  quantity_available: number;
+}

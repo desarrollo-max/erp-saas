@@ -23,12 +23,12 @@ export class SupabaseModuleRepository extends ModuleRepository {
     return data as Module[];
   }
 
-  async getInstalledModules(tenantId: string): Promise<Module[]> {
+  async getInstalledModules(clientId: string): Promise<Module[]> {
     // 1. Get IDs of installed modules
     const { data: licenses, error: licError } = await this.supabase.client
       .from('tenant_licenses')
       .select('module_id')
-      .eq('tenant_id', tenantId)
+      .eq('tenant_id', clientId) // Mapping ClientID -> TenantID for licensing
       .eq('is_active', true);
 
     if (licError) throw new Error(`Error fetching licenses: ${licError.message}`);
@@ -49,11 +49,11 @@ export class SupabaseModuleRepository extends ModuleRepository {
     return modules as Module[];
   }
 
-  async installModule(tenantId: string, moduleId: string): Promise<void> {
+  async installModule(clientId: string, moduleId: string): Promise<void> {
     const { error } = await this.supabase.client
       .from('tenant_licenses')
       .insert({
-        tenant_id: tenantId,
+        tenant_id: clientId,
         module_id: moduleId,
         is_active: true,
         installed_at: new Date().toISOString(),

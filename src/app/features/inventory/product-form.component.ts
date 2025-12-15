@@ -7,7 +7,7 @@ import { NgIconsModule, provideIcons } from '@ng-icons/core';
 import * as heroIcons from '@ng-icons/heroicons/solid';
 import { SessionService } from '@core/services/session.service';
 import { NotificationService } from '@core/services/notification.service';
-import { ScmProduct, ScmProductImage, ScmProductCategory } from '@core/models/erp.types';
+import { ScmProduct, ScmProductImage, ScmProductCategory, ScmProductVariant } from '@core/models/erp.types';
 import { ProductRepository } from '@core/repositories/product.repository';
 import { SupabaseService } from '@core/services/supabase.service';
 
@@ -107,21 +107,52 @@ import { SupabaseService } from '@core/services/supabase.service';
                  </div>
 
                  <!-- Size Configuration (Only for PAIR) -->
-                 <div class="sm:col-span-6 grid grid-cols-1 sm:grid-cols-3 gap-4" *ngIf="productForm.get('unit_type')?.value === 'PAIR'">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Talla Mínima</label>
-                      <input type="number" formControlName="size_min" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                 <div class="sm:col-span-6 border rounded-md p-4 bg-gray-50" *ngIf="productForm.get('unit_type')?.value === 'PAIR'">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Configuración de Tallas</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div>
+                        <label class="block text-sm font-medium text-gray-700">Talla Mínima</label>
+                        <input type="number" formControlName="size_min" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                        <label class="block text-sm font-medium text-gray-700">Talla Máxima</label>
+                        <input type="number" formControlName="size_max" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                        <label class="block text-sm font-medium text-gray-700">Incremento (Pasos)</label>
+                        <select formControlName="size_step" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            <option [value]="0.5">0.5 (Medios números)</option>
+                            <option [value]="1">1 (Números enteros)</option>
+                        </select>
+                        </div>
                     </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Talla Máxima</label>
-                      <input type="number" formControlName="size_max" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+
+                    <div class="flex justify-end border-t border-gray-200 pt-3">
+                        <button type="button" (click)="onGenerateVariants()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Simular y Generar Variantes
+                        </button>
                     </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Incremento (Pasos)</label>
-                      <select formControlName="size_step" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                        <option [value]="0.5">0.5 (Medios números)</option>
-                        <option [value]="1">1 (Números enteros)</option>
-                      </select>
+
+                    <!-- Variants Preview -->
+                    <div *ngIf="previewVariants().length > 0" class="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-2 pl-4 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">SKU Variante</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Talla</th>
+                                    <th scope="col" class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <tr *ngFor="let variant of previewVariants()">
+                                    <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900">{{ variant.sku }}</td>
+                                    <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{{ variant.attribute_value }}</td>
+                                    <td class="whitespace-nowrap px-3 py-2 text-sm text-green-600">
+                                        <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Listo para crear</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                  </div>
 
@@ -315,17 +346,13 @@ export class ProductFormComponent implements OnInit {
 
   images = signal<ScmProductImage[]>([]);
   pendingFiles = signal<{ file: File; preview: string }[]>([]);
-  pendingUrls = signal<string[]>([]); // New Signal
+  pendingUrls = signal<string[]>([]);
   categories = signal<ScmProductCategory[]>([]);
+  previewVariants = signal<ScmProductVariant[]>([]);
 
   isSubmitting = false;
   isEditing = false;
   productId: string | null = null;
-
-  // ... (keep form group definition as is, do not replace entire file, just target areas)
-  // Wait, I can't target non-contiguous blocks easily with one chunk if they are far apart.
-  // I'll do this in two chunks if needed, or replace the whole lower part of the class.
-  // Let's replace from property definitions downwards to include new methods.
 
   productForm = this.fb.group({
     sku: ['', Validators.required],
@@ -359,6 +386,12 @@ export class ProductFormComponent implements OnInit {
     if (this.productId) {
       this.isEditing = true;
       await this.loadProduct(this.productId);
+
+      // Load existing variants if any (to preview)
+      const variants = await this.productRepo.getVariantsByProductId(this.productId);
+      if (variants && variants.length > 0) {
+        this.previewVariants.set(variants);
+      }
     }
   }
 
@@ -418,6 +451,43 @@ export class ProductFormComponent implements OnInit {
       this.notification.error('Error cargando producto');
       console.error(error);
     }
+  }
+
+  async onGenerateVariants() {
+    // 1. Validate Form Data
+    const val = this.productForm.value;
+    const sku = val.sku;
+
+    if (!sku) {
+      this.notification.warning('Debe ingresar un SKU base antes de generar variantes.');
+      return;
+    }
+
+    const config = {
+      min: val.size_min,
+      max: val.size_max,
+      step: val.size_step,
+    };
+
+    // 2. Generate Preview
+    // If we don't have a product ID yet, we use a placeholder or the SKU itself
+    // Ideally, the repo method uses the productId. If new, we might need a temp ID or just pass 'TEMP'
+    // but the repo method returns objects with that ID.
+
+    const pid = this.productId || 'NEW_PRODUCT';
+    const variants = await this.productRepo.generateVariants(pid, config);
+
+    // Adjust SKU to match form input if it changed
+    variants.forEach(v => {
+      // v.sku was generated as `${productId}-${size}` in repo. 
+      // We probably want `${sku}-${size}` if the product is new.
+      // Let's rewrite the SKU slightly for better UX:
+      const sizeSuffix = v.attribute_value.replace(' MX', '').replace('.', '');
+      v.sku = `${sku}-${sizeSuffix}`;
+    });
+
+    this.previewVariants.set(variants);
+    this.notification.success(`Se generaron ${variants.length} variantes preeliminares.`);
   }
 
   async saveProduct() {
@@ -480,6 +550,18 @@ export class ProductFormComponent implements OnInit {
         if (data) finalProductId = data.id;
         this.notification.success('Nuevo producto creado');
       }
+
+      // === SAVE VARIANTS ===
+      if (finalProductId && this.previewVariants().length > 0) {
+        // Ensure all variants have the correct product_id (especially if it was NEW_PRODUCT)
+        const variantsToSave = this.previewVariants().map(v => ({
+          ...v,
+          product_id: finalProductId!, // Must exist now
+          tenant_id: tenantId
+        }));
+        await this.productRepo.saveVariants(variantsToSave);
+      }
+
 
       // Handle Images & URLs
       if (finalProductId) {

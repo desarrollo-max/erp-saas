@@ -1,39 +1,70 @@
-<h1 class="text-2xl font-semibold mb-6">Bienvenido al Dashboard</h1>
+<div class="p-6 space-y-8">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Dashboard General</h1>
+        <p class="text-gray-500 mt-1">Resumen de operaciones y alertas clave.</p>
+    </div>
+    <div class="mt-4 md:mt-0 flex gap-3">
+        <!-- Actions placeholders -->
+        <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+            Descargar Reporte
+        </button>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors">
+            Nueva Orden
+        </button>
+    </div>
+  </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  <!-- Card 1: Ventas -->
-  <mat-card class="rounded-lg shadow">
-    <mat-card-header>
-      <mat-card-title>Ventas del Mes</mat-card-title>
-      <mat-card-subtitle>Resumen de ingresos</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p class="text-3xl font-bold text-gray-800">$45,231.89</p>
-      <p class="text-green-500 font-semibold mt-2">+20.1% desde el mes pasado</p>
-    </mat-card-content>
-  </mat-card>
+  <!-- KPI Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div *ngFor="let kpi of kpis" class="h-32"> <!-- Fixed height for consistency -->
+        <div class="app-kpi-card">
+            <div class="kpi-header">
+                <span class="kpi-title">{{ kpi.title }}</span>
+                <div class="kpi-icon-wrapper" [ngClass]="kpi.colorClass">
+                    <ng-icon [name]="kpi.icon" class="text-lg"></ng-icon>
+                </div>
+            </div>
+            
+            <div class="kpi-content">
+                 <div class="kpi-value">{{ kpi.value }}</div>
+                 <div class="kpi-footer">
+                    <span class="kpi-trend" [ngClass]="{'positive': kpi.trend > 0, 'negative': kpi.trend < 0}">
+                        <ng-icon [name]="kpi.trend > 0 ? ICONS.trendingUp : ICONS.trendingDown" class="w-4 h-4"></ng-icon>
+                        {{ kpi.trend > 0 ? '+' : ''}}{{ kpi.trend }}%
+                    </span>
+                    <span class="kpi-context">{{ kpi.trendLabel }}</span>
+                 </div>
+            </div>
+        </div>
+    </div>
+  </div>
 
-  <!-- Card 2: Usuarios -->
-  <mat-card class="rounded-lg shadow">
-    <mat-card-header>
-      <mat-card-title>Nuevos Usuarios</mat-card-title>
-      <mat-card-subtitle>Clientes registrados</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p class="text-3xl font-bold text-gray-800">+1,204</p>
-      <p class="text-gray-500 font-semibold mt-2">En el último trimestre</p>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Card 3: Tareas Pendientes -->
-  <mat-card class="rounded-lg shadow">
-    <mat-card-header>
-      <mat-card-title>Tareas Pendientes</mat-card-title>
-      <mat-card-subtitle>Actividades por completar</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p class="text-3xl font-bold text-gray-800">15</p>
-      <p class="text-red-500 font-semibold mt-2">2 tareas urgentes</p>
-    </mat-card-content>
-  </mat-card>
+  <!-- Recent Activity / Second Row Placeholder -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+          <div class="app-card p-6 h-96 flex items-center justify-center text-gray-400 border-dashed border-2 bg-gray-50">
+              <div class="text-center">
+                  <ng-icon name="heroChartBar" class="text-4xl mb-2"></ng-icon>
+                  <p>Gráfica de Rendimiento (Próximamente)</p>
+              </div>
+          </div>
+      </div>
+       <div>
+          <div class="app-card p-6 h-96 flex flex-col">
+              <h3 class="font-semibold text-gray-900 mb-4">Actividad Reciente</h3>
+              <div class="flex-1 space-y-4 overflow-y-auto pr-2">
+                   <!-- Mock List -->
+                   <div class="flex items-start gap-3 text-sm" *ngFor="let i of [1,2,3,4,5]">
+                       <div class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
+                       <div>
+                           <p class="font-medium text-gray-800">Nueva orden #ORD-00{{i}}</p>
+                           <p class="text-gray-500 text-xs">Hace {{i * 15}} minutos</p>
+                       </div>
+                   </div>
+              </div>
+          </div>
+      </div>
+  </div>
 </div>

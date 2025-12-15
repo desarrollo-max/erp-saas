@@ -119,19 +119,38 @@ export class LoginComponent {
 
       if (error) throw error;
 
-      console.log('Login successful');
+      console.log('Supabase Auth successful');
       this.notification.success('¡Bienvenido!');
 
-      // Cargar sesión y navegar explícitamente al selector
+      // Cargar sesión
+      console.log('Loading session context...');
       await this.session.loadSession(true);
-      // Forzar redirección al selector de compañías
-      this.router.navigateByUrl('/companies').catch(err => console.error(err));
+
+      const userId = this.session.currentUserId();
+      console.log('Session loaded. User ID:', userId);
+
+      if (userId) {
+        // Forzar navegación fuera del ciclo de eventos actual para evitar bloqueos
+        setTimeout(() => {
+          this.router.navigate(['/companies']).then(success => {
+            console.log('Navigation to /companies result:', success);
+            if (!success) {
+              console.error('Navigation failed via Router');
+              this.isLoading.set(false);
+            }
+          }).catch(err => {
+            console.error('Navigation error:', err);
+            this.isLoading.set(false);
+          });
+        }, 100);
+      } else {
+        throw new Error('No se pudo establecer la sesión de usuario final.');
+      }
 
     } catch (error: any) {
       console.error('Login error:', error);
       this.errorMessage.set(error.message || 'Credenciales inválidas. Intente de nuevo.');
       this.notification.error('Fallo de inicio de sesión');
-    } finally {
       this.isLoading.set(false);
     }
   }

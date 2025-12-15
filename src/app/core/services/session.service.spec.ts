@@ -64,4 +64,20 @@ describe('SessionService', () => {
         expect(service.currentTenantId()).toBeNull();
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
     });
+
+    it('should set currentUserId even if tenant context is already present', async () => {
+        // Mock session response
+        const mockSession = { user: { id: 'user-123', email: 'test@example.com' } };
+        supabaseSpy.client.auth.getSession.mockResolvedValue({ data: { session: mockSession }, error: null });
+
+        // Simulate existing tenant context (e.g. from localStorage)
+        service.currentTenantId.set('tenant-123');
+
+        // Call loadSession
+        await service.loadSession();
+
+        // Expect currentUserId to be set
+        expect(service.currentUserId()).toBe('user-123');
+        expect(service.user()?.email).toBe('test@example.com');
+    });
 });

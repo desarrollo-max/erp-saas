@@ -2,17 +2,19 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
 import { SessionService } from '@core/services/session.service';
 import { ProductRepository } from '@core/repositories/product.repository';
 import { NotificationService } from '@core/services/notification.service';
 import { ScmProduct } from '@core/models/erp.types';
 import { PurchaseOrderService } from '@core/services/purchase-order.service';
+import { NgIconsModule, provideIcons } from '@ng-icons/core';
+import * as heroIcons from '@ng-icons/heroicons/solid';
 
 @Component({
   selector: 'app-inventory-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NgIconsModule],
+  viewProviders: [provideIcons(heroIcons)],
   template: `
     <div class="min-h-screen bg-gray-50 flex flex-col">
       
@@ -21,7 +23,7 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div class="md:flex md:items-center md:justify-between">
             <div class="flex-1 min-w-0">
-              <h2 xclass="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+              <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
                 Catálogo de Productos
               </h2>
               <p class="mt-1 text-sm text-gray-500">
@@ -32,19 +34,25 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
                <button 
                 routerLink="/cadena-suministro/almacenes"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <lucide-icon name="warehouse" class="h-4 w-4 mr-2"></lucide-icon>
+                <ng-icon name="heroBuildingOffice2Solid" class="h-4 w-4 mr-2"></ng-icon>
                 Almacenes
               </button>
               <button 
                 routerLink="/inventory/import"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <lucide-icon name="upload-cloud" class="h-4 w-4 mr-2"></lucide-icon>
+                <ng-icon name="heroArrowUpTraySolid" class="h-4 w-4 mr-2"></ng-icon>
                 Importar
+              </button>
+              <button 
+                routerLink="/inventory/movements/new"
+                class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <ng-icon name="heroClipboardDocumentListSolid" class="h-4 w-4 mr-2"></ng-icon>
+                Movimientos Stock
               </button>
               <button 
                 routerLink="/inventory/new"
                 class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <lucide-icon name="plus" class="h-4 w-4 mr-2"></lucide-icon>
+                <ng-icon name="heroPlusSolid" class="h-4 w-4 mr-2"></ng-icon>
                 Nuevo Producto
               </button>
             </div>
@@ -56,7 +64,7 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
             <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0 bg-indigo-50 rounded-md p-3">
-                  <lucide-icon name="package" class="h-6 w-6 text-indigo-600"></lucide-icon>
+                  <ng-icon name="heroArchiveBoxSolid" class="h-6 w-6 text-indigo-600"></ng-icon>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -71,7 +79,7 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
             <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0 bg-green-50 rounded-md p-3">
-                  <lucide-icon name="check-circle" class="h-6 w-6 text-green-600"></lucide-icon>
+                  <ng-icon name="heroCheckCircleSolid" class="h-6 w-6 text-green-600"></ng-icon>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -86,7 +94,7 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
             <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0 bg-orange-50 rounded-md p-3">
-                  <lucide-icon name="alert-triangle" class="h-6 w-6 text-orange-600"></lucide-icon>
+                  <ng-icon name="heroExclamationTriangleSolid" class="h-6 w-6 text-orange-600"></ng-icon>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -101,7 +109,7 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
              <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-50 rounded-md p-3">
-                  <lucide-icon name="dollar-sign" class="h-6 w-6 text-blue-600"></lucide-icon>
+                  <ng-icon name="heroCurrencyDollarSolid" class="h-6 w-6 text-blue-600"></ng-icon>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -123,7 +131,7 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
           <div class="max-w-lg w-full lg:max-w-xs relative">
             <label for="search" class="sr-only">Buscar</label>
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <lucide-icon name="search" class="h-5 w-5 text-gray-400"></lucide-icon>
+              <ng-icon name="heroMagnifyingGlassSolid" class="h-5 w-5 text-gray-400"></ng-icon>
             </div>
             <input 
               id="search" 
@@ -148,13 +156,13 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
         <div class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200 min-h-[400px]">
           
           <div *ngIf="isLoading()" class="h-64 flex flex-col items-center justify-center">
-             <lucide-icon name="loader-2" class="h-10 w-10 text-indigo-500 animate-spin mb-4"></lucide-icon>
+             <ng-icon name="heroArrowPathSolid" class="h-10 w-10 text-indigo-500 animate-spin mb-4"></ng-icon>
              <p class="text-gray-500 text-sm">Cargando inventario...</p>
           </div>
 
           <div *ngIf="!isLoading() && filteredProducts().length === 0" class="h-64 flex flex-col items-center justify-center text-center p-6">
             <div class="bg-gray-100 rounded-full p-4 mb-4">
-               <lucide-icon name="package-search" class="h-8 w-8 text-gray-400"></lucide-icon>
+               <ng-icon name="heroMagnifyingGlassSolid" class="h-8 w-8 text-gray-400"></ng-icon>
             </div>
             <h3 class="text-lg font-medium text-gray-900">No se encontraron productos</h3>
             <p class="mt-1 text-sm text-gray-500">Intenta ajustar tu búsqueda o crea un nuevo producto.</p>
@@ -223,13 +231,13 @@ import { PurchaseOrderService } from '@core/services/purchase-order.service';
                             (click)="createPurchaseOrder(product)" 
                             class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-50 rounded"
                             title="Generar Orden de Compra">
-                      <lucide-icon name="shopping-cart" class="h-4 w-4"></lucide-icon>
+                      <ng-icon name="heroShoppingCartSolid" class="h-4 w-4"></ng-icon>
                     </button>
                     <button (click)="editProduct(product.id)" class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded">
-                      <lucide-icon name="edit" class="h-4 w-4"></lucide-icon>
+                      <ng-icon name="heroPencilSquareSolid" class="h-4 w-4"></ng-icon>
                     </button>
                     <button (click)="deleteProduct(product.id)" class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded">
-                      <lucide-icon name="trash-2" class="h-4 w-4"></lucide-icon>
+                      <ng-icon name="heroTrashSolid" class="h-4 w-4"></ng-icon>
                     </button>
                   </div>
                 </td>

@@ -3,15 +3,16 @@
 :root {
     /* Default (Light Mode) */
     --app-bg: #f8fafc;
-    /* Light Grey */
-    --app-text: #334155;
-    /* Slate 700 */
+    /* Slate 50 */
+    --app-text: #0f172a;
+    /* Slate 900 */
     --app-text-muted: #64748b;
     /* Slate 500 */
 
     --sidebar-bg: #ffffff;
     --card-bg: #ffffff;
     --border-color: #e2e8f0;
+    /* Slate 200 */
 
     --subtle-bg: #f1f5f9;
     /* Slate 100 */
@@ -19,81 +20,78 @@
 
     /* Semantic Card Colors (Light) */
     --card-prod-bg: #eff6ff;
-    /* Blue 50 */
     --card-prod-border: #dbeafe;
     --card-prod-text: #1e40af;
 
     --card-inv-bg: #ecfdf5;
-    /* Emerald 50 */
     --card-inv-border: #d1fae5;
     --card-inv-text: #065f46;
 
     --card-mkt-bg: #eef2ff;
-    /* Indigo 50 */
     --card-mkt-border: #e0e7ff;
     --card-mkt-text: #3730a3;
 
     --card-pos-bg: #fff7ed;
-    /* Orange 50 */
     --card-pos-border: #ffedd5;
     --card-pos-text: #9a3412;
 
     --card-buy-bg: #ecfeff;
-    /* Cyan 50 */
     --card-buy-border: #cffafe;
     --card-buy-text: #155e75;
 
-    /* Fixed Identity Colors (Do NOT change these on theme switch) */
-    --ai-core-primary: #06b6d4;
-    /* Neon Cyan */
+    /* Identity */
+    --ai-core-primary: #4f46e5;
+    /* Indigo 600 */
     --ai-core-secondary: #8b5cf6;
-    /* Neon Violet */
-    --ai-core-glow: rgba(6, 182, 212, 0.6);
+    --ai-core-glow: rgba(79, 70, 229, 0.5);
+
+    color-scheme: light;
 }
 
-[data-theme="dark"] {
-    /* Dark Mode Overrides */
+/* Dark Mode Configuration */
+[data-theme="dark"],
+.dark {
+    /* Dark Mode Overrides - Professional Palette */
     --app-bg: #0f172a;
-    /* Midnight Blue */
-    --app-text: #f1f5f9;
-    /* Off-white */
+    /* Slate 900 */
+    --app-text: #f8fafc;
+    /* Slate 50 */
     --app-text-muted: #94a3b8;
     /* Slate 400 */
 
-    --sidebar-bg: #1e293b;
-    /* Slate 800 */
+    --sidebar-bg: #0f172a;
     --card-bg: #1e293b;
+    /* Slate 800 */
     --border-color: #334155;
+    /* Slate 700 */
 
     --subtle-bg: #334155;
     /* Slate 700 */
-    --hover-bg: #293548;
+    --hover-bg: #1e293b;
+    /* Slate 800 */
 
     /* Semantic Card Colors (Dark) */
-    /* Use transparent tints for dark mode to blend with card-bg or stand alone */
-    --card-prod-bg: rgba(30, 58, 138, 0.3);
+    --card-prod-bg: rgba(30, 58, 138, 0.4);
     --card-prod-border: #1e3a8a;
     --card-prod-text: #bfdbfe;
 
-    --card-inv-bg: rgba(6, 78, 59, 0.3);
+    --card-inv-bg: rgba(6, 78, 59, 0.4);
     --card-inv-border: #064e3b;
     --card-inv-text: #6ee7b7;
 
-    --card-mkt-bg: rgba(49, 46, 129, 0.3);
+    --card-mkt-bg: rgba(49, 46, 129, 0.4);
     --card-mkt-border: #312e81;
     --card-mkt-text: #c7d2fe;
 
-    --card-pos-bg: rgba(124, 45, 18, 0.3);
+    --card-pos-bg: rgba(124, 45, 18, 0.4);
     --card-pos-border: #7c2d12;
     --card-pos-text: #fdba74;
 
-    --card-buy-bg: rgba(22, 78, 99, 0.3);
+    --card-buy-bg: rgba(22, 78, 99, 0.4);
     --card-buy-border: #164e63;
     --card-buy-text: #67e8f9;
 
-    /* Re-map standard colors to dark equivalents if needed for standard elements */
-    color: var(--app-text);
-    background-color: var(--app-bg);
+    color-scheme: dark;
 }
 
 /* Global resets specifically for theme application */
@@ -103,5 +101,74 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
     height: 100%;
     margin: 0;
-    font-family: Roboto, "Helvetica Neue", sans-serif;
+    font-family: 'Inter', Roboto, sans-serif;
+}
+
+/* Ensure darker backgrounds for dark mode specific elements */
+.dark body {
+    background-color: #0f172a;
+}
+
+/* --- Global Professional Card Styles --- */
+
+.app-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    /* rounded-xl */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    color: var(--app-text);
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        border-color: var(--ai-core-primary);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    }
+}
+
+/* Specific Dark Mode overrides for stability in modules */
+.dark .app-card {
+    background-color: #1e293b;
+    /* Slate 800 */
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+/* Button & Input Overrides for Global Theme */
+.app-input {
+    background-color: var(--card-bg);
+    color: var(--app-text);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+    transition: all 0.2s;
+
+    &:focus {
+        outline: none;
+        border-color: var(--ai-core-primary);
+        box-shadow: 0 0 0 2px var(--ai-core-glow);
+    }
+}
+
+.dark .app-input {
+    background-color: #0f172a;
+    /* Slate 900 for inputs in dark mode */
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+.app-button-primary {
+    background-color: var(--ai-core-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #4338ca;
+        /* Indigo 700 */
+    }
 }

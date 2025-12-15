@@ -15,4 +15,10 @@ export abstract class ProductRepository {
 
     // Categories
     abstract getCategories(tenantId: string): Promise<any[]>;
+
+    // Variants Management
+    abstract getVariantsByProductId(productId: string): Promise<any[]>;
+    abstract generateVariants(productId: string, config: any): Promise<any[]>;
+    abstract saveVariants(variants: any[]): Promise<void>;
+    abstract createVariant(variant: Partial<any>): Promise<any>;
 }

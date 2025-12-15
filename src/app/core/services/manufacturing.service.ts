@@ -71,7 +71,7 @@ export class ManufacturingService {
             for (const item of items) {
                 await this.inventoryRepo.createMovement({
                     tenant_id: order.tenant_id,
-                    product_id: item.component_product_id,
+                    variant_id: item.component_product_id, // NOTE: Assuming component_product_id IS variant_id here for now in V1
                     warehouse_id: order.warehouse_id || 'wh1',
                     movement_type: 'PRODUCTION_CONSUMPTION',
                     quantity: item.quantity * order.quantity,
@@ -85,7 +85,7 @@ export class ManufacturingService {
         // 2. Add Finished Good (In)
         await this.inventoryRepo.createMovement({
             tenant_id: order.tenant_id,
-            product_id: order.product_id,
+            variant_id: order.product_id, // NOTE: Assuming order.product_id maps to a main variant ID
             warehouse_id: order.warehouse_id || 'wh1',
             movement_type: 'PRODUCTION_OUTPUT',
             quantity: order.quantity,

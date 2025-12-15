@@ -27,6 +27,10 @@ import { ManufacturingRepository } from './core/repositories/manufacturing.repos
 import { MockManufacturingRepository } from './core/repositories/implementations/mock-manufacturing.repository';
 import { InventoryRepository } from './core/repositories/inventory.repository';
 import { MockInventoryRepository } from './core/repositories/implementations/mock-inventory.repository';
+import { WarehouseRepository } from './core/repositories/warehouse.repository';
+import { SupabaseWarehouseRepository } from './core/repositories/implementations/supabase-warehouse.repository';
+import { StockRepository } from './core/repositories/stock.repository';
+import { SupabaseStockRepository } from './core/repositories/implementations/supabase-stock.repository';
 
 // Factory function to initialize the session
 export function initializeSession(sessionService: SessionService) {
@@ -58,7 +62,9 @@ export const appConfig: ApplicationConfig = {
     { provide: FinanceRepository, useClass: SupabaseFinanceRepository },
     { provide: HRRepository, useClass: SupabaseHRRepository },
     { provide: ManufacturingRepository, useClass: MockManufacturingRepository },
-    { provide: InventoryRepository, useClass: MockInventoryRepository }
+    { provide: InventoryRepository, useClass: SupabaseWarehouseRepository },
+    { provide: WarehouseRepository, useClass: SupabaseWarehouseRepository },
+    { provide: StockRepository, useClass: SupabaseStockRepository }
   ]
 };
 

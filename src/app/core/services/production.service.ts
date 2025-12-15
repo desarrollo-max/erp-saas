@@ -29,7 +29,7 @@ export class ProductionService {
 
                     await this.inventoryRepo.createMovement({
                         tenant_id: tenantId,
-                        product_id: item.component_product_id,
+                        variant_id: item.component_product_id, // NOTE: Assumes strict Variant mapping
                         warehouse_id: order.warehouse_id || 'DEFAULT_WAREHOUSE',
                         movement_type: 'OUT',
                         quantity: qtyRequired,
@@ -58,7 +58,7 @@ export class ProductionService {
             // 1. Ingresar Producto Terminado
             await this.inventoryRepo.createMovement({
                 tenant_id: tenantId,
-                product_id: order.product_id,
+                variant_id: order.product_id,
                 warehouse_id: order.warehouse_id || 'DEFAULT_WAREHOUSE',
                 movement_type: 'PRODUCTION_OUTPUT',
                 quantity: order.quantity,

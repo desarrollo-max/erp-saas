@@ -44,7 +44,7 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent)
+        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
       },
 
       // RUTAS DE UTILIDAD DEL MÓDULO INVENTARIO (Especificas antes de la dinámica)
@@ -59,6 +59,10 @@ export const routes: Routes = [
       {
         path: 'inventory/import',
         loadComponent: () => import('./features/inventory/import/csv-importer.component').then(m => m.CsvImporterComponent)
+      },
+      {
+        path: 'inventory/movements/new',
+        loadComponent: () => import('./features/inventory/stock-movement-form/stock-movement-form.component').then(m => m.StockMovementFormComponent)
       },
       {
         path: 'cadena-suministro/inventario',
@@ -109,8 +113,16 @@ export const routes: Routes = [
         loadComponent: () => import('./features/pos/pos.component').then(m => m.PosComponent)
       },
       {
+        path: 'ventas/pdv-retail',
+        loadComponent: () => import('./features/pos/pos.component').then(m => m.PosComponent)
+      },
+      {
         path: 'cadena-suministro/movimientos',
         loadComponent: () => import('./features/supply-chain/inventory/transfer/stock-transfer.component').then(m => m.StockTransferComponent)
+      },
+      {
+        path: 'finanzas/contabilidad',
+        loadComponent: () => import('./features/finance/accounting/accounting.component').then(m => m.AccountingComponent)
       },
       // SALES / WHOLESALE
       {

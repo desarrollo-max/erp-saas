@@ -11,9 +11,10 @@ export class SessionService {
   private supabase = inject(SupabaseService);
   private router = inject(Router);
 
-  // Signals for Session Context
+  // Signals for Session Context (Only Tenant & Company - Client removed)
   public currentTenantId = signal<string | null>(null);
   public currentTenantName = signal<string | null>(null);
+  public currentCompanyId = signal<string | null>(null);
   public currentUserRole = signal<string | null>(null);
   public currentUserId = signal<string | null>(null);
 
@@ -44,6 +45,7 @@ export class SessionService {
   constructor() {
     // Intentar recuperar contexto del LocalStorage al inicio
     const storedTenantId = localStorage.getItem('erp_tenant_id');
+    const storedCompanyId = localStorage.getItem('erp_company_id');
     const storedRole = localStorage.getItem('erp_user_role');
     const storedName = localStorage.getItem('erp_tenant_name');
 
@@ -51,6 +53,7 @@ export class SessionService {
       this.currentTenantId.set(storedTenantId);
       this.currentUserRole.set(storedRole);
       if (storedName) this.currentTenantName.set(storedName);
+      if (storedCompanyId) this.currentCompanyId.set(storedCompanyId);
     }
   }
 
@@ -60,7 +63,7 @@ export class SessionService {
    * Setea el contexto actual del Tenant seleccionado y lo persiste.
    * Contiene la lógica de redirección post-selección.
    */
-  setTenantContext(tenantId: string, role: string, name: string): void {
+  async setTenantContext(tenantId: string, role: string, name: string): Promise<void> {
     this.currentTenantId.set(tenantId);
     this.currentUserRole.set(role);
     this.currentTenantName.set(name);
@@ -70,12 +73,50 @@ export class SessionService {
     localStorage.setItem('erp_user_role', role);
     localStorage.setItem('erp_tenant_name', name);
 
+    // Reset company context initially
+    this.currentCompanyId.set(null);
+    localStorage.removeItem('erp_company_id');
+
+    // Explicit removal of legacy client_id
+    localStorage.removeItem('erp_client_id');
+
+    // Load Company Context automatically
+    await this.loadCompanyDetails(tenantId);
+
     // Redirección post-selección:
     // Tanto Admin como User van al Launcher al seleccionar una empresa.
     this.router.navigate(['/launcher']);
 
     // Buscar y setear el objeto completo del tenant
     this.loadFullTenantDetails(tenantId);
+  }
+
+  setCompanyContext(companyId: string): void {
+    this.currentCompanyId.set(companyId);
+    localStorage.setItem('erp_company_id', companyId);
+  }
+
+  /**
+   * Carga la primera compañía activa del tenant y establece el contexto.
+   */
+  private async loadCompanyDetails(tenantId: string): Promise<void> {
+    try {
+      const { data, error } = await this.supabase.client
+        .from('companies')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        this.setCompanyContext(data.id);
+      } else {
+        console.warn('No active company found for tenant:', tenantId);
+      }
+    } catch (err) {
+      console.error('Error loading company details:', err);
+    }
   }
 
   /**
@@ -104,15 +145,17 @@ export class SessionService {
         return;
       }
 
+      // Always set the user ID from the active session regardless of tenant context state
+      const userId = session.user.id;
+      this.currentUserId.set(userId);
+      this.user.set({ email: session.user.email });
+
       // Si ya hay contexto (Tenant ID en Signals) y NO estamos forzando recarga, no hacemos nada más.
       if (this.currentTenantId() && !forceReload) {
         return;
       }
 
       // Si no hay contexto, lo cargamos desde la BD (esto pasa en el inicio de la app)
-      const userId = session.user.id;
-      this.currentUserId.set(userId);
-      this.user.set({ email: session.user.email }); // Populate user signal
 
       // Fetch user's tenants
       const { data: userTenants, error: utError } = await this.supabase.client
@@ -132,14 +175,9 @@ export class SessionService {
       if (utError) throw utError;
 
       if (!userTenants || userTenants.length === 0) {
-        // No logout! Allow user to proceed to Company Selector to create a company.
-        // this.logout(); 
+        // No active tenant found
         return;
       }
-
-      // Multiple Tenants OR Owner (always sees list) -> Go to Company/Tenant Selector
-      // REMOVED REDIRECT: Let AuthGuard or LoginComponent handle navigation to avoid loops.
-      // this.router.navigate(['/companies']);
 
     } catch (err) {
       console.error('Unexpected error loading session:', err);
@@ -159,11 +197,14 @@ export class SessionService {
     this.currentUserRole.set(null);
     this.currentTenant.set(null);
     this.currentUserId.set(null);
+    this.currentCompanyId.set(null);
 
     // Clear LocalStorage
     localStorage.removeItem('erp_tenant_id');
     localStorage.removeItem('erp_user_role');
     localStorage.removeItem('erp_tenant_name');
+    localStorage.removeItem('erp_company_id');
+    localStorage.removeItem('erp_client_id'); // Ensure legacy key is gone
 
     this.router.navigate(['/login']);
   }
