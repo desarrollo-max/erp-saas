@@ -685,7 +685,10 @@ export class AccountingComponent implements OnInit {
           </head>
           <body>
             <div class="header">
-                <div class="company">ERP SaaS</div>
+                <div class="company" style="font-family: sans-serif;">
+                    <span style="font-size: 32px; font-weight: 900; color: #4f46e5;">SIAC</span>
+                    <span style="font-size: 16px; font-weight: 500; color: #64748b; letter-spacing: 2px;">ERP</span>
+                </div>
                 <div class="invoice-details">
                     <h1>FACTURA</h1>
                     <p><strong>Nº:</strong> ${invoice.number}</p>

@@ -73,6 +73,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/supply-chain/inventory/inventory.component').then(m => m.InventoryComponent)
       },
       {
+        path: 'cadena-suministro/inventario/etiquetas',
+        loadComponent: () => import('./features/supply-chain/inventory/label-printing/label-printing.component').then(m => m.LabelPrintingComponent)
+      },
+      {
         path: 'cadena-suministro/almacenes',
         loadComponent: () => import('./features/supply-chain/warehouses/warehouse-list/warehouse-list.component').then(m => m.WarehouseListComponent)
       },
@@ -117,8 +121,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
       },
       {
+        path: 'cadena-suministro/compras/new',
+        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
+      },
+      {
         path: 'purchasing/orders/edit/:id',
         loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
+      },
+      {
+        path: 'cadena-suministro/proveedores',
+        loadComponent: () => import('./features/supply-chain/suppliers/supplier-list.component').then(m => m.SupplierListComponent)
+      },
+      {
+        path: 'cadena-suministro/proveedores/nuevo',
+        loadComponent: () => import('./features/supply-chain/suppliers/supplier-form.component').then(m => m.SupplierFormComponent)
+      },
+      {
+        path: 'cadena-suministro/proveedores/editar/:id',
+        loadComponent: () => import('./features/supply-chain/suppliers/supplier-form.component').then(m => m.SupplierFormComponent)
       },
       {
         path: 'pos',
@@ -133,10 +153,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/supply-chain/inventory/transfer/stock-transfer.component').then(m => m.StockTransferComponent)
       },
       {
-        path: 'finanzas/contabilidad',
-        loadComponent: () => import('./features/finance/accounting/accounting.component').then(m => m.AccountingComponent)
+        path: 'finanzas',
+        loadChildren: () => import('./features/finance/finance.routes').then(m => m.FINANCE_ROUTES)
       },
       // SALES / WHOLESALE
+      {
+        path: 'ventas/pedidos',
+        loadComponent: () => import('./features/sales/orders/orders.component').then(m => m.OrdersComponent)
+      },
+      {
+        path: 'ventas/ordenes',
+        loadComponent: () => import('./features/sales/orders/orders.component').then(m => m.OrdersComponent)
+      },
       {
         path: 'ventas/mayoreo',
         loadComponent: () => import('./features/sales/wholesale/wholesale.component').then(m => m.WholesaleComponent)
@@ -158,6 +186,52 @@ export const routes: Routes = [
       {
         path: 'sales/crm',
         loadChildren: () => import('./features/sales/crm/crm.routes').then(m => m.CRM_ROUTES)
+      },
+
+      // HR ROUTES
+      {
+        path: 'rrhh',
+        loadChildren: () => import('./features/hr/hr.routes').then(m => m.HR_ROUTES)
+      },
+      {
+        path: 'hr',
+        loadChildren: () => import('./features/hr/hr.routes').then(m => m.HR_ROUTES)
+      },
+
+      // MARKETING ROUTES
+      {
+        path: 'marketing',
+        loadChildren: () => import('./features/marketing/marketing.routes').then(m => m.MARKETING_ROUTES)
+      },
+
+      // WEB ROUTES
+      {
+        path: 'web',
+        loadChildren: () => import('./features/web/web.routes').then(m => m.WEB_ROUTES)
+      },
+
+      // SERVICES ROUTES
+      {
+        path: 'servicios',
+        children: [
+          { path: 'proyectos', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'horas', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'campo', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'soporte', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'planificacion', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'citas', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+        ]
+      },
+
+      // PRODUCTIVITY ROUTES
+      {
+        path: 'productividad',
+        children: [
+          { path: 'contactos', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'calendario', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'notas', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+          { path: 'chat', loadComponent: () => import('./shared/components/placeholder/placeholder.component').then(m => m.PlaceholderComponent) },
+        ]
       },
 
       // 🟢 MOTOR DE RUTAS DINÁMICAS (Captura todas las rutas de la tabla modules, ej: /finanzas/contabilidad)

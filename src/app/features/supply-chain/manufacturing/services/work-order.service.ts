@@ -1,61 +1,35 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { WorkOrder } from '../models/work-order.model';
-import { of } from 'rxjs';
+import { ManufacturingRepository } from '@core/repositories/manufacturing.repository';
+import { SessionService } from '@core/services/session.service';
+import { from, map, Observable } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
 })
 export class WorkOrderService {
-    // Mock data specifically for verifying the Kanban board
-    private mockOrders: WorkOrder[] = [
-        {
-            id: '1',
-            orderNumber: 'WO-2023-001',
-            productName: 'Bota Vaquera Clásica',
-            quantity: 50,
-            status: 'planned',
-            priority: 'high',
-            dueDate: new Date('2023-12-10')
-        },
-        {
-            id: '2',
-            orderNumber: 'WO-2023-002',
-            productName: 'Bota Industrial Pro',
-            quantity: 120,
-            status: 'in_progress',
-            currentStep: 'Montado',
-            priority: 'medium',
-            dueDate: new Date('2023-12-15')
-        },
-        {
-            id: '3',
-            orderNumber: 'WO-2023-003',
-            productName: 'Zapato Casual',
-            quantity: 30,
-            status: 'quality_check',
-            priority: 'low',
-            dueDate: new Date('2023-12-08')
-        },
-        {
-            id: '4',
-            orderNumber: 'WO-2023-004',
-            productName: 'Bota Exótica',
-            quantity: 10,
-            status: 'completed',
-            priority: 'high',
-            dueDate: new Date('2023-12-01')
-        }
-    ];
+    private mfgRepo = inject(ManufacturingRepository);
+    private session = inject(SessionService);
 
-    getWorkOrders() {
-        return of(this.mockOrders);
+    getWorkOrders(): Observable<WorkOrder[]> {
+        const tenantId = this.session.currentTenantId();
+        if (!tenantId) return from([[]]);
+
+        return from(this.mfgRepo.getProductionOrders(tenantId)).pipe(
+            map(orders => orders.map(o => ({
+                id: o.id,
+                orderNumber: o.order_number,
+                productName: o.product_id, // For now displaying ID, should join in real scenario
+                quantity: o.quantity,
+                status: (o.status as any) || 'planned',
+                priority: 'medium',
+                dueDate: o.due_date ? new Date(o.due_date) : undefined
+            })))
+        );
     }
 
-    updateStatus(id: string, newStatus: WorkOrder['status']) {
-        const order = this.mockOrders.find(o => o.id === id);
-        if (order) {
-            order.status = newStatus;
-        }
-        return of(order);
+    updateStatus(id: string, newStatus: WorkOrder['status']): Observable<any> {
+        // En un ERP real, el status se actualiza mediante un stage
+        return from(this.mfgRepo.updateOrderStatus(id, 'manual-stage', newStatus));
     }
 }

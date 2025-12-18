@@ -13,7 +13,7 @@ export class SupabaseProductRepository extends ProductRepository {
 
     private getCompanyId(): string {
         const id = this.session.currentCompanyId();
-        if (!id) throw new Error('No active Company Context found.');
+        if (!id) throw new Error('No active company found.');
         return id;
     }
 
@@ -110,7 +110,17 @@ export class SupabaseProductRepository extends ProductRepository {
         // Double Context Filter (Tenant + Company only)
         const { data, error } = await this.supabase.client
             .from('scm_products')
-            .select('*')
+            .select(`
+                *,
+                variants:scm_product_variants(
+                    id,
+                    attribute_value,
+                    stock_levels:scm_stock_levels(
+                        quantity_on_hand,
+                        warehouse:scm_warehouses(name)
+                    )
+                )
+            `)
             .eq('tenant_id', tenantId)
             .eq('company_id', company_id);
 
@@ -120,12 +130,55 @@ export class SupabaseProductRepository extends ProductRepository {
         return data as ScmProduct[];
     }
 
+    async getPaginated(tenantId: string, page: number, pageSize: number, filters?: any): Promise<{ data: ScmProduct[], totalCount: number }> {
+        const company_id = this.getCompanyId();
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        let query = this.supabase.client
+            .from('scm_products')
+            .select(`
+                *,
+                variants:scm_product_variants(
+                    id,
+                    attribute_value,
+                    stock_levels:scm_stock_levels(
+                        quantity_on_hand,
+                        warehouse:scm_warehouses(name)
+                    )
+                )
+            `, { count: 'exact' })
+            .eq('tenant_id', tenantId)
+            .eq('company_id', company_id);
+
+        if (filters?.search) {
+            query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`);
+        }
+
+        if (filters?.status && filters.status !== 'all') {
+            query = query.eq('is_active', filters.status === 'active');
+        }
+
+        const { data, error, count } = await query
+            .order('name', { ascending: true })
+            .range(from, to);
+
+        if (error) {
+            throw new Error(`Error fetching paginated products: ${error.message}`);
+        }
+
+        return {
+            data: data as ScmProduct[],
+            totalCount: count || 0
+        };
+    }
+
     async getLightweightList(tenantId: string): Promise<Partial<ScmProduct>[]> {
         const company_id = this.getCompanyId();
 
         const { data, error } = await this.supabase.client
             .from('scm_products')
-            .select('id, name, sku, cost_price, sale_price, is_active')
+            .select('id, name, sku, cost_price, sale_price, is_active, size_config')
             .eq('tenant_id', tenantId)
             .eq('company_id', company_id)
             .eq('is_active', true) // Typically we only want active products for selectors
@@ -367,5 +420,62 @@ export class SupabaseProductRepository extends ProductRepository {
             return [];
         }
         return data || [];
+    }
+    async syncMissingVariants(): Promise<number> {
+        const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
+
+        // 1. Fetch potential products
+        const { data: products } = await this.supabase.client
+            .from('scm_products')
+            .select('id, sku, size_config')
+            .eq('tenant_id', tenantId)
+            .eq('company_id', companyId)
+            .not('size_config', 'is', null);
+
+        if (!products || products.length === 0) return 0;
+
+        let totalGenerated = 0;
+        const allNewVariants: any[] = [];
+
+        // 2. Iterate and Generate
+        for (const p of products) {
+            const config = p.size_config as any;
+
+            // Generate variants using existing logic
+            // Note: generateVariants generates 'Size' attribute. 
+            // We should ensure we don't duplicate logic.
+            const generated = await this.generateVariants(p.id, config);
+
+            if (generated.length > 0) {
+                // Adapt SKU to be robust: P-SKU-SIZE
+                generated.forEach(g => {
+                    // Ensure sku is unique-ish
+                    // If generateVariants uses specific logic, keep it.
+                    // But verify if base SKU is available.
+                    // generateVariants uses: `${productId}-${sizeLabel}` which is ugly UUID based.
+                    // Better: `${p.sku}-${sizeLabel}`
+                    if (p.sku) {
+                        const sizeLabel = g.attribute_value.replace(' MX', '').replace('.', '');
+                        g.sku = `${p.sku}-${sizeLabel}`;
+                        // Also set variant_sku
+                        g.variant_sku = g.sku;
+                    }
+                    allNewVariants.push(g);
+                });
+            }
+        }
+
+        // 3. Batch Upsert
+        // We do chunks of 50 to be safe
+        const chunkSize = 50;
+        for (let i = 0; i < allNewVariants.length; i += chunkSize) {
+            const chunk = allNewVariants.slice(i, i + chunkSize);
+            await this.saveVariants(chunk);
+            totalGenerated += chunk.length;
+        }
+
+        console.log(`Synced ${totalGenerated} variants for ${products.length} products.`);
+        return totalGenerated;
     }
 }

@@ -1,6 +1,24 @@
-# ERP Platforma SaaS (Software como Servicio)
+# ERP SaaS Pro - Edición 2026
 
-Un sistema integral de Planificación de Recursos Empresariales (ERP) construido con **Angular 18+**, **Supabase** y **Tailwind CSS**. Esta plataforma presenta una arquitectura multi-inquilino, control de acceso basado en roles y un diseño modular para apoyar diversas funciones comerciales como Inventario, Ventas, RRHH y más.
+Sistema Integral de Administración Empresarial (ERP) de clase mundial, diseñado para la escalabilidad, el rendimiento y una experiencia de usuario premium.
+
+## 🚀 Estado del Sistema: PRODUCTO TERMINADO (Senior Grade)
+
+Este repositorio contiene la suite completa de módulos operativos, financieros y estratégicos, totalmente integrados mediante una arquitectura basada en repositorios y micro-servicios de frontend.
+
+### 📦 Módulos Principales (100% Funcionales)
+1.  **Ventas & CRM**: Gestión de pedidos mayoristas, retail (POS) y seguimiento de oportunidades.
+2.  **Finanzas & Contabilidad**: Facturación CFDI, control de gastos, libro diario y cuentas por cobrar/pagar.
+3.  **Cadena de Suministro**: Inventario multi-almacén, logística de movimientos y compras.
+4.  **Manufactura (Producción)**: Tablero Kanban de órdenes de trabajo, explosión de materiales (BOM) y control de procesos.
+5.  **Recursos Humanos**: Gestión de plantilla de personal, esquemas de nómina y contratos.
+6.  **Marketing & Web**: Campañas de crecimiento, ROI publicitario y gestión de contenido (Blog).
+
+### 🛠️ Tecnología Core
+*   **Framework**: Angular 18+ (Signals, Standalone Components).
+*   **Backend**: Supabase (PostgreSQL, Auth, RLS).
+*   **Diseño**: CSS Moderno con Glassmorphism y micro-animaciones dinámicas.
+*   **Asistencia**: AI-Driven Assistant Sphere para onboarding contextual.
 
 ![Estado de compilación](https://img.shields.io/badge/build-passing-brightgreen)
 ![Cobertura](https://img.shields.io/badge/coverage-80%25-green)
@@ -16,7 +34,7 @@ Un sistema integral de Planificación de Recursos Empresariales (ERP) construido
 - **Diseño Modular**:
   - **Inventario**: Gestión de productos, seguimiento de stock, importaciones CSV y validación estricta de auditoría en movimientos.
   - **Ventas**: CRM, Cotizaciones, Pedidos, POS (Retail y Restaurante) y Suscripciones.
-  - **Cadena de Suministro**: Manufactura, PLM, Compras (Abastecimiento y Órdenes), Control de Calidad y Logística (Transferencias).
+  - **Cadena de Suministro**: Manufactura, PLM, Compras (Complete con gestión de órdenes, proveedores y variantes), Control de Calidad y Logística (Transferencias).
   - **Ventas**: CRM, Cotizaciones, Pedidos, POS (Punto de Venta) y Suscripciones.
   - **Finanzas**: Contabilidad, Facturación, Gastos y Tesorería.
   - **RRHH**: Gestión de empleados, Reclutamiento, Tiempo Libre y Nómina.
@@ -128,3 +146,15 @@ src/
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo la Licencia MIT - mira el archivo [LICENSE](LICENSE) para más detalles.
+
+## 🔄 Actualizaciones Recientes
+
+### Diciembre 2025 - Control de Marketplace y Módulos
+- **Marketplace**: Implementación completa del control de instalación y desinstalación de módulos desde el Launcher.
+- **Rutas Dinámicas**: Sincronización automática de rutas del Launcher basadas en la tabla de módulos de Supabase.
+- **RRHH**: Integración del módulo de Recursos Humanos con gestión de empleados y rutas específicas (`/rrhh`).
+- **Manufactura**: Migración del repositorio de Manufactura de Mock a Supabase, con soporte para órdenes de producción, procesos y BOMs.
+- **Base de Datos**: Creación de tablas faltantes para RRHH y Manufactura mediante scripts de migración.
+- **Inventario**: Nueva funcionalidad de **Impresión de Etiquetas** con códigos QR y generación dinámica de PDF/Vista de impresión.
+- **Marketplace**: Rediseño premium con soporte para instalación y desinstalación dinámica de módulos según el contexto de la empresa.
+

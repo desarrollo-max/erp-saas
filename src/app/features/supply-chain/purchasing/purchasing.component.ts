@@ -1,372 +1,165 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { NgIconsModule } from '@ng-icons/core';
-import { NotificationService } from '@core/services/notification.service';
-
-import { ProductRepository } from '@core/repositories/product.repository';
-import { SupabaseService } from '@core/services/supabase.service';
-import { SessionService } from '@core/services/session.service';
-import { ScmWarehouse, ScmProduct } from '@core/models/erp.types';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
+import { NgIconsModule, provideIcons } from '@ng-icons/core';
 import { APP_ICONS } from '@core/constants/app-icons';
+import * as heroIcons from '@ng-icons/heroicons/solid';
+
+import { PurchaseOrderRepository } from '@core/repositories/purchase-order.repository';
+import { PurchaseOrder } from '@core/models/erp.types';
+import { SessionService } from '@core/services/session.service';
 
 @Component({
   selector: 'app-purchasing',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIconsModule],
+  imports: [CommonModule, RouterModule, NgIconsModule, CurrencyPipe, DatePipe],
+  viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="h-screen flex flex-col transition-colors duration-300" style="background-color: var(--app-bg); color: var(--app-text);">
+    <div class="flex flex-col h-full bg-gray-50 dark:bg-slate-900">
       
       <!-- HEADER -->
-      <div class="h-16 flex items-center justify-between px-4 sm:px-6 shadow-sm z-10 shrink-0" style="background-color: var(--card-bg); border-bottom: 1px solid var(--border-color);">
-        <div class="flex items-center gap-4">
-          <button (click)="goBack()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition">
-            <ng-icon [name]="ICONS.back" class="w-6 h-6"></ng-icon>
-          </button>
-          <h1 class="text-lg sm:text-xl font-bold flex items-center gap-2 truncate">
-            <ng-icon [name]="ICONS.purchases" class="text-cyan-600 w-6 h-6"></ng-icon>
-            <span class="hidden sm:inline">Compras / Abastecimiento</span>
-            <span class="sm:hidden">Compras</span>
-          </h1>
-        </div>
-        
-        <div class="flex items-center gap-4">
-          <select [(ngModel)]="selectedWarehouseId"
-                  class="p-2 rounded-md border text-xs sm:text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-colors max-w-[150px] sm:max-w-xs"
-                  style="background-color: var(--subtle-bg); border-color: var(--border-color); color: var(--app-text);">
-            <option [ngValue]="null"> -- Destino -- </option>
-            <option *ngFor="let w of warehouses()" [value]="w.id">{{ w.name }}</option>
-          </select>
-        </div>
+      <div class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-5 flex items-center justify-between shadow-sm sticky top-0 z-10">
+         <div>
+           <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+             <div class="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg text-cyan-600 dark:text-cyan-400">
+                <ng-icon name="heroShoppingBagSolid" class="w-6 h-6"></ng-icon>
+             </div>
+             Ordenes de Compra
+           </h1>
+           <p class="text-sm text-gray-500 mt-1">Gestione sus pedidos a proveedores, recepciones y facturas.</p>
+         </div>
+         <div class="flex gap-3">
+           <button (click)="manageSuppliers()" class="bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 px-4 py-2.5 rounded-lg font-medium shadow-sm transition flex items-center gap-2">
+             <ng-icon name="heroUsersSolid" class="w-5 h-5"></ng-icon>
+             Proveedores
+           </button>
+           <button (click)="createOrder()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-md transition flex items-center gap-2">
+             <ng-icon name="heroPlusCircleSolid" class="w-5 h-5"></ng-icon>
+             Nueva Orden
+           </button>
+         </div>
       </div>
 
-      <!-- CONTENT WRAPPER -->
-      <div class="flex-grow flex overflow-hidden relative">
-        
-        <!-- MAIN PRODUCT AREA (Scrollable) -->
-        <div class="flex-grow flex flex-col p-4 sm:p-6 overflow-hidden">
-          
-          <!-- Search Bar -->
-          <div class="mb-4 shrink-0">
-            <div class="relative">
-              <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar productos (Nombre, SKU)..."
-                     class="w-full pl-10 pr-4 py-3 rounded-xl border shadow-sm outline-none focus:ring-2 focus:ring-cyan-500 transition-colors"
-                     style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--app-text);">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none opacity-50">
-                <ng-icon [name]="ICONS.search" class="w-5 h-5"></ng-icon>
-              </div>
-            </div>
-          </div>
+      <!-- CONTENT -->
+      <div class="flex-1 overflow-auto p-6">
+         
+         <div *ngIf="isLoading()" class="flex flex-col items-center justify-center h-64">
+             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-600 mb-4"></div>
+             <p class="text-gray-500">Cargando órdenes...</p>
+         </div>
 
-          <!-- Product Grid -->
-          <div class="flex-grow overflow-y-auto pr-1 pb-20 sm:pb-0"> <!-- PB for mobile float button space -->
+         <div *ngIf="!isLoading()" class="bg-white dark:bg-slate-800 rounded-xl shadow border border-gray-200 dark:border-slate-700 overflow-hidden">
              
-             <!-- Loading State -->
-             <div *ngIf="isLoading()" class="flex justify-center py-10">
-               <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-600"></div>
+             <!-- Empty State -->
+             <div *ngIf="orders().length === 0" class="flex flex-col items-center justify-center py-20 text-gray-400">
+                 <ng-icon name="heroDocumentTextSolid" class="w-16 h-16 mb-4 opacity-50"></ng-icon>
+                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-200">No hay órdenes de compra</h3>
+                 <p class="text-sm max-w-xs text-center mt-2">Comience creando su primera orden para abastecer el inventario.</p>
+                 <button (click)="createOrder()" class="mt-6 text-cyan-600 font-medium hover:text-cyan-700 hover:underline">Crear Orden Ahora</button>
              </div>
 
-             <!-- Grid -->
-             <div *ngIf="!isLoading()" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-               <div *ngFor="let product of filteredProducts()" 
-                    class="rounded-xl shadow-sm p-3 sm:p-4 flex flex-col gap-2 relative group border transition-all hover:shadow-md"
-                    [class.border-cyan-500]="getQuantity(product.id) > 0"
-                    style="background-color: var(--card-bg); border-color: var(--border-color);">
-                 
-                 <!-- Image -->
-                 <!-- Image Removed as requested -->
-
-
-                 <!-- Info -->
-                 <h3 class="font-semibold text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2.5em]" [title]="product.name">{{ product.name }}</h3>
-                 <p class="text-xs opacity-60 mb-2 truncate">{{ product.sku }}</p>
-
-                 <!-- Pricing & Actions Row -->
-                 <div class="mt-auto pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between mb-2">
-                       <span class="text-xs font-medium opacity-80">Costo Ref.</span>
-                       <span class="font-bold text-sm">{{ product.cost_price | currency }}</span>
-                    </div>
-
-                    <!-- Inline Input Control -->
-                    <div class="flex items-center justify-between bg-gray-50 dark:bg-slate-800 rounded-lg p-1">
-                      <button (click)="updateCart(product, -1)" 
-                              class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white dark:hover:bg-slate-700 shadow-sm transition-colors text-gray-600 dark:text-gray-300 disabled:opacity-30"
-                              [disabled]="getQuantity(product.id) === 0">
-                        <ng-icon [name]="ICONS.subtract" class="w-4 h-4"></ng-icon>
-                      </button>
-                      
-                      <input type="number" 
-                             [value]="getQuantity(product.id)"
-                             (input)="onInputQuantity(product, $event)"
-                             class="w-10 text-center bg-transparent border-none p-0 text-sm font-bold focus:ring-0 appearance-none"
-                             min="0">
-
-                      <button (click)="updateCart(product, 1)" 
-                              class="w-8 h-8 flex items-center justify-center rounded-md bg-white dark:bg-slate-700 shadow-sm text-cyan-600 hover:text-cyan-700 transition-colors">
-                        <ng-icon [name]="ICONS.add" class="w-4 h-4"></ng-icon>
-                      </button>
-                    </div>
-                 </div>
-
-               </div>
+             <!-- Orders Table -->
+             <div *ngIf="orders().length > 0" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                   <thead class="bg-gray-50 dark:bg-slate-700/50">
+                      <tr>
+                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Folio</th>
+                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proveedor</th>
+                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
+                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                         <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                      </tr>
+                   </thead>
+                   <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+                      <tr *ngFor="let order of orders()" class="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition">
+                         <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="font-mono font-medium text-gray-900 dark:text-white">{{ order.po_number || '---' }}</span>
+                         </td>
+                         <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900 dark:text-gray-200 font-medium">{{ order.supplier?.name || 'Proveedor desconocido' }}</div>
+                         </td>
+                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ order.po_date | date:'shortDate' }}
+                         </td>
+                         <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                  [ngClass]="getStatusClass(order.status)">
+                               {{ getStatusLabel(order.status) }}
+                            </span>
+                         </td>
+                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {{ order.total_amount | currency }}
+                         </td>
+                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button (click)="editOrder(order)" class="text-cyan-600 hover:text-cyan-900 dark:hover:text-cyan-400 transition-colors mr-3" title="Editar / Ver">
+                               <ng-icon name="heroPencilSquareSolid" class="w-5 h-5"></ng-icon>
+                            </button>
+                            <!-- FUTURE: Add Delete / Receive buttons here -->
+                         </td>
+                      </tr>
+                   </tbody>
+                </table>
              </div>
-          </div>
-        </div>
-
-        <!-- SIDEBAR SUMMARY (Desktop) & FLOATING (Mobile) -->
-        
-        <!-- Desktop Sidebar -->
-        <div class="hidden md:flex w-80 lg:w-96 flex-col shadow-xl z-20 border-l shrink-0" style="background-color: var(--card-bg); border-color: var(--border-color);">
-          <div class="p-4 border-b flex items-center gap-2 font-bold text-lg" style="border-color: var(--border-color);">
-             <ng-icon [name]="ICONS.list" class="w-5 h-5 text-cyan-600"></ng-icon>
-             Resumen de Orden
-          </div>
-          
-          <div class="flex-grow overflow-y-auto p-4 flex flex-col gap-2">
-             <ng-container *ngIf="cartItems().length > 0; else emptyCart">
-               <div *ngFor="let item of cartItems()" class="flex justify-between items-start text-sm p-3 rounded-lg bg-gray-50 dark:bg-slate-800/50">
-                 <div class="flex flex-col max-w-[70%]">
-                    <span class="font-medium truncate">{{ item.product.name }}</span>
-                    <span class="text-xs opacity-60">{{ item.product.sku }}</span>
-                 </div>
-                 <div class="flex flex-col items-end">
-                    <span class="font-bold">x{{ item.quantity }}</span>
-                    <span class="text-xs text-cyan-600 cursor-pointer hover:underline" (click)="removeItem(item.product.id)">Quitar</span>
-                 </div>
-               </div>
-             </ng-container>
-             <ng-template #emptyCart>
-               <div class="h-64 flex flex-col items-center justify-center opacity-40 text-center">
-                 <ng-icon [name]="ICONS.purchases" class="w-12 h-12 mb-2"></ng-icon>
-                 <p class="text-sm px-4">Selecciona productos del catálogo para armar tu orden.</p>
-               </div>
-             </ng-template>
-          </div>
-
-          <div class="p-4 border-t" style="border-color: var(--border-color);">
-            <div class="flex justify-between mb-4 font-bold text-lg">
-               <span>Total Items:</span>
-               <span>{{ totalItems() }}</span>
-            </div>
-            <button (click)="checkout()" 
-                    [disabled]="cartItems().length === 0 || !selectedWarehouseId() || isProcessing()"
-                    class="w-full py-3 rounded-lg font-bold text-white shadow-md transition-all flex items-center justify-center gap-2"
-                    [ngClass]="{
-                      'bg-cyan-600 hover:bg-cyan-700': cartItems().length > 0 && selectedWarehouseId(),
-                      'bg-gray-400 cursor-not-allowed': cartItems().length === 0 || !selectedWarehouseId()
-                    }">
-               <span *ngIf="!isProcessing()">Confirmar Entrada</span>
-               <div *ngIf="isProcessing()" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            </button>
-            <p *ngIf="!selectedWarehouseId()" class="text-xs text-red-500 text-center mt-2">Seleccione almacén de destino</p>
-          </div>
-        </div>
-
-        <!-- Mobile Floating Bar -->
-        <div class="md:hidden fixed bottom-0 left-0 right-0 p-4 border-t shadow-2xl z-50 flex items-center justify-between gap-4 glass-panel"
-             style="background-color: var(--card-bg); border-color: var(--border-color);">
-           <div class="flex flex-col">
-              <span class="text-xs font-semibold opacity-70">Resumen</span>
-              <span class="font-bold text-lg">{{ totalItems() }} Artículos</span>
-           </div>
-           
-           <button (click)="checkout()" 
-                    [disabled]="cartItems().length === 0 || !selectedWarehouseId() || isProcessing()"
-                    class="flex-grow py-3 rounded-lg font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 max-w-[200px]"
-                    [ngClass]="{
-                      'bg-cyan-600 hover:bg-cyan-700': cartItems().length > 0 && selectedWarehouseId(),
-                      'bg-gray-400 cursor-not-allowed': cartItems().length === 0 || !selectedWarehouseId()
-                    }">
-               <span *ngIf="!isProcessing()">Confirmar</span>
-               <div *ngIf="isProcessing()" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-           </button>
-        </div>
-
+         </div>
       </div>
     </div>
-  `,
-  styles: [`
-    /* Hide number input arrows */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
-    .glass-panel {
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-  `]
+  `
 })
 export class PurchasingComponent implements OnInit {
-  // Dependencies
-
-  private productRepo = inject(ProductRepository);
   private router = inject(Router);
-  private notification = inject(NotificationService);
-  private supabase = inject(SupabaseService);
+  private poRepo = inject(PurchaseOrderRepository);
   private session = inject(SessionService);
-  public readonly ICONS = APP_ICONS;
 
-  // Data Signals
-  warehouses = signal<ScmWarehouse[]>([]);
-  products = signal<ScmProduct[]>([]);
+  orders = signal<PurchaseOrder[]>([]);
   isLoading = signal(true);
 
-  // State Signals
-  selectedWarehouseId = signal<string | null>(null);
-  searchQuery = signal('');
-  isProcessing = signal(false);
-
-  // Cart Logic: Map<ProductId, Quantity>
-  // We use a simple object/map approach or array. Let's use a signal holding the array for easier iteration.
-  // Actually, a Map might be cleaner for O(1) lookups in template. But let's stick to array of objects to match previous logc but optimized.
-  // Let's use a signal of detailed items.
-  cartItems = signal<Array<{ product: ScmProduct, quantity: number }>>([]);
-
-  // Computed
-  filteredProducts = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    return this.products().filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
-  });
-
-  totalItems = computed(() => {
-    return this.cartItems().reduce((acc, item) => acc + item.quantity, 0);
-  });
-
   async ngOnInit() {
-    await this.loadData();
-  }
+    const tenantId = this.session.currentTenantId();
+    if (!tenantId) return;
 
-  async loadData() {
     try {
-      this.isLoading.set(true);
-      const tenantId = this.session.currentTenantId();
-      if (!tenantId) return;
-
-      const [whResponse, prods] = await Promise.all([
-        this.supabase.client.from('scm_warehouses').select('*').eq('tenant_id', tenantId),
-        this.productRepo.getAll(tenantId)
-      ]);
-
-      if (whResponse.error) throw whResponse.error;
-
-      this.warehouses.set(whResponse.data as ScmWarehouse[]);
-      this.products.set(prods);
+      // Fetch orders (assuming getAll exists or similar)
+      const data = await this.poRepo.getAll(tenantId);
+      this.orders.set(data);
     } catch (error) {
-      console.error(error);
-      this.notification.error('Error cargando datos de compras');
+      console.error('Error fetching orders', error);
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  // --- Agile Logic ---
-
-  getQuantity(productId: string): number {
-    const item = this.cartItems().find(i => i.product.id === productId);
-    return item ? item.quantity : 0;
+  createOrder() {
+    this.router.navigate(['/purchasing/orders/new']);
   }
 
-  updateCart(product: ScmProduct, change: number) {
-    this.cartItems.update(items => {
-      const existingIndex = items.findIndex(i => i.product.id === product.id);
-
-      if (existingIndex > -1) {
-        const currentQ = items[existingIndex].quantity;
-        const newQ = currentQ + change;
-
-        if (newQ <= 0) {
-          // Remove
-          return items.filter((_, index) => index !== existingIndex);
-        } else {
-          // Update
-          const newItems = [...items];
-          newItems[existingIndex] = { ...newItems[existingIndex], quantity: newQ };
-          return newItems;
-        }
-      } else {
-        if (change > 0) {
-          // Add
-          return [...items, { product, quantity: change }];
-        }
-        return items;
-      }
-    });
+  manageSuppliers() {
+    this.router.navigate(['/cadena-suministro/proveedores']);
   }
 
-  onInputQuantity(product: ScmProduct, event: Event) {
-    const input = event.target as HTMLInputElement;
-    const val = parseInt(input.value, 10);
-
-    if (isNaN(val) || val < 0) return;
-
-    this.setQuantity(product, val);
+  editOrder(order: PurchaseOrder) {
+    this.router.navigate(['/purchasing/orders/edit', order.id]);
   }
 
-  setQuantity(product: ScmProduct, quantity: number) {
-    this.cartItems.update(items => {
-      if (quantity <= 0) {
-        return items.filter(i => i.product.id !== product.id);
-      }
-
-      const existingIndex = items.findIndex(i => i.product.id === product.id);
-      if (existingIndex > -1) {
-        const newItems = [...items];
-        newItems[existingIndex] = { ...newItems[existingIndex], quantity };
-        return newItems;
-      } else {
-        return [...items, { product, quantity }];
-      }
-    });
-  }
-
-  removeItem(productId: string) {
-    this.cartItems.update(items => items.filter(i => i.product.id !== productId));
-  }
-
-  goBack() {
-    this.router.navigate(['/launcher']);
-  }
-
-  async checkout() {
-    if (!this.selectedWarehouseId()) {
-      this.notification.error('Seleccione un almacén de destino');
-      return;
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'DRAFT': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      case 'SENT': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
+      case 'PARTIAL': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
+      case 'COMPLETED': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+      case 'CANCELLED': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800';
     }
+  }
 
-    this.isProcessing.set(true);
-    try {
-      const warehouseId = this.selectedWarehouseId()!;
-      // Using today's date
-      const date = new Date().toISOString().split('T')[0];
-
-      const movements = this.cartItems().map(item => ({
-        product_id: item.product.id,
-        warehouse_id: warehouseId,
-        movement_date: date,
-        quantity: item.quantity,
-        movement_type: 'IN', // Assuming purchase adds stock directly for now as per previous logic
-        notes: 'Compra Integrada desde Módulo de Abastecimiento',
-        reference_type: 'purchase_agile'
-      }));
-
-      const { error } = await this.supabase.client
-        .from('scm_stock_movements')
-        .insert(movements);
-
-      if (error) throw error;
-
-      this.notification.success('Entrada de mercancía registrada exitosamente.');
-      this.cartItems.set([]);
-
-    } catch (error: any) {
-      console.error('Purchase error', error);
-      this.notification.error('Error al procesar la compra.');
-    } finally {
-      this.isProcessing.set(false);
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'DRAFT': return 'Borrador';
+      case 'SENT': return 'Enviada';
+      case 'PARTIAL': return 'Parcial';
+      case 'COMPLETED': return 'Completado';
+      case 'CANCELLED': return 'Cancelada';
+      default: return status;
     }
   }
 }

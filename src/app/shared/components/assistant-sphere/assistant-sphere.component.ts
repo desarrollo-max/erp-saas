@@ -76,54 +76,112 @@ export class AssistantSphereComponent {
 
   private contextMap: Record<string, ModuleContext> = {
     '/launcher': {
-      title: 'Launcher',
-      description: 'Tu punto de partida. Accede a todos los módulos disponibles.',
-      tips: ['Usa "Cambiar" para alternar entre empresas.', 'Aquí verás notificaciones importantes.']
+      title: 'Lanzador de Aplicaciones',
+      description: 'Panel central para acceder a tus herramientas operativas.',
+      tips: [
+        'Haga clic en un icono para abrir el módulo.',
+        'Los módulos instalados desde el Marketplace aparecerán aquí automáticamente.',
+        'Use el selector de organización en el header si gestiona múltiples empresas.'
+      ]
+    },
+    '/ventas/pedidos': {
+      title: 'Gestión de Pedidos',
+      description: 'Control centralizado de órdenes de venta y cotizaciones.',
+      tips: [
+        '1. Revise el resumen de KPIs para ver pedidos pendientes de entrega.',
+        '2. Use el filtro de búsqueda para localizar clientes o folios específicos.',
+        '3. Haga clic en un pedido para ver el desglose de productos y estatus de pago.'
+      ]
+    },
+    '/finanzas/facturacion': {
+      title: 'Facturación CFDI (SAT)',
+      description: 'Emisión y timbrado de comprobantes fiscales legales.',
+      tips: [
+        '1. Verifique que la conexión con el SAT esté en verde.',
+        '2. Use "Emitir CFDI" para facturar pedidos confirmados o ventas POS.',
+        '3. Puede descargar el XML y PDF directamente desde el historial de folios.'
+      ]
+    },
+    '/finanzas/gastos': {
+      title: 'Control de Egresos',
+      description: 'Registro de gastos directos y facturas de proveedores.',
+      tips: [
+        '1. Registre cada gasto con su respectivo folio de comprobante.',
+        '2. Clasifique por categoría (Operativo, Servicios, etc.) para ver reportes exactos.',
+        '3. Monitoree el gráfico de presupuesto para no exceder las metas del mes.'
+      ]
+    },
+    '/finanzas/contabilidad': {
+      title: 'Libro Diario y PGC',
+      description: 'Corazón contable del sistema: Cuentas y asientos.',
+      tips: [
+        '1. Configure su Catálogo de Cuentas antes de iniciar operaciones.',
+        '2. Los asientos manuales deben estar cuadrados (Debe = Haber).',
+        '3. El sistema genera asientos automáticos desde Ventas e Inventario.'
+      ]
+    },
+    '/rrhh/empleados': {
+      title: 'Gestión de Talento',
+      description: 'Control de personal, expedientes y nóminas.',
+      tips: [
+        '1. Añada a sus colaboradores con su esquema de pago (Semanal/Quincenal).',
+        '2. Use los filtros por departamento para organizar la vista.',
+        '3. Gestione contratos y documentos desde el perfil de cada empleado.'
+      ]
+    },
+    '/marketing/campanas': {
+      title: 'Estrategia de Crecimiento',
+      description: 'Seguimiento de campañas publicitarias y ROI.',
+      tips: [
+        '1. Configure el presupuesto total antes de lanzar la campaña.',
+        '2. Monitoree el CPC (Costo por Clic) para optimizar su inversión.',
+        '3. El ROI se calcula automáticamente según las ventas ligadas a la campaña.'
+      ]
+    },
+    '/web/blog': {
+      title: 'Contenido y SEO',
+      description: 'Editor de artículos para su sitio web oficial.',
+      tips: [
+        '1. Suba imágenes de alta resolución para mejorar el impacto visual.',
+        '2. Use categorías para organizar su contenido (Novedades, Guías, etc.).',
+        '3. Las publicaciones afectan directamente el posicionamiento en Google.'
+      ]
     },
     '/produccion/dashboard': {
-      title: 'Tablero de Producción',
-      description: 'Gestión visual de tus órdenes de trabajo.',
-      tips: ['Arrastra las tarjetas para cambiar el estado.', 'Usa los filtros superiores para ver procesos específicos.']
-    },
-    '/produccion/work-orders': {
-      title: 'Órdenes de Producción',
-      description: 'Lista detallada de todas las órdenes.',
-      tips: ['Crea nuevas órdenes con el botón "Nueva Orden".', 'Verifica el stock antes de iniciar.']
-    },
-    '/produccion/bom': {
-      title: 'Explosión de Materiales',
-      description: 'Define las recetas (BOM) para tus productos.',
-      tips: ['Asigna insumos y cantidades exactas.', 'El % de desperdicio ayuda a calcular costos reales.']
+      title: 'Centro de Producción',
+      description: 'Control de piso y órdenes de fabricación.',
+      tips: [
+        '1. Arrastre órdenes entre columnas para actualizar el avance en piso.',
+        '2. Verifique la disponibilidad de materia prima antes de "Iniciar".',
+        '3. Use el registro de desperdicio para ajustar el costo real del lote.'
+      ]
     },
     '/cadena-suministro/inventario': {
-      title: 'Inventario Global',
-      description: 'Control de existencias de todos los almacenes.',
-      tips: ['Usa "Importar" para cargas masivas.', 'Las alertas naranjas indican stock bajo.']
-    },
-    '/cadena-suministro/almacenes/stock': {
-      title: 'Existencias por Almacén',
-      description: 'Visualiza qué productos hay exactamente en esta ubicación.',
-      tips: ['Compara "Físico" vs "Disponible" (reservado en órdenes).']
-    },
-    '/cadena-suministro/almacenes': {
-      title: 'Gestión de Almacenes',
-      description: 'Administra tus ubicaciones físicas de inventario.',
-      tips: ['Crea múltiples almacenes para segregar stock.', 'Marca un almacén como "Predeterminado" para agilizar operaciones.']
+      title: 'Inventario Inteligente',
+      description: 'Monitor de existencias y valor de almacén.',
+      tips: [
+        '1. La columna "Existencias" muestra el stock global entre almacenes.',
+        '2. Haga clic en la cantidad para ver en qué almacén físico se encuentra.',
+        '3. Use "Bajos de Mínimo" para detectar productos que requieren reorden.'
+      ]
     },
     '/pos': {
-      title: 'Punto de Venta',
-      description: 'Realiza ventas rápidas y directas al cliente.',
-      tips: ['Selecciona un "Almacén de Salida" para descontar stock.', 'Usa el buscador para añadir productos rápidamente.']
+      title: 'Punto de Venta Retail',
+      description: 'Terminal de venta rápida para mostrador.',
+      tips: [
+        '1. Seleccione el almacén correcto para que el stock se descuente fielmente.',
+        '2. Escanee códigos de barras o busque nombre para agilizar.',
+        '3. Al cerrar la venta, puede emitir ticket térmico o factura instantánea.'
+      ]
     },
-    '/cadena-suministro/compras': {
-      title: 'Compras y Abastecimiento',
-      description: 'Registra la entrada de productos a tus almacenes.',
-      tips: ['Realiza compras internas o a proveedores.', 'Esto generará entradas de stock automáticamente.']
-    },
-    '/cadena-suministro/movimientos': {
-      title: 'Transferencias de Stock',
-      description: 'Mueve inventario entre almacenes.',
-      tips: ['Requiere seleccionar Origen y Destino distintos.', 'Se generan movimientos de Salida y Entrada simultáneos.']
+    '/cadena-suministro/almacenes': {
+      title: 'Logística de Almacenes',
+      description: 'Configuración de ubicaciones y transferencias.',
+      tips: [
+        '1. Cree almacenes separados para Materia Prima y Producto Terminado.',
+        '2. Use "Transferencia" para mover stock sin afectar contabilidad externa.',
+        '3. El historial muestra quién y cuándo movió cada unidad.'
+      ]
     }
   };
 

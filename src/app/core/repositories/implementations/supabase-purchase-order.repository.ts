@@ -12,7 +12,9 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     private session = inject(SessionService);
 
     private getCompanyId(): string {
-        return this.session.currentCompany()?.id || '';
+        const id = this.session.currentCompanyId();
+        if (!id) throw new Error('No active company found.');
+        return id;
     }
 
     // --- HEADERS ---
@@ -108,10 +110,13 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
 
     async addLine(line: Partial<PurchaseOrderLine>): Promise<PurchaseOrderLine> {
         // Basic implementation without fancy logic like auto-line-number for now, unless needed.
+        const tenantId = this.session.currentTenantId();
+
         const { data, error } = await this.supabase.client
             .from('scm_po_lines')
             .insert({
                 ...line,
+                tenant_id: tenantId,
                 created_at: new Date().toISOString()
             })
             .select()

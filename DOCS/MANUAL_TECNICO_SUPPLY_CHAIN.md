@@ -57,7 +57,20 @@ Todos los movimientos de stock se centralizan en la tabla `scm_stock_movements`,
     3. Ejecución (Transacción lógica):
         * Para cada item, crea DOS movimientos vinculados por un `reference_number` común (ej. `TRF-171892...`).
         * **Movimiento 1 (Salida)**: Tipo `TRANSFER_OUT` en Almacén Origen (Cantidad negativa).
+        * **Movimiento 1 (Salida)**: Tipo `TRANSFER_OUT` en Almacén Origen (Cantidad negativa).
         * **Movimiento 2 (Entrada)**: Tipo `TRANSFER_IN` en Almacén Destino (Cantidad positiva).
+
+### 2.4 Etiquetado de Inventario
+
+**Ruta:** `/cadena-suministro/inventario/etiquetas`
+**Componente:** `LabelPrintingComponent` (`src/app/features/supply-chain/inventory/label-printing/label-printing.component.ts`)
+
+* **Descripción**: Herramienta para generar e imprimir etiquetas de productos con código QR.
+* **Funcionalidades**:
+    1. **Selección de Producto y Variante**: Integración con selector dinámico dependiente.
+    2. **Cola de Impresión**: Permite agregar múltiples productos con distintas cantidades antes de imprimir.
+    3. **Generación QR**: Utiliza la librería `qrcode` para generar códigos escaneables (SKU).
+    4. **Modo Impresión**: Estilos CSS `@media print` dedicados para formatear la salida en una grilla de etiquetas oculta en la vista normal.
 
 ---
 
@@ -86,6 +99,7 @@ Se han implementado pruebas unitarias para garantizar la estabilidad de los comp
 * `pos.component.spec.ts`: Verifica la carga de datos, adición al carrito y llamadas al repositorio.
 * `purchasing.component.spec.ts`: Valida lógica de orden de compra.
 * `stock-transfer.component.spec.ts`: Asegura que no se permitan transferencias con mismo origen/destino y valida la creación de movimientos duales.
+* `label-printing.component.spec.ts`: Verifica la carga de productos/variantes y la gestión de la cola de impresión.
 
 Para ejecutar las pruebas:
 

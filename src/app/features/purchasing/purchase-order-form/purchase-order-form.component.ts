@@ -8,6 +8,7 @@ import { APP_ICONS } from '@core/constants/app-icons';
 
 import { PurchaseOrderRepository } from '@core/repositories/purchase-order.repository';
 import { SupplierRepository } from '@core/repositories/supplier.repository';
+import { SupabaseSupplierRepository } from '@core/repositories/implementations/supabase-supplier.repository';
 import { ProductRepository } from '@core/repositories/product.repository';
 import { WarehouseRepository } from '@core/repositories/warehouse.repository';
 import { SessionService } from '@core/services/session.service';
@@ -17,7 +18,10 @@ import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } fro
   selector: 'app-purchase-order-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, NgIconsModule],
-  providers: [CurrencyPipe],
+  providers: [
+    CurrencyPipe,
+    { provide: SupplierRepository, useClass: SupabaseSupplierRepository }
+  ],
   viewProviders: [provideIcons(heroIcons)],
   template: `
     <div class="flex flex-col h-full bg-gray-50 dark:bg-slate-900">
@@ -117,7 +121,7 @@ import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } fro
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Productos a Comprar</h3>
                   <p class="text-xs text-gray-500">Agregue los artículos que desea solicitar al proveedor.</p>
                </div>
-               <button type="button" (click)="addLine()" class="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-600 transition shadow-sm flex items-center gap-2">
+               <button type="button" (click)="openAddItemModal()" class="px-4 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition shadow-sm flex items-center gap-2">
                  <ng-icon name="heroPlusCircleSolid" class="h-5 w-5"></ng-icon>
                  Agregar Producto
                </button>
@@ -129,9 +133,9 @@ import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } fro
                   <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">#</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/3">Producto</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Variante / Talla</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">Cantidad</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-40">Costo Unitario</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/4">Variante (Talla)</th>
+                    <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-40">Cantidad</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-40">Costo Unit.</th>
                     <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider w-40">Subtotal</th>
                     <th scope="col" class="relative px-6 py-3 w-16"><span class="sr-only">Eliminar</span></th>
                   </tr>
@@ -144,50 +148,31 @@ import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } fro
                        {{ i + 1 }}
                     </td>
 
-                    <!-- Product Selector -->
+                    <!-- Product Read Only -->
                     <td class="px-6 py-4">
-                      <select formControlName="product_id" (change)="onProductChange(i)" 
-                              class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-transparent text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:text-gray-200 py-2">
-                         <option [ngValue]="null" class="text-gray-400">Seleccionar Producto...</option>
-                         <option *ngFor="let p of products()" [value]="p.id" class="text-gray-900 dark:text-white font-medium">
-                            {{ p.name }} ({{ p.sku }})
-                         </option>
-                      </select>
-                      <div class="text-xs text-red-500 mt-1 pl-1" *ngIf="line.get('product_id')?.touched && line.get('product_id')?.invalid">
-                        <span class="flex items-center gap-1"><ng-icon name="heroExclamationCircleSolid" class="h-3 w-3"></ng-icon> Requerido</span>
+                      <div class="flex items-center text-sm font-medium text-gray-900 dark:text-white">
+                          {{ getProductName(i) }}
                       </div>
                     </td>
 
-                    <!-- Variant Selector -->
+                    <!-- Variant Read Only -->
                     <td class="px-6 py-4">
-                       <ng-container *ngIf="line.get('product_id')?.value && getVariantsForLine(i).length > 0">
-                         <div class="relative">
-                            <select formControlName="variant_id" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-transparent text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:text-gray-200 py-2 pl-3 pr-8">
-                                <option [ngValue]="null">-- Seleccionar Talla --</option>
-                                <option *ngFor="let v of getVariantsForLine(i)" [value]="v.id">
-                                   {{ v.attribute_value }} {{ v.sku ? '('+v.sku+')' : '' }}
-                                </option>
-                         </select>
-                         <div class="text-xs text-red-500 mt-1 pl-1" *ngIf="line.get('variant_id')?.touched && line.get('variant_id')?.invalid">
-                           <span class="flex items-center gap-1"><ng-icon name="heroExclamationCircleSolid" class="h-3 w-3"></ng-icon> Talla requerida</span>
-                         </div>
-                       </div>
-                    </ng-container>
-                       <ng-container *ngIf="!line.get('product_id')?.value">
-                         <span class="text-xs text-gray-400 italic block py-2 px-3 bg-gray-50 dark:bg-slate-900/50 rounded border border-gray-100 dark:border-slate-700">
-                           Primero elija producto
-                         </span>
-                       </ng-container>
-                       <ng-container *ngIf="line.get('product_id')?.value && getVariantsForLine(i).length === 0">
-                          <span class="text-xs text-gray-500 italic flex items-center gap-1 py-2">
-                            <ng-icon name="heroInformationCircleSolid" class="text-blue-400"></ng-icon> Producto único
-                          </span>
-                       </ng-container>
+                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-slate-700 dark:text-gray-300">
+                         {{ getLineVariantName(i) }}
+                       </span>
                     </td>
 
-                    <!-- Quantity -->
+                    <!-- Quantity Stepper -->
                     <td class="px-6 py-4">
-                       <input type="number" formControlName="quantity_ordered" min="1" placeholder="0" class="block w-full rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:text-gray-200 text-center font-medium">
+                       <div class="flex items-center justify-center gap-1">
+                           <button type="button" (click)="decrementQty(i)" class="p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+                               <ng-icon name="heroMinusSolid" class="h-4 w-4"></ng-icon>
+                           </button>
+                           <input type="number" formControlName="quantity_ordered" min="1" class="block w-16 text-center rounded-md border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:text-gray-200 font-medium no-spinner" style="-moz-appearance: textfield;">
+                           <button type="button" (click)="incrementQty(i)" class="p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+                               <ng-icon name="heroPlusSolid" class="h-4 w-4"></ng-icon>
+                           </button>
+                       </div>
                     </td>
 
                     <!-- Unit Price -->
@@ -222,8 +207,8 @@ import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } fro
                         <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
                            <ng-icon name="heroShoppingCartSolid" class="h-12 w-12 mb-3 text-gray-300 dark:text-slate-600"></ng-icon>
                            <p class="text-base font-medium">La orden está vacía</p>
-                           <p class="text-sm mt-1">Comience agregando productos a la lista de compra.</p>
-                           <button (click)="addLine()" class="mt-4 text-indigo-600 hover:text-indigo-700 font-medium text-sm">Agregar primer producto</button>
+                           <p class="text-sm mt-1">Haga clic en "Agregar Producto" para comenzar.</p>
+                           <button (click)="openAddItemModal()" class="mt-4 text-indigo-600 hover:text-indigo-700 font-medium text-sm">Agregar Producto</button>
                         </div>
                      </td>
                   </tr>
@@ -242,6 +227,94 @@ import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } fro
 
         </form>
       </div>
+    
+    <!-- ADD ITEM MODAL -->
+    <div *ngIf="isAddItemModalOpen()" class="fixed inset-0 z-50 overflow-y-auto" role="dialog">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-900/60 transition-opacity backdrop-blur-sm" (click)="closeAddItemModal()"></div>
+        
+        <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <div class="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 text-left shadow-2xl transition-all border border-gray-100 dark:border-slate-700 flex flex-col max-h-[90vh]">
+                
+                <!-- Modal Header -->
+                <div class="bg-indigo-600 px-6 py-4 flex items-center justify-between shrink-0">
+                  <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                     <ng-icon name="heroPlusCircleSolid" class="h-6 w-6"></ng-icon>
+                     Agregar Producto a la Orden
+                  </h3>
+                  <button (click)="closeAddItemModal()" class="text-indigo-200 hover:text-white transition rounded-full p-1 hover:bg-indigo-500/50">
+                     <ng-icon name="heroXMarkSolid" class="h-6 w-6"></ng-icon>
+                  </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 overflow-y-auto">
+                   
+                   <!-- 1. Select Product -->
+                   <div class="mb-6">
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">1. Seleccione Producto</label>
+                       <select [value]="tempSelectedProductId() || 'null'" (change)="onModalProductChange($event.target)" 
+                               class="block w-full rounded-lg border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base py-3">
+                           <option value="null">-- Buscar Producto --</option>
+                           <option *ngFor="let p of products()" [value]="p.id">
+                               {{ p.name }} ({{ p.sku }})
+                           </option>
+                       </select>
+                   </div>
+
+                   <!-- 2. Select Variant (if needed) -->
+                   <div *ngIf="tempSelectedProductId() && hasVariants()" class="mb-6 animate-fade-in-up">
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                           2. Seleccione Talla / Variante
+                           <span class="text-red-500 ml-1">*</span>
+                       </label>
+                       
+                       <div *ngIf="modalVariants().length > 0; else noVariantsFound" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                           <button *ngFor="let v of modalVariants()" 
+                                   (click)="selectVariantInModal(v.id)"
+                                   [class.ring-2]="tempSelectedVariantId() === v.id"
+                                   [class.ring-indigo-500]="tempSelectedVariantId() === v.id"
+                                   [class.bg-indigo-50]="tempSelectedVariantId() === v.id"
+                                   [class.text-indigo-700]="tempSelectedVariantId() === v.id"
+                                   [class.dark:bg-indigo-900]="tempSelectedVariantId() === v.id"
+                                   class="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-slate-700 transition group bg-white dark:bg-slate-800">
+                               <span class="text-lg font-bold">{{ v.attribute_value }}</span>
+                               <span class="text-xs text-gray-400 dark:text-gray-500">{{ (v.sku || '').split('-').pop() }}</span>
+                           </button>
+                       </div>
+                       
+                       <ng-template #noVariantsFound>
+                           <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-lg text-sm flex items-center gap-2">
+                               <ng-icon name="heroExclamationTriangleSolid" class="h-5 w-5"></ng-icon>
+                               El producto requiere talla pero no hay variantes creadas. Sincronice el catálogo.
+                           </div>
+                       </ng-template>
+                   </div>
+                   
+                   <!-- Info if no variants needed -->
+                   <div *ngIf="tempSelectedProductId() && !hasVariants()" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm flex items-center gap-2">
+                       <ng-icon name="heroInformationCircleSolid" class="h-5 w-5"></ng-icon>
+                       Este producto no tiene variantes (Talla Única). Puede agregarlo directamente.
+                   </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 dark:bg-slate-700/50 px-6 py-4 flex justify-end gap-3 shrink-0 border-t border-gray-200 dark:border-slate-700">
+                    <button type="button" (click)="closeAddItemModal()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+                        Cancelar
+                    </button>
+                    <button type="button" (click)="confirmAddFromModal()" 
+                            [disabled]="!canAddFromModal()"
+                            class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2">
+                        <ng-icon name="heroCheckSolid" class="h-5 w-5"></ng-icon>
+                        Confirmar y Agregar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     </div>
   `
 })
@@ -256,6 +329,7 @@ export class PurchaseOrderFormComponent implements OnInit {
   private session = inject(SessionService);
 
   public readonly ICONS = APP_ICONS;
+  protected readonly Validators = Validators;
 
   form: FormGroup;
   isEditMode = signal(false);
@@ -304,18 +378,43 @@ export class PurchaseOrderFormComponent implements OnInit {
 
   async ngOnInit() {
     const tenantId = this.session.currentTenantId();
-    if (!tenantId) return;
+    if (!tenantId) {
+      console.error('No Tenant ID in session');
+      return;
+    }
 
     this.isLoading.set(true);
 
     try {
+      // DEBUG: Log start of fetch
+      console.log('Fetching PO Resources for Tenant:', tenantId);
+
+      // Auto-fix: Ensure variants exist for configured products
+      try {
+        await this.productRepo.syncMissingVariants();
+      } catch (err) {
+        console.warn('Sync variants warning:', err); // Don't block main UI
+      }
+
       // Parallel Data Fetching for Agility
+      // Use checks to avoid one failure killing all
+      const suppliersPromise = this.supplierRepo.getAll(tenantId).catch(err => { console.error('Suppliers failed', err); return []; });
+      const productsPromise = this.productRepo.getLightweightList(tenantId).catch(err => { console.error('Products failed', err); return []; });
+      const variantsPromise = this.productRepo.getAllVariants(tenantId).catch(err => { console.error('Variants failed', err); return []; });
+      const warehousesPromise = this.warehouseRepo.getAll(tenantId).catch(err => { console.error('Warehouses failed', err); return []; });
+
       const [suppliers, products, variants, warehouses] = await Promise.all([
-        this.supplierRepo.getAll(tenantId),
-        this.productRepo.getLightweightList(tenantId),
-        this.productRepo.getAllVariants(tenantId),
-        this.warehouseRepo.getAll(tenantId)
+        suppliersPromise,
+        productsPromise,
+        variantsPromise,
+        warehousesPromise
       ]);
+
+      console.log('Resources Loaded:', {
+        suppliersCount: suppliers.length,
+        productsCount: products.length,
+        warehousesCount: warehouses.length
+      });
 
       this.suppliers.set(suppliers);
       this.products.set(products);
@@ -328,18 +427,22 @@ export class PurchaseOrderFormComponent implements OnInit {
         this.variantMap.set(v.product_id, list);
       });
 
-      // Handle Edit Mode
+      // Handle Edit Mode or Pre-fill from Query Params
+      this.route.queryParams.subscribe(params => {
+        if (params['product_id']) {
+          // Force user to confirm variant in modal before adding
+          this.openAddItemModal(params['product_id']);
+        }
+      });
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
         this.isEditMode.set(true);
         await this.loadOrder(id);
-      } else {
-        // Init with one empty line
-        this.addLine();
       }
 
     } catch (error) {
-      console.error('Error loading data', error);
+      console.error('CRITICAL Error loading data in PurchaseOrderForm', error);
+      alert('Error cargando datos. Revise la consola.');
     } finally {
       this.isLoading.set(false);
     }
@@ -371,6 +474,95 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.updateTotal();
   }
 
+  // --- Add Item Modal Logic ---
+  isAddItemModalOpen = signal(false);
+  tempSelectedProductId = signal<string | null>(null);
+  tempSelectedVariantId = signal<string | null>(null);
+
+  // Computed signals for the modal
+  modalVariants = computed(() => {
+    const pid = this.tempSelectedProductId();
+    if (!pid) return [];
+    const variants = this.variantMap.get(pid) || [];
+    return variants.sort((a, b) => {
+      const valA = parseFloat(a.attribute_value) || 0;
+      const valB = parseFloat(b.attribute_value) || 0;
+      return valA - valB;
+    });
+  });
+
+  modalSelectedProduct = computed(() => {
+    const pid = this.tempSelectedProductId();
+    return this.products().find(p => p.id === pid) || null;
+  });
+
+  hasVariants = computed(() => {
+    const prod = this.modalSelectedProduct();
+    if (!prod) return false;
+    const vars = this.modalVariants();
+    if (vars.length > 0) return true;
+
+    // Check config
+    if (prod.size_config) {
+      if (Array.isArray(prod.size_config) && prod.size_config.length > 0) return true;
+      if (typeof prod.size_config === 'object' && (prod.size_config as any).min) return true;
+    }
+    return false;
+  });
+
+  canAddFromModal = computed(() => {
+    const pid = this.tempSelectedProductId();
+    if (!pid) return false;
+
+    if (this.hasVariants()) {
+      return !!this.tempSelectedVariantId();
+    }
+    return true; // No variants needed
+  });
+
+  openAddItemModal(preSelectProductId?: string) {
+    this.tempSelectedProductId.set(preSelectProductId || null);
+    this.tempSelectedVariantId.set(null);
+    this.isAddItemModalOpen.set(true);
+  }
+
+  closeAddItemModal() {
+    this.isAddItemModalOpen.set(false);
+  }
+
+  onModalProductChange(target: any) {
+    const pid = target.value;
+    this.tempSelectedProductId.set(pid === 'null' ? null : pid);
+    this.tempSelectedVariantId.set(null); // Reset variant
+  }
+
+  selectVariantInModal(variantId: string) {
+    this.tempSelectedVariantId.set(variantId);
+  }
+
+  confirmAddFromModal() {
+    if (!this.canAddFromModal()) return;
+
+    const pid = this.tempSelectedProductId();
+    const vid = this.tempSelectedVariantId();
+    const prod = this.modalSelectedProduct();
+
+    if (!pid || !prod) return;
+
+    // Add to FormArray
+    this.addLine({
+      product_id: pid,
+      variant_id: vid,
+      quantity_ordered: 1, // Default
+      unit_price: 0 // Could default to cost_price
+    });
+
+    this.closeAddItemModal();
+  }
+
+  // --- Form Array Logic ---
+
+  // Modified addLine to push directly (used by loadOrder AND modal)
   addLine(data?: any) {
     const group = this.fb.group({
       product_id: [data?.product_id || null, Validators.required],
@@ -378,52 +570,78 @@ export class PurchaseOrderFormComponent implements OnInit {
       quantity_ordered: [data?.quantity_ordered || 1, [Validators.required, Validators.min(1)]],
       unit_price: [data?.unit_price || 0, [Validators.required, Validators.min(0)]]
     });
-    this.lines.push(group);
 
-    // Set initial validators based on product
+    // Set variant validator if needed (though coming from modal it should be fine, but for safety/edit)
     if (data?.product_id) {
-      this.updateVariantValidators(this.lines.length - 1, data.product_id);
-    }
-  }
-
-  removeLine(index: number) {
-    this.lines.removeAt(index);
-  }
-
-  getVariantsForLine(index: number): ScmProductVariant[] {
-    const control = this.lines.at(index);
-    const productId = control.get('product_id')?.value;
-    if (!productId) return [];
-    return this.variantMap.get(productId) || [];
-  }
-
-  onProductChange(index: number) {
-    const control = this.lines.at(index);
-    const productId = control.get('product_id')?.value;
-
-    // Reset variant when product changes
-    control.patchValue({ variant_id: null });
-
-    this.updateVariantValidators(index, productId);
-  }
-
-  private updateVariantValidators(index: number, productId: string | null) {
-    const control = this.lines.at(index);
-    const variantControl = control.get('variant_id');
-
-    if (!productId) {
-      variantControl?.clearValidators();
-      variantControl?.updateValueAndValidity();
-      return;
+      this.setVariantValidatorInternal(group, data.product_id);
     }
 
+    this.lines.push(group);
+    this.updateTotal(); // calc totals immediately
+  }
+
+  private setVariantValidatorInternal(group: FormGroup, productId: string) {
     const variants = this.variantMap.get(productId) || [];
-    if (variants.length > 0) {
+    const product = this.products().find(p => p.id === productId);
+
+    let hasConfiguredVariants = false;
+    if (product?.size_config) {
+      if (Array.isArray(product.size_config) && product.size_config.length > 0) hasConfiguredVariants = true;
+      else if (typeof product.size_config === 'object' && (product.size_config as any).min) hasConfiguredVariants = true;
+    }
+
+    const variantControl = group.get('variant_id');
+    if (variants.length > 0 || hasConfiguredVariants) {
       variantControl?.setValidators(Validators.required);
     } else {
       variantControl?.clearValidators();
     }
     variantControl?.updateValueAndValidity();
+  }
+
+  removeLine(index: number) {
+    this.lines.removeAt(index);
+    this.updateTotal();
+  }
+
+  // Helpers for Template Display
+  getProductName(index: number): string {
+    const pid = this.lines.at(index).get('product_id')?.value;
+    const p = this.products().find(x => x.id === pid);
+    return p ? `${p.name} (${p.sku})` : 'Producto desconocido';
+  }
+
+  getLineVariantName(index: number): string {
+    const pid = this.lines.at(index).get('product_id')?.value;
+    const vid = this.lines.at(index).get('variant_id')?.value;
+    if (!pid || !vid) return 'N/A';
+
+    const variants = this.variantMap.get(pid) || [];
+    const v = variants.find(x => x.id === vid);
+    return v ? v.attribute_value : '';
+  }
+
+  // Helper for Stepper
+  incrementQty(index: number) {
+    const control = this.lines.at(index).get('quantity_ordered');
+    const current = control?.value || 0;
+    control?.setValue(current + 1);
+  }
+
+  decrementQty(index: number) {
+    const control = this.lines.at(index).get('quantity_ordered');
+    const current = control?.value || 0;
+    if (current > 1) {
+      control?.setValue(current - 1);
+    }
+  }
+
+  private updateVariantValidators(index: number, productId: string | null) {
+    // Compatibility wrapper if needed, or remove if unused. 
+    // Since we lock the row, we might not need dynamic change listening anymore.
+    // But keeping for safety.
+    const control = this.lines.at(index) as FormGroup;
+    if (productId) this.setVariantValidatorInternal(control, productId);
   }
 
   // Optional: Auto-set price from product cost if available (Future feature)
@@ -460,6 +678,8 @@ export class PurchaseOrderFormComponent implements OnInit {
         // Calculate amounts
         total_amount: this.totalAmount(),
         net_amount: this.totalAmount(), // Simplified (no tax yet)
+        tax_amount: 0,
+        freight_amount: 0,
         // po_number: generated by backend or trigger usually
         po_number: `PO-${Date.now().toString().slice(-6)}` // Temporary client-side ID
       };

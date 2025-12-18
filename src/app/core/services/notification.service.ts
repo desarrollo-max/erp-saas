@@ -11,7 +11,7 @@ export class NotificationService {
   success(message: string): void {
     this.snackBar.open(message, 'Cerrar', {
       duration: 3000,
-      panelClass: ['success-snackbar'], // Asegúrate de definir esta clase en styles.scss
+      panelClass: ['success-snackbar'],
       horizontalPosition: 'right',
       verticalPosition: 'top',
     });
@@ -20,7 +20,7 @@ export class NotificationService {
   error(message: string): void {
     this.snackBar.open(message, 'Cerrar', {
       duration: 5000,
-      panelClass: ['error-snackbar'], // Asegúrate de definir esta clase en styles.scss
+      panelClass: ['error-snackbar'],
       horizontalPosition: 'right',
       verticalPosition: 'top',
     });
@@ -34,8 +34,18 @@ export class NotificationService {
       verticalPosition: 'top',
     });
   }
+
   loading(message: string): void {
     this.snackBar.open(message, '...', {
+      duration: 3000,
+      panelClass: ['info-snackbar'],
+      horizontalPosition: 'right',
+      verticalPosition: 'top',
+    });
+  }
+
+  info(message: string): void {
+    this.snackBar.open(message, 'Cerrar', {
       duration: 3000,
       panelClass: ['info-snackbar'],
       horizontalPosition: 'right',

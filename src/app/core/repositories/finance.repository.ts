@@ -8,4 +8,12 @@ export abstract class FinanceRepository {
     abstract createJournalEntry(entry: Partial<FinJournalEntry>, lines: any[]): Promise<void>;
 
     abstract getAccountTypes(): Promise<any[]>;
+
+    // Invoices (Modern API)
+    abstract getInvoices(tenantId: string): Promise<any[]>;
+    abstract createInvoice(invoice: any): Promise<void>;
+
+    // Expenses
+    abstract getExpenses(tenantId: string): Promise<any[]>;
+    abstract createExpense(expense: any): Promise<void>;
 }

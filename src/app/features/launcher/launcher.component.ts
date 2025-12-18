@@ -139,7 +139,9 @@ import { APP_ICONS, getAppIcon } from '@core/constants/app-icons';
       <!-- MARKETPLACE MODAL -->
       <app-marketplace-modal 
         *ngIf="showMarketplace()" 
+        [installedIds]="getInstalledModuleIds()"
         (closeModal)="showMarketplace.set(false)"
+        (moduleUninstalled)="onModuleUninstalled($event)"
         (moduleInstalled)="onModuleInstalled($event)">
       </app-marketplace-modal>
 
@@ -210,17 +212,6 @@ export class LauncherComponent implements OnInit {
   goToModule(module: Module) {
     if (!module.route_path) return;
 
-    // START HOTFIX
-    if (module.code === 'inventory' || module.code === 'scm-inventory') {
-      this.router.navigate(['/cadena-suministro/inventario']);
-      return;
-    }
-    if (module.code === 'pos' || module.code === 'pdv-retail') {
-      this.router.navigate(['/ventas/pdv-retail']);
-      return;
-    }
-    // END HOTFIX
-
     if (module.route_path) {
       this.router.navigate([module.route_path]);
     } else {
@@ -241,6 +232,15 @@ export class LauncherComponent implements OnInit {
     if (!current.find(m => m.id === module.id)) {
       this.installedModules.set([...current, module]);
     }
+  }
+
+  onModuleUninstalled(moduleId: string) {
+    const current = this.installedModules();
+    this.installedModules.set(current.filter(m => m.id !== moduleId));
+  }
+
+  getInstalledModuleIds(): string[] {
+    return this.installedModules().map(m => m.id);
   }
 
   changeCompany() {

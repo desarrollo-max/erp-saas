@@ -781,6 +781,7 @@ export interface PurchaseOrder {
   approved_at: string | null;
   created_at: string;
   updated_at: string;
+  supplier?: { name: string }; // Extended for UI
 }
 
 export interface PurchaseOrderLine {

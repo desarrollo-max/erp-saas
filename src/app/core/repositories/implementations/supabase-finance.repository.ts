@@ -71,4 +71,48 @@ export class SupabaseFinanceRepository extends FinanceRepository {
         }
         return data || [];
     }
+
+    // Invoices (Fiscal)
+    async getInvoices(tenantId: string): Promise<any[]> {
+        const { data, error } = await this.supabase.client
+            .from('fin_invoices')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Table fin_invoices might not exist yet', error);
+            return [];
+        }
+        return data || [];
+    }
+
+    async createInvoice(invoice: any): Promise<void> {
+        const { error } = await this.supabase.client
+            .from('fin_invoices')
+            .insert(invoice);
+        if (error) throw error;
+    }
+
+    // Expenses
+    async getExpenses(tenantId: string): Promise<any[]> {
+        const { data, error } = await this.supabase.client
+            .from('fin_expenses')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Table fin_expenses might not exist yet', error);
+            return [];
+        }
+        return data || [];
+    }
+
+    async createExpense(expense: any): Promise<void> {
+        const { error } = await this.supabase.client
+            .from('fin_expenses')
+            .insert(expense);
+        if (error) throw error;
+    }
 }

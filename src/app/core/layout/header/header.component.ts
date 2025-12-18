@@ -19,23 +19,32 @@ interface ModuleGroup {
   standalone: true,
   imports: [CommonModule, RouterModule, NgIconsModule, GlobalSearchModalComponent],
   template: `
-    <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm z-50 fixed top-0 w-full h-16 transition-colors duration-300">
+    <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-[var(--border-color)] shadow-sm z-50 fixed top-0 w-full h-16 transition-all duration-300">
       <div class="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         
         <!-- LEFT: Logo & Modules Menu -->
         <div class="flex items-center gap-2 sm:gap-4">
           <div (click)="goLauncher()" class="flex items-center gap-2 cursor-pointer group max-w-[150px] sm:max-w-none">
-            <ng-container *ngIf="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url; else defaultLogo">
-              <img [src]="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url" alt="Company Logo" class="w-8 h-8 rounded-lg object-cover flex-shrink-0 bg-white">
+            <ng-container *ngIf="session.currentCompany() || session.currentTenant(); else systemBranding">
+              <ng-container *ngIf="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url; else defaultLogo">
+                <img [src]="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url" alt="Company Logo" class="w-8 h-8 rounded-lg object-cover flex-shrink-0 bg-white">
+              </ng-container>
+              <ng-template #defaultLogo>
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold group-hover:bg-indigo-700 transition flex-shrink-0">
+                  {{ getCompanyInitial() }}
+                </div>
+              </ng-template>
+              <span class="font-bold text-lg sm:text-xl tracking-tight text-gray-900 dark:text-white group-hover:text-indigo-500 transition truncate block">
+                {{ session.currentCompany()?.name || session.currentTenant()?.name }}
+              </span>
             </ng-container>
-            <ng-template #defaultLogo>
-              <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold group-hover:bg-indigo-700 transition flex-shrink-0">
-                {{ getCompanyInitial() }}
+
+            <ng-template #systemBranding>
+              <div class="flex items-center gap-1">
+                 <span class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-400 dark:from-indigo-400 dark:to-indigo-200">SIAC</span>
+                 <span class="text-sm font-bold text-gray-500 dark:text-gray-400 tracking-widest mt-1">ERP</span>
               </div>
             </ng-template>
-            <span class="font-bold text-lg sm:text-xl tracking-tight text-gray-900 dark:text-white group-hover:text-indigo-500 transition truncate block">
-              {{ session.currentCompany()?.name || session.currentTenant()?.name || 'ERP SaaS' }}
-            </span>
           </div>
 
           <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1 sm:mx-2 hidden sm:block"></div>

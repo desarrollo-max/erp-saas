@@ -26,12 +26,7 @@ import { SupabaseService } from '@core/services/supabase.service';
               {{ isEditing ? 'Editar Producto' : 'Nuevo Producto' }}
             </h1>
             <div class="flex gap-2">
-            <button
-                type="button"
-                (click)="importAgaveProducts()"
-                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
-                Importar Agave (JSON)
-            </button>
+
             <button 
               type="button" 
               (click)="cancel()"

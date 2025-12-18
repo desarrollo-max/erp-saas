@@ -12,7 +12,9 @@ export class SupabaseSupplierRepository extends SupplierRepository {
     private session = inject(SessionService);
 
     private getCompanyId(): string {
-        return this.session.currentCompany()?.id || '';
+        const id = this.session.currentCompanyId();
+        if (!id) throw new Error('No active company found.');
+        return id;
     }
 
     async getAll(tenantId: string): Promise<Supplier[]> {

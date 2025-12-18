@@ -16,62 +16,76 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
   imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, NgIconsModule],
   viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="min-h-screen flex items-center justify-center p-4 transition-colors duration-300" style="background-color: var(--app-bg); color: var(--app-text);">
+    <div class="min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden">
       
+      <!-- Background Decorative Elements -->
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 -z-10"></div>
+      <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl dark:bg-indigo-500/5"></div>
+      <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"></div>
+
       <!-- Toggle Button Top Right -->
-      <div class="absolute top-4 right-4">
-         <button (click)="themeService.toggleTheme()" class="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition focus:outline-none bg-white dark:bg-slate-800 shadow-sm">
+      <div class="absolute top-4 right-4 z-20">
+         <button (click)="themeService.toggleTheme()" class="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition focus:outline-none bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm">
             <ng-icon [name]="themeService.isDark() ? 'heroSunSolid' : 'heroMoonSolid'" class="w-6 h-6"></ng-icon>
          </button>
       </div>
 
-      <div class="w-full max-w-md shadow-xl rounded-xl p-8 border-t-4 border-indigo-600 transition-colors duration-300" style="background-color: var(--card-bg);">
+      <div class="w-full max-w-md p-8 glass-panel shadow-2xl rounded-2xl animate-fade-in relative z-10">
         
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-extrabold" style="color: var(--app-text);">ERP SaaS Acceso</h1>
-          <p class="mt-1" style="color: var(--app-text-muted);">Inicia sesión para continuar</p>
+          <h1 class="text-3xl font-extrabold flex flex-col items-center gap-3" style="color: var(--app-text);">
+            <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-lg mb-2 flex items-center justify-center">
+                <span class="text-4xl font-black tracking-tighter text-indigo-600 dark:text-indigo-400">SIAC</span>
+                <span class="text-xl font-bold text-slate-500 dark:text-slate-400 ml-2 tracking-widest">ERP</span>
+            </div>
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                Acceso
+            </span>
+          </h1>
+          <p class="mt-2 text-sm font-medium" style="color: var(--app-text-muted);">Bienvenido de nuevo</p>
         </div>
 
         <!-- Alerta de Error -->
-        <div *ngIf="errorMessage()" class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 mb-4 rounded-md">
-          <p class="font-bold">Error de Autenticación</p>
-          <p class="text-sm">{{ errorMessage() }}</p>
+        <div *ngIf="errorMessage()" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 p-4 mb-6 rounded-lg text-sm flex items-start gap-2">
+          <lucide-icon name="alert-circle" class="w-5 h-5 flex-shrink-0 mt-0.5"></lucide-icon>
+          <div>
+              <p class="font-bold">Error</p>
+              <p>{{ errorMessage() }}</p>
+          </div>
         </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
           
           <!-- Correo Electrónico -->
-          <div class="mb-4">
-            <label for="email" class="block text-sm font-medium" style="color: var(--app-text);">Correo Electrónico</label>
+          <div>
+            <label for="email" class="block text-sm font-semibold mb-1.5 ml-1" style="color: var(--app-text);">Correo Electrónico</label>
             <input type="email" id="email" formControlName="email" 
-                   class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-3 focus:border-indigo-500 focus:ring-indigo-500 font-medium"
-                   style="background-color: var(--subtle-bg); color: var(--app-text);"
-                   placeholder="admin@mi-erp.com">
+                   class="app-input"
+                   placeholder="nombre@empresa.com">
           </div>
 
           <!-- Contraseña -->
-          <div class="mb-6">
-            <label for="password" class="block text-sm font-medium" style="color: var(--app-text);">Contraseña</label>
+          <div>
+            <label for="password" class="block text-sm font-semibold mb-1.5 ml-1" style="color: var(--app-text);">Contraseña</label>
             <input type="password" id="password" formControlName="password"
-                   class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-3 focus:border-indigo-500 focus:ring-indigo-500 font-medium"
-                   style="background-color: var(--subtle-bg); color: var(--app-text);"
-                   placeholder="******">
+                   class="app-input"
+                   placeholder="••••••••">
           </div>
 
           <!-- Botón de Envío -->
           <button type="submit" [disabled]="loginForm.invalid || isLoading()"
-                  class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition duration-150">
+                  class="app-button-primary w-full mt-4">
             
             <span *ngIf="!isLoading()">Iniciar Sesión</span>
             <div *ngIf="isLoading()" class="flex items-center">
               <lucide-icon name="loader-2" class="w-5 h-5 mr-2 animate-spin"></lucide-icon>
-              Cargando...
+              Verificando...
             </div>
           </button>
         </form>
         
-        <p class="mt-6 text-center text-sm" style="color: var(--app-text-muted);">
-          ¿No tienes cuenta? <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Regístrate</a>
+        <p class="mt-8 text-center text-sm" style="color: var(--app-text-muted);">
+          &copy; {{ 2026 }} SIAC ERP. Todos los derechos reservados.
         </p>
       </div>
     </div>

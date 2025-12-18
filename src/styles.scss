@@ -1,174 +1,195 @@
 @use "tailwindcss";
 
 :root {
-    /* Default (Light Mode) */
-    --app-bg: #f8fafc;
-    /* Slate 50 */
-    --app-text: #0f172a;
-    /* Slate 900 */
-    --app-text-muted: #64748b;
-    /* Slate 500 */
+    /* TYPOGRAPHY */
+    --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
 
-    --sidebar-bg: #ffffff;
+    /* LIGHT THEME (Modern clean look) */
+    --app-bg: #f8fafc; /* Slate 50 */
+    --app-text: #334155; /* Slate 700 - Softer than pure black */
+    --app-text-muted: #64748b; /* Slate 500 */
+    
     --card-bg: #ffffff;
-    --border-color: #e2e8f0;
-    /* Slate 200 */
+    --card-border: #f1f5f9; /* Slate 100 - Very subtle */
+    
+    --sidebar-bg: #ffffff;
+    --border-color: #e2e8f0; /* Slate 200 */
 
-    --subtle-bg: #f1f5f9;
-    /* Slate 100 */
-    --hover-bg: #f8fafc;
+    --subtle-bg: #f8fafc; /* Slate 50 */
+    --hover-bg: #f1f5f9; /* Slate 100 */
 
-    /* Semantic Card Colors (Light) */
-    --card-prod-bg: #eff6ff;
-    --card-prod-border: #dbeafe;
-    --card-prod-text: #1e40af;
-
-    --card-inv-bg: #ecfdf5;
-    --card-inv-border: #d1fae5;
-    --card-inv-text: #065f46;
-
-    --card-mkt-bg: #eef2ff;
-    --card-mkt-border: #e0e7ff;
-    --card-mkt-text: #3730a3;
-
-    --card-pos-bg: #fff7ed;
-    --card-pos-border: #ffedd5;
-    --card-pos-text: #9a3412;
-
-    --card-buy-bg: #ecfeff;
-    --card-buy-border: #cffafe;
-    --card-buy-text: #155e75;
-
-    /* Identity */
-    --ai-core-primary: #4f46e5;
-    /* Indigo 600 */
-    --ai-core-secondary: #8b5cf6;
-    --ai-core-glow: rgba(79, 70, 229, 0.5);
+    /* BRAND & ACCENTS */
+    --ai-core-primary: #4f46e5; /* Indigo 600 - Primary Brand */
+    --ai-core-secondary: #8b5cf6; /* Violet 500 */
+    --ai-core-glow: rgba(79, 70, 229, 0.3);
+    
+    /* SEMANTIC CARDS (Refined pastels) */
+    --card-prod-bg: #eff6ff; --card-prod-border: #bfdbfe; --card-prod-text: #1e40af;
+    --card-inv-bg: #f0fdf4; --card-inv-border: #bbf7d0; --card-inv-text: #166534;
+    --card-mkt-bg: #eef2ff; --card-mkt-border: #c7d2fe; --card-mkt-text: #3730a3;
+    --card-pos-bg: #fff7ed; --card-pos-border: #fed7aa; --card-pos-text: #9a3412;
+    --card-buy-bg: #ecfeff; --card-buy-border: #a5f3fc; --card-buy-text: #155e75;
 
     color-scheme: light;
 }
 
-/* Dark Mode Configuration */
+/* DARK MODE (Deep, rich, high contrast safe) */
 [data-theme="dark"],
 .dark {
-    /* Dark Mode Overrides - Professional Palette */
-    --app-bg: #0f172a;
-    /* Slate 900 */
-    --app-text: #f8fafc;
-    /* Slate 50 */
-    --app-text-muted: #94a3b8;
-    /* Slate 400 */
+    --app-bg: #0b0f19; /* Very deep slate/blue */
+    --app-text: #e2e8f0; /* Slate 200 */
+    --app-text-muted: #94a3b8; /* Slate 400 */
 
-    --sidebar-bg: #0f172a;
-    --card-bg: #1e293b;
-    /* Slate 800 */
-    --border-color: #334155;
-    /* Slate 700 */
+    --card-bg: #111827; /* Gray 900 */
+    --card-border: #1f2937; /* Gray 800 */
+    
+    --sidebar-bg: #111827;
+    --border-color: #1f2937; /* Gray 800 */
 
-    --subtle-bg: #334155;
-    /* Slate 700 */
-    --hover-bg: #1e293b;
-    /* Slate 800 */
+    --subtle-bg: #1f2937; /* Gray 800 */
+    --hover-bg: #374151; /* Gray 700 */
 
-    /* Semantic Card Colors (Dark) */
-    --card-prod-bg: rgba(30, 58, 138, 0.4);
-    --card-prod-border: #1e3a8a;
-    --card-prod-text: #bfdbfe;
+    --ai-core-glow: rgba(99, 102, 241, 0.4);
 
-    --card-inv-bg: rgba(6, 78, 59, 0.4);
-    --card-inv-border: #064e3b;
-    --card-inv-text: #6ee7b7;
-
-    --card-mkt-bg: rgba(49, 46, 129, 0.4);
-    --card-mkt-border: #312e81;
-    --card-mkt-text: #c7d2fe;
-
-    --card-pos-bg: rgba(124, 45, 18, 0.4);
-    --card-pos-border: #7c2d12;
-    --card-pos-text: #fdba74;
-
-    --card-buy-bg: rgba(22, 78, 99, 0.4);
-    --card-buy-border: #164e63;
-    --card-buy-text: #67e8f9;
+    /* Muted semantics for dark mode */
+    --card-prod-bg: rgba(30,58,138,0.2); --card-prod-border: #1e3a8a; --card-prod-text: #93c5fd;
+    --card-inv-bg: rgba(6,78,59,0.2); --card-inv-border: #064e3b; --card-inv-text: #6ee7b7;
+    --card-mkt-bg: rgba(49,46,129,0.2); --card-mkt-border: #312e81; --card-mkt-text: #a5b4fc;
+    --card-pos-bg: rgba(124,45,18,0.2); --card-pos-border: #7c2d12; --card-pos-text: #fdba74;
+    --card-buy-bg: rgba(22,78,99,0.2); --card-buy-border: #164e63; --card-buy-text: #67e8f9;
 
     color-scheme: dark;
 }
 
-/* Global resets specifically for theme application */
+/* GLOBAL RESETS */
 body {
     background-color: var(--app-bg);
     color: var(--app-text);
-    transition: background-color 0.3s ease, color 0.3s ease;
-    height: 100%;
-    margin: 0;
-    font-family: 'Inter', Roboto, sans-serif;
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.4s ease, color 0.3s ease;
 }
 
-/* Ensure darker backgrounds for dark mode specific elements */
-.dark body {
-    background-color: #0f172a;
+/* SCROLLBARS (Modern Webkit) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1; /* Slate 300 */
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background-color: #475569; /* Slate 600 */
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8; /* Slate 400 */
 }
 
-/* --- Global Professional Card Styles --- */
-
+/* COMPONENT: CARDS */
 .app-card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
-    /* rounded-xl */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    color: var(--app-text);
-    transition: all 0.2s ease-in-out;
+    border-radius: 1rem; /* More rounded */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* Soft depth */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
 
     &:hover {
-        border-color: var(--ai-core-primary);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+        border-color: var(--ai-core-primary); /* Brand highlight */
     }
 }
 
-/* Specific Dark Mode overrides for stability in modules */
-.dark .app-card {
-    background-color: #1e293b;
-    /* Slate 800 */
-    border-color: #334155;
-    color: #f8fafc;
-}
-
-/* Button & Input Overrides for Global Theme */
+/* COMPONENT: INPUTS */
 .app-input {
-    background-color: var(--card-bg);
+    background-color: var(--subtle-bg);
     color: var(--app-text);
     border: 1px solid var(--border-color);
-    border-radius: 0.375rem;
-    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem; /* Larger touch target */
+    font-size: 0.95rem;
     width: 100%;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &::placeholder {
+        color: var(--app-text-muted);
+        opacity: 0.7;
+    }
+
+    &:hover {
+        background-color: var(--card-bg);
+        border-color: #94a3b8;
+    }
 
     &:focus {
         outline: none;
+        background-color: var(--card-bg);
         border-color: var(--ai-core-primary);
-        box-shadow: 0 0 0 2px var(--ai-core-glow);
+        box-shadow: 0 0 0 3px var(--ai-core-glow);
     }
 }
 
-.dark .app-input {
-    background-color: #0f172a;
-    /* Slate 900 for inputs in dark mode */
-    border-color: #334155;
-    color: #f8fafc;
-}
-
+/* COMPONENT: BUTTONS */
 .app-button-primary {
-    background-color: var(--ai-core-primary);
+    background: linear-gradient(135deg, var(--ai-core-primary) 0%, #4338ca 100%);
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    transition: background-color 0.2s;
+    padding: 0.75rem 1.5rem; /* Larger comfortable click area */
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    border: none;
     cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 
     &:hover {
-        background-color: #4338ca;
-        /* Indigo 700 */
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px -2px rgba(79, 70, 229, 0.4);
+        filter: brightness(1.1);
     }
+
+    &:active {
+        transform: translateY(0);
+    }
+    
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        background: var(--app-text-muted);
+    }
+}
+
+/* UTILITY: GLASSMORPHISM */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.dark .glass-panel {
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
 }

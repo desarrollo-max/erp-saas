@@ -4,6 +4,7 @@ export abstract class ProductRepository {
     abstract create(product: Partial<ScmProduct>): Promise<void>;
     abstract createBulk(products: Partial<ScmProduct>[], updateIfExists?: boolean): Promise<{ added: number; updated: number; failed: number; errors: any[] }>;
     abstract getAll(tenantId: string): Promise<ScmProduct[]>;
+    abstract getPaginated(tenantId: string, page: number, pageSize: number, filters?: any): Promise<{ data: ScmProduct[], totalCount: number }>;
     abstract getLightweightList(tenantId: string): Promise<Partial<ScmProduct>[]>;
     abstract getById(id: string): Promise<ScmProduct | null>;
     abstract update(id: string, product: Partial<ScmProduct>): Promise<void>;
@@ -23,4 +24,5 @@ export abstract class ProductRepository {
     abstract saveVariants(variants: any[]): Promise<void>;
     abstract createVariant(variant: Partial<any>): Promise<any>;
     abstract getAllVariants(tenantId: string): Promise<ScmProductVariant[]>;
+    abstract syncMissingVariants(): Promise<number>;
 }

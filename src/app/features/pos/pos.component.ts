@@ -422,7 +422,10 @@ export class PosComponent implements OnInit {
       </head>
       <body>
         <div class="header">
-          <h2>ERP SAAS</h2>
+          <div style="margin-bottom: 10px;">
+            <span style="font-size: 24px; font-weight: 900; letter-spacing: -1px;">SIAC</span>
+            <span style="font-size: 14px; letter-spacing: 2px; color: #666;">ERP</span>
+          </div>
           <p>Ticket de Venta</p>
           <p>${date}</p>
           <p>Almacén: ${warehouseName}</p>

@@ -62,4 +62,14 @@ export class SupabaseModuleRepository extends ModuleRepository {
 
     if (error) throw new Error(`Error installing module: ${error.message}`);
   }
+
+  async uninstallModule(clientId: string, moduleId: string): Promise<void> {
+    const { error } = await this.supabase.client
+      .from('tenant_licenses')
+      .delete()
+      .eq('tenant_id', clientId)
+      .eq('module_id', moduleId);
+
+    if (error) throw new Error(`Error uninstalling module: ${error.message}`);
+  }
 }

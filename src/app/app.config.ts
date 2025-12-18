@@ -24,13 +24,18 @@ import { SupabaseFinanceRepository } from './core/repositories/implementations/s
 import { HRRepository } from './core/repositories/hr.repository';
 import { SupabaseHRRepository } from './core/repositories/implementations/supabase-hr.repository';
 import { ManufacturingRepository } from './core/repositories/manufacturing.repository';
-import { MockManufacturingRepository } from './core/repositories/implementations/mock-manufacturing.repository';
+import { SupabaseManufacturingRepository } from './core/repositories/implementations/supabase-manufacturing.repository';
 import { InventoryRepository } from './core/repositories/inventory.repository';
 import { MockInventoryRepository } from './core/repositories/implementations/mock-inventory.repository';
 import { WarehouseRepository } from './core/repositories/warehouse.repository';
 import { SupabaseWarehouseRepository } from './core/repositories/implementations/supabase-warehouse.repository';
 import { StockRepository } from './core/repositories/stock.repository';
 import { SupabaseStockRepository } from './core/repositories/implementations/supabase-stock.repository';
+import { PurchaseOrderRepository } from './core/repositories/purchase-order.repository';
+import { SupabasePurchaseOrderRepository } from './core/repositories/implementations/supabase-purchase-order.repository';
+import { SupplierRepository } from './core/repositories/supplier.repository';
+import { SupabaseSupplierRepository } from './core/repositories/implementations/supabase-supplier.repository';
+
 
 // Factory function to initialize the session
 export function initializeSession(sessionService: SessionService) {
@@ -61,10 +66,12 @@ export const appConfig: ApplicationConfig = {
     { provide: SalesRepository, useClass: SupabaseSalesRepository },
     { provide: FinanceRepository, useClass: SupabaseFinanceRepository },
     { provide: HRRepository, useClass: SupabaseHRRepository },
-    { provide: ManufacturingRepository, useClass: MockManufacturingRepository },
+    { provide: ManufacturingRepository, useClass: SupabaseManufacturingRepository },
     { provide: InventoryRepository, useClass: SupabaseWarehouseRepository },
     { provide: WarehouseRepository, useClass: SupabaseWarehouseRepository },
-    { provide: StockRepository, useClass: SupabaseStockRepository }
+    { provide: StockRepository, useClass: SupabaseStockRepository },
+    { provide: PurchaseOrderRepository, useClass: SupabasePurchaseOrderRepository },
+    { provide: SupplierRepository, useClass: SupabaseSupplierRepository }
   ]
 };
 
