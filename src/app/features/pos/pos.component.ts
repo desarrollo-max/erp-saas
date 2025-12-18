@@ -359,36 +359,95 @@ export class PosComponent implements OnInit {
     this.isProcessing.set(true);
     try {
       const warehouseId = this.selectedWarehouseId()!;
-      const currentCart = this.cart();
+      const currentCart = [...this.cart()]; // Snapshot for receipt
 
       // Create movements
       for (const item of currentCart) {
+        // IMPORTANT: The repository handles subtraction for 'OUT' type.
+        // We must pass POSITIVE quantity.
         await this.stockRepo.createStockMovement({
+          tenant_id: this.session.currentTenantId()!, // Ensure tenant context
           warehouse_id: warehouseId,
           variant_id: item.variant.id,
-          // Explicitly pass product_id if available to satisfy DB consistency if needed
-          // (Legacy column or triggers might use it)
-          product_id: item.variant.product_id,
-          quantity: -item.quantity, // Ensure negative for OUT
+          // Removed product_id passed explicitly to avoid ambiguous column errors.
+          // The DB uses variant_id as the primary link now.
+          quantity: Math.abs(item.quantity), // Positive value
           movement_type: 'OUT',
           notes: 'Venta POS Ref: ' + new Date().toLocaleTimeString(),
           reference_type: 'pos_sale',
-          movement_date: new Date().toISOString().split('T')[0]
+          movement_date: new Date().toISOString()
         });
       }
+
+      this.printTicket(currentCart, this.calculateTotal());
 
       this.notification.success('Venta registrada con éxito');
       this.cart.set([]);
 
       // Refresh stock
-      this.onWarehouseChange();
+      this.awaitingRefresh = true; // Flag for UI or wait
+      await this.onWarehouseChange();
 
     } catch (error: any) {
       console.error('Checkout error', error);
       this.notification.error(`Error en venta: ${error.message}`);
     } finally {
       this.isProcessing.set(false);
+      this.awaitingRefresh = false;
     }
+  }
+
+  private awaitingRefresh = false;
+
+  printTicket(items: any[], total: number) {
+    const printWindow = window.open('', '', 'width=400,height=600');
+    if (!printWindow) return;
+
+    const date = new Date().toLocaleString();
+    const warehouseName = this.selectedWarehouseName();
+
+    // Generate HTML for receipt
+    const html = `
+      <html>
+      <head>
+        <title>Ticket de Venta</title>
+        <style>
+          body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .line { border-bottom: 1px dashed #000; margin: 10px 0; }
+          .item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+          .total { font-weight: bold; font-size: 14px; text-align: right; margin-top: 10px; }
+          .footer { text-align: center; margin-top: 20px; font-size: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>ERP SAAS</h2>
+          <p>Ticket de Venta</p>
+          <p>${date}</p>
+          <p>Almacén: ${warehouseName}</p>
+        </div>
+        <div class="line"></div>
+        ${items.map(item => `
+          <div class="item">
+            <span>${item.quantity} x ${item.variant.name.substring(0, 20)}</span>
+            <span>$${(item.quantity * item.price).toFixed(2)}</span>
+          </div>
+        `).join('')}
+        <div class="line"></div>
+        <div class="total">TOTAL: $${total.toFixed(2)}</div>
+        <div class="footer">
+          <p>¡Gracias por su compra!</p>
+        </div>
+        <script>
+          window.onload = function() { window.print(); window.close(); }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
   }
 
   calculateTotal(): number {

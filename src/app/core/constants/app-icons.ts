@@ -40,6 +40,7 @@ export const APP_ICONS = {
     inventory: 'heroArchiveBoxSolid',
     marketplace: 'heroBuildingStorefrontSolid',
     purchases: 'heroShoppingCartSolid',
+    purchasing: 'heroShoppingCartSolid',
     sales: 'heroBanknotesSolid',
     pos: 'heroCurrencyDollarSolid',
     logistics: 'heroTruckSolid',

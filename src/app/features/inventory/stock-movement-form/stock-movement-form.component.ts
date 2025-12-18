@@ -274,7 +274,8 @@ export class StockMovementFormComponent implements OnInit {
     });
 
     this.productSearchControl.valueChanges.subscribe(() => {
-      this.form.get('variant_id')?.markAsUntouched();
+      // Don't clear validation immediately, wait for selection
+      // But if user types new search, we should probably reset variant selection
     });
   }
 
@@ -288,6 +289,7 @@ export class StockMovementFormComponent implements OnInit {
         this.warehouseRepo.getAll(tenantId)
       ]);
       this.products.set(prods);
+      // Cast to match ScmWarehouse interface if there's a discrepancy, otherwise implicit set is fine
       this.warehouses.set(whs as unknown as ScmWarehouse[]);
     } catch (e) {
       console.error(e);
@@ -305,7 +307,13 @@ export class StockMovementFormComponent implements OnInit {
       if (!this.form.get('product_id')?.value) {
         this.productSearchControl.setValue('');
       } else {
-        this.productSearchControl.setValue(this.selectedProduct()?.name || '');
+        // Restore name if they typed something else but didn't select
+        const currentProd = this.selectedProduct();
+        if (currentProd) {
+          this.productSearchControl.setValue(currentProd.name, { emitEvent: false });
+        } else {
+          this.productSearchControl.setValue('');
+        }
       }
     }, 200);
   }
@@ -360,7 +368,6 @@ export class StockMovementFormComponent implements OnInit {
     this.selectedProduct.set(null);
     this.mergedVariants.set([]);
     this.selectedVariant.set(null);
-    setTimeout(() => document.getElementById('product_search')?.focus(), 100);
   }
 
   async onSubmit() {

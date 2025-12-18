@@ -1,9 +1,10 @@
-import { ScmProduct, ScmProductImage } from "@core/models/erp.types";
+import { ScmProduct, ScmProductImage, ScmProductVariant } from "@core/models/erp.types";
 
 export abstract class ProductRepository {
     abstract create(product: Partial<ScmProduct>): Promise<void>;
     abstract createBulk(products: Partial<ScmProduct>[], updateIfExists?: boolean): Promise<{ added: number; updated: number; failed: number; errors: any[] }>;
     abstract getAll(tenantId: string): Promise<ScmProduct[]>;
+    abstract getLightweightList(tenantId: string): Promise<Partial<ScmProduct>[]>;
     abstract getById(id: string): Promise<ScmProduct | null>;
     abstract update(id: string, product: Partial<ScmProduct>): Promise<void>;
     abstract delete(id: string): Promise<void>;
@@ -21,4 +22,5 @@ export abstract class ProductRepository {
     abstract generateVariants(productId: string, config: any): Promise<any[]>;
     abstract saveVariants(variants: any[]): Promise<void>;
     abstract createVariant(variant: Partial<any>): Promise<any>;
+    abstract getAllVariants(tenantId: string): Promise<ScmProductVariant[]>;
 }

@@ -7,6 +7,7 @@ import { Module } from '@core/models/module.model';
 import { NgIconsModule } from '@ng-icons/core';
 import { ThemeService } from '@core/services/theme.service';
 import { APP_ICONS, getAppIcon } from '@core/constants/app-icons';
+import { GlobalSearchModalComponent } from '../global-search-modal/global-search-modal.component';
 
 interface ModuleGroup {
   category: string;
@@ -16,7 +17,7 @@ interface ModuleGroup {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgIconsModule],
+  imports: [CommonModule, RouterModule, NgIconsModule, GlobalSearchModalComponent],
   template: `
     <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm z-50 fixed top-0 w-full h-16 transition-colors duration-300">
       <div class="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -101,6 +102,12 @@ interface ModuleGroup {
 
         <!-- RIGHT: User Profile & Context -->
         <div class="flex items-center gap-2 sm:gap-4">
+          <!-- SEARCH TRIGGER -->
+          <button (click)="openSearch()" class="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none transition-colors">
+            <span class="sr-only">Buscar</span>
+            <ng-icon name="heroMagnifyingGlassSolid" class="h-6 w-6"></ng-icon>
+          </button>
+
           <!-- Context Info (Role) -->
           <div class="hidden md:flex flex-col items-end mr-2">
              <span class="text-xs text-gray-500 dark:text-gray-400 font-medium" *ngIf="session.currentUserRole()">
@@ -126,6 +133,11 @@ interface ModuleGroup {
     </header>
     <!-- Spacer to prevent content overlap -->
     <div class="h-16"></div>
+
+    <!-- GLOBAL SEARCH MODAL -->
+    <ng-container *ngIf="isSearchOpen()">
+        <app-global-search-modal (closed)="isSearchOpen.set(false)"></app-global-search-modal>
+    </ng-container>
   `,
   styles: []
 })
@@ -139,6 +151,7 @@ export class HeaderComponent {
 
   // State
   isMenuOpen = signal(false);
+  isSearchOpen = signal(false);
   modules = signal<Module[]>([]);
   groupedModules = computed(() => {
     const modules = this.modules();
@@ -182,6 +195,10 @@ export class HeaderComponent {
 
   toggleTheme() {
     this.themeService.toggleTheme();
+  }
+
+  openSearch() {
+    this.isSearchOpen.set(true);
   }
 
   async loadModules() {

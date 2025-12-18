@@ -75,15 +75,8 @@ import { APP_ICONS } from '@core/constants/app-icons';
                     style="background-color: var(--card-bg); border-color: var(--border-color);">
                  
                  <!-- Image -->
-                 <div class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden mb-2 relative">
-                    <img *ngIf="product.image_url" [src]="product.image_url" loading="lazy" class="object-cover w-full h-full" alt="Prod">
-                    <span *ngIf="!product.image_url" class="text-2xl font-bold opacity-30 select-none">{{ product.name.charAt(0) }}</span>
-                    
-                    <!-- Selection Badge -->
-                    <div *ngIf="getQuantity(product.id) > 0" class="absolute top-2 right-2 bg-cyan-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
-                      x{{ getQuantity(product.id) }}
-                    </div>
-                 </div>
+                 <!-- Image Removed as requested -->
+
 
                  <!-- Info -->
                  <h3 class="font-semibold text-xs sm:text-sm line-clamp-2 leading-tight min-h-[2.5em]" [title]="product.name">{{ product.name }}</h3>

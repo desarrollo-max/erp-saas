@@ -37,6 +37,7 @@ export class MockInventoryRepository extends InventoryRepository {
         {
             id: 'sl1',
             tenant_id: 't1',
+            company_id: 'c1',
             variant_id: 'raw_leather_01', // Example Raw Material
             warehouse_id: 'wh1',
             quantity_on_hand: 500,
@@ -50,6 +51,7 @@ export class MockInventoryRepository extends InventoryRepository {
         {
             id: 'sl2',
             tenant_id: 't1',
+            company_id: 'c1',
             variant_id: 'raw_thread_01',
             warehouse_id: 'wh1',
             quantity_on_hand: 1000,
@@ -76,6 +78,7 @@ export class MockInventoryRepository extends InventoryRepository {
         this.movements.push({
             id: Math.random().toString(36).substring(7),
             tenant_id: movement.tenant_id || 't1',
+            company_id: 'c1',
             variant_id: movement.variant_id!,
             warehouse_id: movement.warehouse_id!,
             movement_type: movement.movement_type || 'ADJUSTMENT',
@@ -96,6 +99,7 @@ export class MockInventoryRepository extends InventoryRepository {
             level = {
                 id: 'sl-' + Date.now(),
                 tenant_id: movement.tenant_id || 't1',
+                company_id: 'c1',
                 variant_id: movement.variant_id!,
                 warehouse_id: movement.warehouse_id!,
                 quantity_on_hand: 0,

@@ -8,4 +8,5 @@ export abstract class StockRepository {
 
     // Also useful methods likely needed
     abstract getAllStockByWarehouse(warehouseId: string): Promise<ScmStockLevel[]>;
+    abstract getMovementHistory(): Promise<ScmStockMovement[]>;
 }

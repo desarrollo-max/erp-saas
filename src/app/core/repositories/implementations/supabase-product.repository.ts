@@ -120,6 +120,23 @@ export class SupabaseProductRepository extends ProductRepository {
         return data as ScmProduct[];
     }
 
+    async getLightweightList(tenantId: string): Promise<Partial<ScmProduct>[]> {
+        const company_id = this.getCompanyId();
+
+        const { data, error } = await this.supabase.client
+            .from('scm_products')
+            .select('id, name, sku, cost_price, sale_price, is_active')
+            .eq('tenant_id', tenantId)
+            .eq('company_id', company_id)
+            .eq('is_active', true) // Typically we only want active products for selectors
+            .order('name');
+
+        if (error) {
+            throw new Error(`Error fetching products list: ${error.message}`);
+        }
+        return data as Partial<ScmProduct>[];
+    }
+
     async getById(id: string): Promise<ScmProduct | null> {
         const company_id = this.getCompanyId();
 
@@ -334,5 +351,21 @@ export class SupabaseProductRepository extends ProductRepository {
             throw new Error(`Error creating variant: ${error.message}`);
         }
         return data;
+    }
+
+    async getAllVariants(tenantId: string): Promise<any[]> {
+        const company_id = this.getCompanyId();
+
+        const { data, error } = await this.supabase.client
+            .from('scm_product_variants')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .eq('company_id', company_id);
+
+        if (error) {
+            console.error('Error fetching all variants:', error);
+            return [];
+        }
+        return data || [];
     }
 }

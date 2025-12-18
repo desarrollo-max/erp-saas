@@ -353,6 +353,7 @@ export interface ScmWarehouse {
 export interface ScmStockLevel {
   id: string;
   tenant_id: string;
+  company_id: string;
   variant_id: string; // Migrated from product_id
   warehouse_id: string;
   quantity_on_hand: number;
@@ -367,6 +368,7 @@ export interface ScmStockLevel {
 export interface ScmStockMovement {
   id: string;
   tenant_id: string;
+  company_id: string;
   // client_id removed
   warehouse_id: string;
   product_id?: string; // Optional (or Required depending on schema, but DB can likely handle null if variant is primary, but app code sends it)
@@ -729,4 +731,70 @@ export interface StockOnHand {
   quantity_on_hand: number;
   quantity_reserved: number;
   quantity_available: number;
+}
+
+// ======================================================
+//       Purchasing (Standardized) Interfaces
+// ======================================================
+
+export interface Supplier {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  name: string;
+  legal_name: string | null;
+  tax_id: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postal_code: string | null;
+  payment_terms: string | null;
+  is_active: boolean;
+  rating: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  warehouse_id?: string; // Target warehouse for reception
+  po_number: string;
+  po_date: string;
+  supplier_id: string;
+  expected_delivery_date: string | null;
+  status: 'DRAFT' | 'SENT' | 'PARTIAL' | 'COMPLETED' | 'CANCELLED';
+  total_amount: number;
+  tax_amount: number;
+  freight_amount: number;
+  net_amount: number;
+  currency_code: string;
+  notes: string | null;
+  created_by: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseOrderLine {
+  id: string;
+  purchase_order_id: string;
+  line_number: number;
+  product_id: string;
+  variant_id?: string; // New field for variant support
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_price: number;
+  line_amount: number;
+  tax_percent: number;
+  expected_delivery_date: string | null;
+  notes: string | null;
+  created_at: string;
 }

@@ -19,7 +19,7 @@ export class SessionService {
   public currentUserId = signal<string | null>(null);
 
   // Signal para el usuario autenticado (Para HeaderComponent)
-  public user = signal<{ email?: string } | null>(null);
+  public user = signal<{ email?: string; id?: string } | null>(null);
 
   // Signal para el objeto completo del tenant
   public currentTenant = signal<Tenant | null>(null);
@@ -148,7 +148,7 @@ export class SessionService {
       // Always set the user ID from the active session regardless of tenant context state
       const userId = session.user.id;
       this.currentUserId.set(userId);
-      this.user.set({ email: session.user.email });
+      this.user.set({ email: session.user.email, id: userId });
 
       // Si ya hay contexto (Tenant ID en Signals) y NO estamos forzando recarga, no hacemos nada más.
       if (this.currentTenantId() && !forceReload) {

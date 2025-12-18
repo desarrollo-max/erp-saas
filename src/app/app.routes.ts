@@ -65,6 +65,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/stock-movement-form/stock-movement-form.component').then(m => m.StockMovementFormComponent)
       },
       {
+        path: 'inventory/movements/history',
+        loadComponent: () => import('./features/inventory/stock-movement-history/stock-movement-history.component').then(m => m.StockMovementHistoryComponent)
+      },
+      {
         path: 'cadena-suministro/inventario',
         loadComponent: () => import('./features/supply-chain/inventory/inventory.component').then(m => m.InventoryComponent)
       },
@@ -107,6 +111,14 @@ export const routes: Routes = [
       {
         path: 'cadena-suministro/compras',
         loadComponent: () => import('./features/supply-chain/purchasing/purchasing.component').then(m => m.PurchasingComponent)
+      },
+      {
+        path: 'purchasing/orders/new',
+        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
+      },
+      {
+        path: 'purchasing/orders/edit/:id',
+        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
       },
       {
         path: 'pos',
