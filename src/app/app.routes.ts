@@ -68,78 +68,60 @@ export const routes: Routes = [
         path: 'inventory/movements/history',
         loadComponent: () => import('./features/inventory/stock-movement-history/stock-movement-history.component').then(m => m.StockMovementHistoryComponent)
       },
+      // 📦 CADENA DE SUMINISTRO (Agrupado)
       {
-        path: 'cadena-suministro/inventario',
-        loadComponent: () => import('./features/supply-chain/inventory/inventory.component').then(m => m.InventoryComponent)
+        path: 'cadena-suministro',
+        children: [
+          {
+            path: 'inventario',
+            children: [
+              { path: '', loadComponent: () => import('./features/supply-chain/inventory/inventory.component').then(m => m.InventoryComponent) },
+              { path: 'etiquetas', loadComponent: () => import('./features/supply-chain/inventory/label-printing/label-printing.component').then(m => m.LabelPrintingComponent) }
+            ]
+          },
+          {
+            path: 'almacenes',
+            children: [
+              { path: '', loadComponent: () => import('./features/supply-chain/warehouses/warehouse-list/warehouse-list.component').then(m => m.WarehouseListComponent) },
+              { path: 'new', loadComponent: () => import('./features/supply-chain/warehouses/warehouse-form/warehouse-form.component').then(m => m.WarehouseFormComponent) },
+              { path: 'edit/:id', loadComponent: () => import('./features/supply-chain/warehouses/warehouse-form/warehouse-form.component').then(m => m.WarehouseFormComponent) },
+              { path: 'stock/:id', loadComponent: () => import('./features/supply-chain/warehouses/warehouse-stock-view/warehouse-stock-view.component').then(m => m.WarehouseStockViewComponent) }
+            ]
+          },
+          {
+            path: 'manufactura',
+            loadChildren: () => import('./features/supply-chain/manufacturing/manufacturing.routes').then(m => m.PRODUCTION_ROUTES)
+          },
+          {
+            path: 'compras',
+            children: [
+              { path: '', loadComponent: () => import('./features/supply-chain/purchasing/purchasing.component').then(m => m.PurchasingComponent) },
+              { path: 'new', loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent) },
+              { path: 'edit/:id', loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent) }
+            ]
+          },
+          {
+            path: 'proveedores',
+            children: [
+              { path: '', loadComponent: () => import('./features/supply-chain/suppliers/supplier-list.component').then(m => m.SupplierListComponent) },
+              { path: 'nuevo', loadComponent: () => import('./features/supply-chain/suppliers/supplier-form.component').then(m => m.SupplierFormComponent) },
+              { path: 'editar/:id', loadComponent: () => import('./features/supply-chain/suppliers/supplier-form.component').then(m => m.SupplierFormComponent) }
+            ]
+          },
+          {
+            path: 'movimientos',
+            loadComponent: () => import('./features/supply-chain/inventory/transfer/stock-transfer.component').then(m => m.StockTransferComponent)
+          }
+        ]
       },
-      {
-        path: 'cadena-suministro/inventario/etiquetas',
-        loadComponent: () => import('./features/supply-chain/inventory/label-printing/label-printing.component').then(m => m.LabelPrintingComponent)
-      },
-      {
-        path: 'cadena-suministro/almacenes',
-        loadComponent: () => import('./features/supply-chain/warehouses/warehouse-list/warehouse-list.component').then(m => m.WarehouseListComponent)
-      },
-      {
-        path: 'cadena-suministro/almacenes/new',
-        loadComponent: () => import('./features/supply-chain/warehouses/warehouse-form/warehouse-form.component').then(m => m.WarehouseFormComponent)
-      },
-      {
-        path: 'cadena-suministro/almacenes/edit/:id',
-        loadComponent: () => import('./features/supply-chain/warehouses/warehouse-form/warehouse-form.component').then(m => m.WarehouseFormComponent)
-      },
-      {
-        path: 'cadena-suministro/almacenes/stock/:id',
-        loadComponent: () => import('./features/supply-chain/warehouses/warehouse-stock-view/warehouse-stock-view.component').then(m => m.WarehouseStockViewComponent)
-      },
-      {
-        path: 'inventory', // Ruta base del módulo de Inventario (Actualizada a Supply Chain Dashboard)
-        loadComponent: () => import('./features/supply-chain/inventory/inventory.component').then(m => m.InventoryComponent)
-      },
-      {
-        path: 'production',
-        loadChildren: () => import('./features/supply-chain/manufacturing/manufacturing.routes').then(m => m.PRODUCTION_ROUTES)
-      },
-      {
-        path: 'produccion',
-        loadChildren: () => import('./features/supply-chain/manufacturing/manufacturing.routes').then(m => m.PRODUCTION_ROUTES)
-      },
-      {
-        path: 'manufactura',
-        loadChildren: () => import('./features/supply-chain/manufacturing/manufacturing.routes').then(m => m.PRODUCTION_ROUTES)
-      },
-      {
-        path: 'cadena-suministro/manufactura',
-        loadChildren: () => import('./features/supply-chain/manufacturing/manufacturing.routes').then(m => m.PRODUCTION_ROUTES)
-      },
-      {
-        path: 'cadena-suministro/compras',
-        loadComponent: () => import('./features/supply-chain/purchasing/purchasing.component').then(m => m.PurchasingComponent)
-      },
-      {
-        path: 'purchasing/orders/new',
-        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
-      },
-      {
-        path: 'cadena-suministro/compras/new',
-        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
-      },
-      {
-        path: 'purchasing/orders/edit/:id',
-        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent)
-      },
-      {
-        path: 'cadena-suministro/proveedores',
-        loadComponent: () => import('./features/supply-chain/suppliers/supplier-list.component').then(m => m.SupplierListComponent)
-      },
-      {
-        path: 'cadena-suministro/proveedores/nuevo',
-        loadComponent: () => import('./features/supply-chain/suppliers/supplier-form.component').then(m => m.SupplierFormComponent)
-      },
-      {
-        path: 'cadena-suministro/proveedores/editar/:id',
-        loadComponent: () => import('./features/supply-chain/suppliers/supplier-form.component').then(m => m.SupplierFormComponent)
-      },
+
+      // ALIAS PARA ACCESO RÁPIDO
+      { path: 'inventario', redirectTo: 'cadena-suministro/inventario', pathMatch: 'full' },
+      { path: 'inventory', redirectTo: 'cadena-suministro/inventario', pathMatch: 'full' },
+      { path: 'produccion', redirectTo: 'cadena-suministro/manufactura', pathMatch: 'prefix' },
+      { path: 'production', redirectTo: 'cadena-suministro/manufactura', pathMatch: 'prefix' },
+      { path: 'manufactura', redirectTo: 'cadena-suministro/manufactura', pathMatch: 'prefix' },
+      { path: 'fabricacion', redirectTo: 'cadena-suministro/manufactura', pathMatch: 'prefix' },
       {
         path: 'pos',
         loadComponent: () => import('./features/pos/pos.component').then(m => m.PosComponent)

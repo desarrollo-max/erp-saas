@@ -25,13 +25,17 @@ export class SupabaseService {
     });
 
     // Cliente ADMIN con Service Role Key (Bypass RLS)
-    // ADVERTENCIA DE SEGURIDAD: Esto expone la clave maestra en el cliente.
-    // Solo debe usarse porque el usuario lo ha solicitado explícitamente para desarrollo.
     this.adminClient = createClient(environment.supabaseUrl, environment.supabaseServiceRoleKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
-        detectSessionInUrl: false
+        detectSessionInUrl: false,
+        storageKey: 'sb-admin-auth-token', // Clave única para evitar conflictos de advertencia
+        storage: {
+          getItem: () => null,
+          setItem: () => { },
+          removeItem: () => { }
+        }
       }
     });
   }

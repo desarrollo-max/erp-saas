@@ -9,7 +9,9 @@ import { ScmProduct } from '@core/models/erp.types';
 import { PurchaseOrderService } from '@core/services/purchase-order.service';
 import { NgIconsModule, provideIcons } from '@ng-icons/core';
 import * as heroIcons from '@ng-icons/heroicons/solid';
-import { heroPrinterSolid } from '@ng-icons/heroicons/solid';
+import { heroPrinterSolid, heroDocumentArrowDownSolid } from '@ng-icons/heroicons/solid';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-inventory-dashboard',
@@ -164,10 +166,17 @@ import { heroPrinterSolid } from '@ng-icons/heroicons/solid';
               <option value="inactive">Inactivos</option>
             </select>
           </div>
+          <button 
+            (click)="exportToPdf()"
+            [disabled]="isLoading() || products().length === 0"
+            class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all">
+            <ng-icon name="heroDocumentArrowDownSolid" class="h-4 w-4 mr-2"></ng-icon>
+            Exportar PDF
+          </button>
         </div>
 
         <!-- TABLE WITH LOADING STATE -->
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200 min-h-[400px]">
+        <div id="inventory-table-container" class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200 min-h-[400px]">
           
           <div *ngIf="isLoading()" class="h-64 flex flex-col items-center justify-center">
              <ng-icon name="heroArrowPathSolid" class="h-10 w-10 text-indigo-500 animate-spin mb-4"></ng-icon>
@@ -190,7 +199,6 @@ import { heroPrinterSolid } from '@ng-icons/heroicons/solid';
           <table *ngIf="!isLoading() && products().length > 0" class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Imagen</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto / SKU</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
                 <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Existencias</th>
@@ -204,20 +212,10 @@ import { heroPrinterSolid } from '@ng-icons/heroicons/solid';
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let product of products()" class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4 whitespace-nowrap">
-                   <div class="h-10 w-10 flex-shrink-0">
-                      <img *ngIf="product.image_url" [src]="product.image_url" alt="" class="h-10 w-10 rounded-full object-cover">
-                      <div *ngIf="!product.image_url" class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                         <ng-icon name="heroPhotoSolid" class="h-5 w-5"></ng-icon>
-                      </div>
-                   </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="ml-4">
+                    <div>
                       <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
                       <div class="text-xs text-gray-500">SKU: {{ product.sku }}</div>
                     </div>
-                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -309,8 +307,7 @@ import { heroPrinterSolid } from '@ng-icons/heroicons/solid';
           </div>
         </div>
       </div>
-        </div>
-      </div>
+    </div>
 
     <!-- STOCK DETAILS MODAL -->
     <!-- STOCK DETAILS MODAL -->
@@ -387,7 +384,6 @@ import { heroPrinterSolid } from '@ng-icons/heroicons/solid';
           </div>
         </div>
       </div>
-    </div>
     </div>
 
 
@@ -561,5 +557,110 @@ export class InventoryComponent implements OnInit {
         unit_price: product.cost_price || 0
       }
     });
+  }
+
+  async exportToPdf() {
+    const data = document.getElementById('inventory-table-container');
+    if (!data) return;
+
+    this.notification.info('Preparando documento PDF...');
+
+    // Ocultar elementos que no queremos en el PDF
+    const actionsHeader = data.querySelector('thead th:last-child') as HTMLElement;
+    const actionsCells = data.querySelectorAll('tbody td:last-child') as NodeListOf<HTMLElement>;
+    const originalHeaderDisplay = actionsHeader?.style.display;
+    const originalCellsDisplay: string[] = [];
+    actionsCells.forEach(cell => originalCellsDisplay.push(cell.style.display));
+
+    if (actionsHeader) actionsHeader.style.display = 'none';
+    actionsCells.forEach(cell => cell.style.display = 'none');
+
+    try {
+      const canvas = await html2canvas(data, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          // 1. ELIMINAR TODAS LAS HOJAS DE ESTILO EXTERNAS (LINK)
+          const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+          links.forEach(l => l.remove());
+
+          // 2. SANEAR ETIQUETAS <style> EXISTENTES (Catch oklch, oklab, lch, etc)
+          const styles = clonedDoc.querySelectorAll('style');
+          styles.forEach(style => {
+            // Reemplazo agresivo de cualquier función de color moderna por un color hex seguro
+            // Cubre oklch, oklab, lch, hwb y color-mix (comunes en Tailwind 4)
+            style.innerHTML = style.innerHTML.replace(/(?:oklch|oklab|lch|hwb|color-mix)\s*\([^)]+\)/gi, '#4f46e5');
+          });
+
+          // 3. INYECTAR ESTILOS BASE ESENCIALES
+          const styleOverride = clonedDoc.createElement('style');
+          styleOverride.innerHTML = `
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: white; }
+            #inventory-table-container { 
+              background: white !important; 
+              color: black !important; 
+              width: 100% !important; 
+              max-width: none !important;
+              padding: 0 !important;
+            }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+            th { background-color: #f8fafc; color: #1e293b; font-weight: bold; text-transform: uppercase; }
+            .bg-indigo-600 { background-color: #4f46e5 !important; color: white !important; }
+            .text-indigo-600, .text-indigo-500 { color: #4f46e5 !important; }
+            .bg-indigo-50 { background-color: #eef2ff !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            .bg-amber-50 { background-color: #fffbeb !important; }
+            .font-bold { font-weight: 700; }
+            .font-medium { font-weight: 500; }
+            .whitespace-nowrap { white-space: nowrap; }
+            .text-xs { font-size: 9px; }
+            .text-gray-500 { color: #64748b; }
+            .text-gray-900 { color: #1e293b; }
+          `;
+          clonedDoc.head.appendChild(styleOverride);
+
+          // 4. LIMPIEZA ADICIONAL DE ESTILOS EN LÍNEA
+          const all = clonedDoc.querySelectorAll('*');
+          all.forEach(el => {
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.hasAttribute('style')) {
+              const s = htmlEl.getAttribute('style') || '';
+              // Reemplazo preventivo en atributos style
+              htmlEl.setAttribute('style', s.replace(/(?:oklch|oklab|lch|hwb|color-mix)\s*\([^)]+\)/gi, '#4f46e5'));
+            }
+          });
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = (pdf as any).getImageProperties(imgData);
+      const pdfWidth = (pdf as any).internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // Header Indigo
+      pdf.setFillColor(63, 81, 181);
+      pdf.rect(0, 0, 210, 40, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(22);
+      pdf.text('REPORTE DE INVENTARIO', 15, 25);
+      pdf.setFontSize(10);
+      pdf.text(`Fecha: ${new Date().toLocaleString()}`, 15, 33);
+
+      pdf.addImage(imgData, 'PNG', 0, 45, pdfWidth, pdfHeight);
+
+      pdf.save(`Inventario_${new Date().toISOString().split('T')[0]}.pdf`);
+      this.notification.success('PDF generado con éxito.');
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      this.notification.error('Error al generar el PDF.');
+    } finally {
+      if (actionsHeader) actionsHeader.style.display = originalHeaderDisplay;
+      actionsCells.forEach((cell, index) => cell.style.display = originalCellsDisplay[index]);
+    }
   }
 }

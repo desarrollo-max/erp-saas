@@ -11,6 +11,9 @@ import { ProductRepository } from '@core/repositories/product.repository';
 import { SessionService } from '@core/services/session.service';
 import { ScmStockMovement } from '@core/models/erp.types';
 import { FormsModule } from '@angular/forms';
+import { NotificationService } from '@core/services/notification.service';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Extended Interface for UI
 interface ExtendedStockMovement extends ScmStockMovement {
@@ -41,10 +44,17 @@ interface ExtendedStockMovement extends ScmStockMovement {
         </div>
         
         <div class="flex gap-3">
-           <a [routerLink]="['/inventory/movements/new']" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-2">
-             <ng-icon name="heroPlusSolid" class="h-5 w-5"></ng-icon>
-             Nuevo Movimiento
-           </a>
+            <button 
+              (click)="exportToPdf()"
+              [disabled]="isLoading() || movements().length === 0"
+              class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-2">
+              <ng-icon name="heroDocumentArrowDownSolid" class="h-5 w-5"></ng-icon>
+              Exportar reporte
+            </button>
+            <a [routerLink]="['/inventory/movements/new']" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition flex items-center gap-2">
+              <ng-icon name="heroPlusSolid" class="h-5 w-5"></ng-icon>
+              Nuevo Movimiento
+            </a>
         </div>
       </div>
 
@@ -88,7 +98,7 @@ interface ExtendedStockMovement extends ScmStockMovement {
 
       <!-- TABLE CONTAINER -->
       <div class="flex-1 overflow-auto p-6">
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow ring-1 ring-black ring-opacity-5 overflow-hidden">
+        <div id="movements-table-container" class="bg-white dark:bg-slate-800 rounded-lg shadow ring-1 ring-black ring-opacity-5 overflow-hidden">
           
           <div *ngIf="isLoading()" class="p-12 flex justify-center">
              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -171,6 +181,7 @@ export class StockMovementHistoryComponent implements OnInit {
   private warehouseRepo = inject(WarehouseRepository);
   private productRepo = inject(ProductRepository);
   private session = inject(SessionService);
+  private notification = inject(NotificationService);
 
   public readonly ICONS = APP_ICONS;
 
@@ -320,5 +331,97 @@ export class StockMovementHistoryComponent implements OnInit {
     return m.movement_type === 'IN' ||
       m.movement_type === 'PRODUCTION_OUTPUT' ||
       (m.movement_type === 'ADJUSTMENT' && m.quantity >= 0);
+  }
+
+  async exportToPdf() {
+    const data = document.getElementById('movements-table-container');
+    if (!data) return;
+
+    this.notification.info('Generando reporte PDF...');
+
+    try {
+      const canvas = await html2canvas(data, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          // 1. ELIMINAR TODAS LAS HOJAS DE ESTILO EXTERNAS (LINK)
+          const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+          links.forEach(l => l.remove());
+
+          // 2. SANEAR ETIQUETAS <style> EXISTENTES (Catch oklch, oklab, lch, etc)
+          const styles = clonedDoc.querySelectorAll('style');
+          styles.forEach(style => {
+            // Reemplazo agresivo de cualquier función de color moderna por un color hex seguro
+            // Cubre oklch, oklab, lch, hwb y color-mix (comunes en Tailwind 4)
+            style.innerHTML = style.innerHTML.replace(/(?:oklch|oklab|lch|hwb|color-mix)\s*\([^)]+\)/gi, '#4f46e5');
+          });
+
+          // 3. INYECTAR ESTILOS BASE ESENCIALES
+          const styleOverride = clonedDoc.createElement('style');
+          styleOverride.innerHTML = `
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: white; }
+            #movements-table-container { 
+              background: white !important; 
+              color: black !important; 
+              width: 100% !important; 
+              max-width: none !important;
+              padding: 0 !important;
+            }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+            th { background-color: #f8fafc; color: #1e293b; font-weight: bold; text-transform: uppercase; }
+            .bg-indigo-600 { background-color: #4f46e5 !important; color: white !important; }
+            .text-indigo-600, .text-indigo-500 { color: #4f46e5 !important; }
+            .bg-green-50 { background-color: #f0fdf4 !important; }
+            .text-green-700, .text-green-600 { color: #15803d !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            .text-red-700, .text-red-600 { color: #b91c1c !important; }
+            .font-bold { font-weight: 700; }
+            .font-medium { font-weight: 500; }
+            .whitespace-nowrap { white-space: nowrap; }
+            .text-xs { font-size: 9px; }
+            .text-gray-500 { color: #64748b; }
+            .text-gray-900 { color: #1e293b; }
+          `;
+          clonedDoc.head.appendChild(styleOverride);
+
+          // 4. LIMPIEZA ADICIONAL DE ESTILOS EN LÍNEA
+          const all = clonedDoc.querySelectorAll('*');
+          all.forEach(el => {
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.hasAttribute('style')) {
+              const s = htmlEl.getAttribute('style') || '';
+              // Reemplazo preventivo en atributos style
+              htmlEl.setAttribute('style', s.replace(/(?:oklch|oklab|lch|hwb|color-mix)\s*\([^)]+\)/gi, '#4f46e5'));
+            }
+          });
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = (pdf as any).internal.pageSize.getWidth();
+      const imgProps = (pdf as any).getImageProperties(imgData);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // Header Indigo
+      pdf.setFillColor(63, 81, 181);
+      pdf.rect(0, 0, 210, 40, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(20);
+      pdf.text('HISTORIAL DE MOVIMIENTOS', 15, 25);
+      pdf.setFontSize(10);
+      pdf.text(`Generado el: ${new Date().toLocaleString()}`, 15, 33);
+
+      pdf.addImage(imgData, 'PNG', 0, 45, pdfWidth, pdfHeight);
+      pdf.save(`Movimientos_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      this.notification.success('Reporte generado con éxito.');
+    } catch (e) {
+      console.error('PDF Error:', e);
+      this.notification.error('Error al generar el PDF.');
+    }
   }
 }

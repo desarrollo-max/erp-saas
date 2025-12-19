@@ -51,6 +51,15 @@ export class SupabaseManufacturingRepository extends ManufacturingRepository {
         return data as MfgProductionOrder;
     }
 
+    async updateProductionOrder(orderId: string, order: Partial<MfgProductionOrder>): Promise<void> {
+        const { error } = await this.supabase.client
+            .from('mfg_production_orders')
+            .update(order)
+            .eq('id', orderId);
+
+        if (error) throw error;
+    }
+
     async updateOrderStatus(orderId: string, stageId: string, status: string): Promise<void> {
         const { error } = await this.supabase.client
             .from('mfg_production_orders')

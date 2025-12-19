@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+
+import { Component, OnInit, inject, signal, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WorkOrder } from '../../models/work-order.model';
-import { WorkOrderService } from '../../services/work-order.service';
+import { ManufacturingRepository } from '@core/repositories/manufacturing.repository';
+import { MfgProductionOrder, MfgStage } from '@core/models/erp.types';
 import { NgIconsModule, provideIcons } from '@ng-icons/core';
 import * as heroIcons from '@ng-icons/heroicons/solid';
 
@@ -11,64 +12,59 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
   imports: [CommonModule, NgIconsModule],
   viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="flex gap-8 p-8 overflow-x-auto h-full bg-slate-50 dark:bg-slate-950/20 rounded-[2rem]">
+    <div class="flex gap-8 p-0 overflow-x-auto h-full bg-transparent scrollbar-hide">
       
-      <!-- COLUMNS -->
-      <div *ngFor="let col of columns" class="flex-1 min-w-[320px] flex flex-col group/col">
-        <div class="flex items-center justify-between mb-6 px-2">
+      <!-- COLUMNS dynamically loaded based on stages -->
+      <div *ngFor="let stage of stages(); let i = index" class="flex-1 min-w-[320px] flex flex-col group/col">
+        <div class="flex items-center justify-between mb-6 px-4">
             <div class="flex items-center gap-3">
-                <div [class]="col.colorClass + ' w-2 h-6 rounded-full'"></div>
-                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400group-hover/col:text-slate-600 transition-colors">{{ col.label }}</h3>
-                <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-500">{{ getOrdersForColumn(col.id).length }}</span>
+                <div class="w-2 h-6 rounded-full shadow-sm" [ngClass]="getStageColor(i)"></div>
+                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 group-hover/col:text-slate-600 transition-colors">{{ stage.name }}</h3>
+                <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-500">{{ getOrdersForStage(stage.id).length }}</span>
             </div>
-            <button class="text-slate-300 hover:text-indigo-500 transition-colors">
-                <ng-icon name="heroPlusSolid" class="w-4 h-4"></ng-icon>
-            </button>
         </div>
 
-        <div class="flex-grow space-y-4 min-h-[500px] border-2 border-transparent group-hover/col:border-indigo-500/10 rounded-[2.5rem] p-2 transition-all duration-500">
-            <div *ngFor="let order of getOrdersForColumn(col.id)" 
-                 class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all cursor-grab active:cursor-grabbing group">
+        <div class="flex-grow space-y-4 min-h-[400px] border-2 border-transparent group-hover/col:bg-slate-100/50 dark:group-hover/col:bg-slate-900/50 rounded-[2.5rem] p-4 transition-all duration-500 overflow-y-auto custom-scrollbar">
+            <div *ngFor="let order of getOrdersForStage(stage.id)" 
+                 class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group/card">
                 
                 <div class="flex justify-between items-start mb-4">
-                    <span class="text-[10px] font-black tracking-widest text-indigo-500 uppercase">#{{ order.orderNumber }}</span>
-                    <div [ngClass]="{
-                        'text-rose-500': order.priority === 'high',
-                        'text-amber-500': order.priority === 'medium',
-                        'text-slate-300': order.priority === 'low'
-                    }">
+                    <span class="text-[10px] font-black tracking-widest text-indigo-500 uppercase">#{{ order.order_number }}</span>
+                    <div [ngClass]="getPriorityClass(order.priority)">
                         <ng-icon name="heroFlagSolid" class="w-4 h-4"></ng-icon>
                     </div>
                 </div>
 
-                <h4 class="text-sm font-black text-slate-800 dark:text-slate-100 mb-2 line-clamp-2 leading-relaxed">{{ order.productName }}</h4>
+                <h4 class="text-sm font-black text-slate-800 dark:text-slate-100 mb-2 line-clamp-2 leading-relaxed">{{ order.scm_products?.name || 'Producto Desconocido' }}</h4>
                 
-                <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-6">
+                <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-6 font-mono">
                     <div class="flex items-center gap-1">
                         <ng-icon name="heroSquares2x2Solid" class="w-3.5 h-3.5"></ng-icon>
-                        {{ order.quantity }} unidades
-                    </div>
-                    <div class="flex items-center gap-1" *ngIf="order.dueDate">
-                        <ng-icon name="heroCalendarDaysSolid" class="w-3.5 h-3.5"></ng-icon>
-                        {{ order.dueDate | date:'shortDate' }}
+                        {{ order.quantity }} unid.
                     </div>
                 </div>
 
                 <div class="pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
-                    <div class="flex -space-x-2">
-                        <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black">OP</div>
-                    </div>
-                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <button (click)="moveOrder(order.id, col.nextId)" *ngIf="col.nextId" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
-                             <ng-icon name="heroChevronRightSolid" class="w-4 h-4"></ng-icon>
-                         </button>
-                    </div>
+                    <!-- Backward button -->
+                    <button *ngIf="i > 0" (click)="moveOrder(order, stages()[i-1])" 
+                            class="p-2 text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all opacity-0 group-hover/card:opacity-100"
+                            title="Retroceder para reproceso">
+                        <ng-icon name="heroArrowUturnLeftSolid" class="w-4 h-4"></ng-icon>
+                    </button>
+                    
+                    <div class="flex-grow"></div>
+
+                    <!-- Forward button -->
+                    <button (click)="moveOrder(order, stages()[i+1], i === stages().length - 1)" 
+                            class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover/card:opacity-100"
+                            [title]="i === stages().length - 1 ? 'Finalizar Orden' : 'Avanzar Etapa'">
+                        <ng-icon [name]="i === stages().length - 1 ? 'heroCheckCircleSolid' : 'heroArrowRightSolid'" class="w-4 h-4"></ng-icon>
+                    </button>
                 </div>
             </div>
 
-            <!-- EMPTY STATE FOR COLUMN -->
-            <div *ngIf="getOrdersForColumn(col.id).length === 0" class="h-32 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex items-center justify-center">
-                <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Vaciando...</p>
+            <div *ngIf="getOrdersForStage(stage.id).length === 0" class="h-24 border-2 border-dashed border-slate-50 dark:border-slate-800 rounded-[2rem] flex items-center justify-center text-center">
+                <p class="text-[10px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-widest italic">Etapa Vacía</p>
             </div>
         </div>
       </div>
@@ -77,58 +73,73 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
   `,
   styles: [`
     :host { display: block; height: 100%; width: 100%; }
-    ::-webkit-scrollbar { height: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-    .dark ::-webkit-scrollbar-thumb { background: #1e293b; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   `]
 })
-export class WorkOrderKanbanComponent implements OnInit {
-  private workOrderService = inject(WorkOrderService);
+export class WorkOrderKanbanComponent implements OnInit, OnChanges {
+  private mfgRepo = inject(ManufacturingRepository);
 
-  orders = signal<WorkOrder[]>([]);
+  @Input() processId!: string;
+  @Input() initialOrders: MfgProductionOrder[] = [];
+  @Output() ordersChanged = new EventEmitter<void>();
 
-  columns = [
-    { id: 'planned', label: 'Planeado', colorClass: 'bg-slate-300', nextId: 'in_progress' },
-    { id: 'in_progress', label: 'En Curso', colorClass: 'bg-indigo-500', nextId: 'quality_check' },
-    { id: 'quality_check', label: 'Control Calidad', colorClass: 'bg-amber-500', nextId: 'completed' },
-    { id: 'completed', label: 'Terminado', colorClass: 'bg-emerald-500', nextId: null }
-  ];
+  stages = signal<MfgStage[]>([]);
+  orders = signal<MfgProductionOrder[]>([]);
 
-  ngOnInit() {
-    this.loadOrders();
+  async ngOnInit() {
+    await this.loadStages();
   }
 
-  loadOrders() {
-    this.workOrderService.getWorkOrders().subscribe(data => {
-      this.orders.set(data);
-      // Fallback if empty for WOW effect during demo/dev
-      if (data.length === 0) {
-        this.orders.set([
-          { id: '1', orderNumber: 'WO-882', productName: 'Bota Cowboy Piel Exótica', quantity: 24, status: 'planned', priority: 'high', dueDate: new Date() },
-          { id: '2', orderNumber: 'WO-883', productName: 'Zapato Ejecutivo Oxford', quantity: 150, status: 'in_progress', priority: 'medium', dueDate: new Date() },
-          { id: '3', orderNumber: 'WO-884', productName: 'Sandalia Confort Premium', quantity: 500, status: 'quality_check', priority: 'low', dueDate: new Date() }
-        ]);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['initialOrders']) {
+      this.orders.set(this.initialOrders);
+    }
+  }
+
+  async loadStages() {
+    if (!this.processId) return;
+    try {
+      const data = await this.mfgRepo.getProcessStages(this.processId);
+      this.stages.set(data);
+    } catch (error) {
+      console.error('Error loading stages:', error);
+    }
+  }
+
+  getOrdersForStage(stageId: string) {
+    return this.orders().filter(o => o.current_stage_id === stageId);
+  }
+
+  async moveOrder(order: MfgProductionOrder, targetStage: MfgStage | undefined, isCompleting: boolean = false) {
+    try {
+      if (isCompleting) {
+        // Si es la última etapa y se avanza, completar orden
+        await this.mfgRepo.updateOrderStatus(order.id, order.current_stage_id, 'COMPLETED');
+      } else if (targetStage) {
+        // Mover a la etapa destino (adelante o atrás)
+        // El estado principal se mantiene IN_PROGRESS normalmente
+        await this.mfgRepo.updateOrderStatus(order.id, targetStage.id, 'IN_PROGRESS');
       }
-    });
+      this.ordersChanged.emit();
+    } catch (error) {
+      console.error('Error moving order:', error);
+    }
   }
 
-  getOrdersForColumn(status: string) {
-    return this.orders().filter(o => o.status === status);
+  getStageColor(index: number): string {
+    const colors = ['bg-slate-300', 'bg-indigo-400', 'bg-blue-400', 'bg-purple-400', 'bg-amber-400', 'bg-emerald-400'];
+    return colors[index % colors.length];
   }
 
-  async moveOrder(id: string, nextStatus: string | null) {
-    if (!nextStatus) return;
-
-    // Optimistic UI update
-    this.orders.update(all => all.map(o => o.id === id ? { ...o, status: nextStatus as any } : o));
-
-    // Persistence
-    this.workOrderService.updateStatus(id, nextStatus as any).subscribe({
-      error: () => {
-        // Rollback on error
-        this.loadOrders();
-      }
-    });
+  getPriorityClass(priority: string | undefined): string {
+    const p = (priority || '').toUpperCase();
+    if (p === 'HIGH' || p === 'URGENT' || p === 'URGENTE') return 'text-rose-500';
+    if (p === 'MEDIUM') return 'text-amber-500';
+    return 'text-slate-300';
   }
 }

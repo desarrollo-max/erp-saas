@@ -10,6 +10,7 @@ export abstract class ManufacturingRepository {
     abstract getProductionOrders(tenantId: string): Promise<MfgProductionOrder[]>;
     abstract getOrderById(orderId: string): Promise<MfgProductionOrder | undefined>; // NEW
     abstract createProductionOrder(order: Partial<MfgProductionOrder>): Promise<MfgProductionOrder>;
+    abstract updateProductionOrder(orderId: string, order: Partial<MfgProductionOrder>): Promise<void>;
     abstract updateOrderStatus(orderId: string, stageId: string, status: string): Promise<void>;
 
     abstract getProcesses(tenantId: string): Promise<MfgProcess[]>;

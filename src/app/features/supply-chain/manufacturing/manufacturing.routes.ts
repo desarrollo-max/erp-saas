@@ -1,3 +1,4 @@
+
 import { Routes } from '@angular/router';
 
 export const PRODUCTION_ROUTES: Routes = [
@@ -11,43 +12,68 @@ export const PRODUCTION_ROUTES: Routes = [
     },
     {
         path: 'work-orders',
-        loadComponent: () => import('./work-orders/work-order-list/work-order-list.component').then(m => m.WorkOrderListComponent)
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./work-orders/work-order-list/work-order-list.component').then(m => m.WorkOrderListComponent)
+            },
+            {
+                path: ':id',
+                loadComponent: () => import('./work-orders/work-order-form/work-order-form.component').then(m => m.WorkOrderFormComponent)
+            }
+        ]
     },
-    {
-        path: 'work-orders/:id',
-        loadComponent: () => import('./work-orders/work-order-form/work-order-form.component').then(m => m.WorkOrderFormComponent)
-    },
+    // Alises para español
+    { path: 'ordenes', redirectTo: 'work-orders', pathMatch: 'prefix' },
+    { path: 'ordenes-trabajo', redirectTo: 'work-orders', pathMatch: 'prefix' },
+
     {
         path: 'processes',
-        loadComponent: () => import('./processes/process-list/process-list.component').then(m => m.ProcessListComponent)
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./processes/process-list/process-list.component').then(m => m.ProcessListComponent)
+            },
+            {
+                path: ':id',
+                loadComponent: () => import('./processes/process-detail/process-detail.component').then(m => m.ProcessDetailComponent)
+            }
+        ]
     },
-    {
-        path: 'processes/:id',
-        loadComponent: () => import('./processes/process-detail/process-detail.component').then(m => m.ProcessDetailComponent)
-    },
+    { path: 'procesos', redirectTo: 'processes', pathMatch: 'prefix' },
+
     {
         path: 'catalog',
-        loadComponent: () => import('./catalog/catalog-list/catalog-list.component').then(m => m.CatalogListComponent)
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./catalog/catalog-list/catalog-list.component').then(m => m.CatalogListComponent)
+            },
+            {
+                path: 'new',
+                loadComponent: () => import('./catalog/catalog-form/catalog-form.component').then(m => m.CatalogFormComponent)
+            },
+            {
+                path: ':id',
+                loadComponent: () => import('./catalog/catalog-form/catalog-form.component').then(m => m.CatalogFormComponent)
+            }
+        ]
     },
-    {
-        path: 'catalog/new',
-        loadComponent: () => import('./catalog/catalog-form/catalog-form.component').then(m => m.CatalogFormComponent)
-    },
-    {
-        path: 'catalog/:id',
-        loadComponent: () => import('./catalog/catalog-form/catalog-form.component').then(m => m.CatalogFormComponent)
-    },
-    {
-        path: 'finished-goods',
-        redirectTo: 'catalog',
-        pathMatch: 'full'
-    },
+    { path: 'catalogo', redirectTo: 'catalog', pathMatch: 'prefix' },
+
     {
         path: 'bom',
-        loadComponent: () => import('./bom/bom-list/bom-list.component').then(m => m.BomListComponent)
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./bom/bom-list/bom-list.component').then(m => m.BomListComponent)
+            },
+            {
+                path: ':id',
+                loadComponent: () => import('./bom/bom-form/bom-form.component').then(m => m.BomFormComponent)
+            }
+        ]
     },
-    {
-        path: 'bom/:id',
-        loadComponent: () => import('./bom/bom-form/bom-form.component').then(m => m.BomFormComponent)
-    }
+    { path: 'recetas', redirectTo: 'bom', pathMatch: 'prefix' },
+    { path: 'explosion-materiales', redirectTo: 'bom', pathMatch: 'prefix' }
 ];

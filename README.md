@@ -149,12 +149,13 @@ Este proyecto está licenciado bajo la Licencia MIT - mira el archivo [LICENSE](
 
 ## 🔄 Actualizaciones Recientes
 
-### Diciembre 2025 - Control de Marketplace y Módulos
+### Diciembre 2025 - Manufactura Premium & Control de Procesos
+- **Manufactura**: Implementación completa de componentes para Gestión de Procesos (Rutas y Etapas), Explosión de Materiales (BOM) y Órdenes de Producción.
+- **UI/UX**: Rediseño premium del Centro de Mando (Dashboard) y Lanzador de Manufactura con estética 2026.
+- **Funcionalidad**: Integración total con Supabase para persistencia de datos industriales.
 - **Marketplace**: Implementación completa del control de instalación y desinstalación de módulos desde el Launcher.
 - **Rutas Dinámicas**: Sincronización automática de rutas del Launcher basadas en la tabla de módulos de Supabase.
 - **RRHH**: Integración del módulo de Recursos Humanos con gestión de empleados y rutas específicas (`/rrhh`).
-- **Manufactura**: Migración del repositorio de Manufactura de Mock a Supabase, con soporte para órdenes de producción, procesos y BOMs.
-- **Base de Datos**: Creación de tablas faltantes para RRHH y Manufactura mediante scripts de migración.
 - **Inventario**: Nueva funcionalidad de **Impresión de Etiquetas** con códigos QR y generación dinámica de PDF/Vista de impresión.
-- **Marketplace**: Rediseño premium con soporte para instalación y desinstalación dinámica de módulos según el contexto de la empresa.
+- **Estabilidad**: Corrección del error `oklch` en generación de PDFs y resolución de advertencia de múltiples instancias de Supabase.
 

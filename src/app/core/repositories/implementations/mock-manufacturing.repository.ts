@@ -132,6 +132,13 @@ export class MockManufacturingRepository extends ManufacturingRepository {
         return newOrder;
     }
 
+    async updateProductionOrder(orderId: string, order: Partial<MfgProductionOrder>): Promise<void> {
+        const index = this.orders.findIndex(o => o.id === orderId);
+        if (index !== -1) {
+            this.orders[index] = { ...this.orders[index], ...order, updated_at: new Date().toISOString() };
+        }
+    }
+
     async updateOrderStatus(orderId: string, stageId: string, status: string): Promise<void> {
         const order = this.orders.find(o => o.id === orderId);
         if (order) {

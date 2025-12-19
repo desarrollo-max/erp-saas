@@ -101,8 +101,14 @@ Se han implementado pruebas unitarias para garantizar la estabilidad de los comp
 * `stock-transfer.component.spec.ts`: Asegura que no se permitan transferencias con mismo origen/destino y valida la creación de movimientos duales.
 * `label-printing.component.spec.ts`: Verifica la carga de productos/variantes y la gestión de la cola de impresión.
 
-Para ejecutar las pruebas:
+---
 
-```bash
-ng test
-```
+## 5. Exportación de Datos
+
+### 5.1 Generación de PDF
+Los módulos de inventario e historial de movimientos cuentan con funcionalidades de exportación a PDF utilizando `jspdf` y `html2canvas`.
+
+**Consideraciones Técnicas:**
+* **Compatibilidad CSS**: `html2canvas` no soporta funciones de color modernas como `oklch()` (utilizadas en Tailwind v4). Se ha implementado un sistema de saneamiento en el callback `onclone` que reemplaza dinámicamente estas funciones por colores estándar hexadecimales antes de renderizar el canvas.
+* **Escalado**: Se utiliza un factor de escala de 2x para mejorar la calidad de impresión y legibilidad de los textos en el PDF resultante.
+* **Filtros**: El PDF respeta los filtros aplicados en la vista (paginación, búsqueda, estados).

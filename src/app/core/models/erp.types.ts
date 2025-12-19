@@ -657,6 +657,7 @@ export interface MfgBillOfMaterials {
   version: string;
   is_active: boolean;
   created_at: string;
+  scm_products?: { name: string; sku: string }; // Optional joined product
 }
 
 export interface MfgBomItem {
@@ -666,6 +667,7 @@ export interface MfgBomItem {
   quantity: number;
   wastage_percent: number;
   created_at: string;
+  scm_products?: { name: string; sku: string }; // Optional joined product
 }
 
 export interface MfgProductionOrder {
@@ -681,10 +683,13 @@ export interface MfgProductionOrder {
   status: 'DRAFT' | 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   start_date: string | null;
   due_date: string | null;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | 'URGENTE';
   notes: string | null;
   created_at: string;
   updated_at: string;
+  scm_products?: { name: string; sku: string }; // Optional joined product
+  mfg_processes?: { name: string }; // Optional joined process
+  mfg_stages?: { name: string }; // Optional joined stage
 }
 
 

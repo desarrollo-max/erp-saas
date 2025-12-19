@@ -18,7 +18,14 @@ export class SupabaseAdminService {
             this.adminClient = createClient(environment.supabaseUrl, environment.supabaseServiceRoleKey, {
                 auth: {
                     autoRefreshToken: false,
-                    persistSession: false
+                    persistSession: false,
+                    detectSessionInUrl: false,
+                    storageKey: 'sb-admin-legacy-auth-token', // Unique key for this instance
+                    storage: {
+                        getItem: () => null,
+                        setItem: () => { },
+                        removeItem: () => { }
+                    }
                 }
             });
         }
