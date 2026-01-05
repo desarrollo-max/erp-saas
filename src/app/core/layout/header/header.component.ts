@@ -8,6 +8,15 @@ import { NgIconsModule } from '@ng-icons/core';
 import { ThemeService } from '@core/services/theme.service';
 import { APP_ICONS, getAppIcon } from '@core/constants/app-icons';
 import { GlobalSearchModalComponent } from '../global-search-modal/global-search-modal.component';
+import { provideIcons } from '@ng-icons/core';
+import { heroSunSolid, heroMoonSolid } from '@ng-icons/heroicons/solid';
+import { NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+
+
+
 
 interface ModuleGroup {
   category: string;
@@ -18,91 +27,107 @@ interface ModuleGroup {
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule, RouterModule, NgIconsModule, GlobalSearchModalComponent],
+  providers: [provideIcons({ heroSunSolid, heroMoonSolid })],
+
+
+
   template: `
-    <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-[var(--border-color)] shadow-sm z-50 fixed top-0 w-full h-16 transition-all duration-300">
-      <div class="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    <header class="bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 z-50 fixed top-0 w-full h-20 transition-all duration-300">
+      <div class="h-full px-6 lg:px-10 flex items-center justify-between">
         
         <!-- LEFT: Logo & Modules Menu -->
-        <div class="flex items-center gap-2 sm:gap-4">
-          <div (click)="goLauncher()" class="flex items-center gap-2 cursor-pointer group max-w-[150px] sm:max-w-none">
+        <div class="flex items-center gap-6">
+          <div (click)="goLauncher()" class="flex items-center gap-4 cursor-pointer group">
             <ng-container *ngIf="session.currentCompany() || session.currentTenant(); else systemBranding">
               <ng-container *ngIf="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url; else defaultLogo">
-                <img [src]="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url" alt="Company Logo" class="w-8 h-8 rounded-lg object-cover flex-shrink-0 bg-white">
+                <img [src]="session.currentCompany()?.logo_url || session.currentTenant()?.logo_url" alt="Company Logo" class="w-11 h-11 rounded-2xl object-cover flex-shrink-0 bg-white shadow-lg group-hover:shadow-indigo-500/10 transition-all border border-slate-100">
               </ng-container>
               <ng-template #defaultLogo>
-                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold group-hover:bg-indigo-700 transition flex-shrink-0">
+                <div class="w-11 h-11 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-black group-hover:scale-105 transition-transform flex-shrink-0 shadow-lg">
                   {{ getCompanyInitial() }}
                 </div>
               </ng-template>
-              <span class="font-bold text-lg sm:text-xl tracking-tight text-gray-900 dark:text-white group-hover:text-indigo-500 transition truncate block">
-                {{ session.currentCompany()?.name || session.currentTenant()?.name }}
-              </span>
+              <div class="flex flex-col">
+                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.3em] leading-none mb-1 opacity-70 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">Contexto Activo</span>
+                <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition truncate max-w-[120px] sm:max-w-xs leading-none">
+                    {{ session.currentCompany()?.name || session.currentTenant()?.name }}
+                </span>
+              </div>
             </ng-container>
 
             <ng-template #systemBranding>
-              <div class="flex items-center gap-1">
-                 <span class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-400 dark:from-indigo-400 dark:to-indigo-200">SIAC</span>
-                 <span class="text-sm font-bold text-gray-500 dark:text-gray-400 tracking-widest mt-1">ERP</span>
+              <div class="flex items-center gap-3">
+                 <div class="p-2 bg-primary-600 rounded-xl shadow-lg shadow-primary-500/20">
+                    <span class="text-xl font-black tracking-tighter text-white uppercase italic">SIAC</span>
+                 </div>
+                 <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 tracking-[0.4em] uppercase">Digital Core</span>
               </div>
             </ng-template>
           </div>
 
-          <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1 sm:mx-2 hidden sm:block"></div>
+          <div class="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-4 hidden lg:block"></div>
 
           <!-- Modules Dropdown Trigger -->
           <div class="relative" #menuContainer id="header-modules-menu">
             <button 
               (click)="toggleMenu()"
-              class="flex items-center gap-2 p-3 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-              [class.bg-gray-100]="isMenuOpen()"
-              [class.dark:bg-gray-800]="isMenuOpen()">
-              <ng-icon [name]="ICONS.menu" class="w-6 h-6 text-gray-500 dark:text-gray-400"></ng-icon>
-              <span class="hidden sm:inline">Módulos</span>
+              class="flex items-center gap-3 px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all focus:outline-none border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
+              [class.bg-slate-100]="isMenuOpen()"
+              [class.dark:bg-slate-800/80]="isMenuOpen()"
+              [class.border-slate-200]="isMenuOpen()">
+              <ng-icon [name]="ICONS.menu" class="w-5 h-5 opacity-70"></ng-icon>
+              <span class="hidden md:inline">Ecosistemas</span>
               <ng-icon 
                 [name]="ICONS.dropdown" 
-                class="w-4 h-4 text-gray-400 transition-transform duration-200 hidden sm:block"
+                class="w-3.5 h-3.5 opacity-50 transition-transform duration-300"
                 [class.rotate-180]="isMenuOpen()">
               </ng-icon>
             </button>
 
-            <!-- Dropdown Menu (Mobile Drawer / Desktop Dropdown) -->
+            <!-- Dropdown Menu (Premium & Large) -->
             <div *ngIf="isMenuOpen()" 
-                 class="fixed inset-x-0 top-16 bottom-0 bg-white dark:bg-gray-800 z-[60] overflow-y-auto lg:absolute lg:inset-auto lg:top-full lg:left-0 lg:mt-2 lg:w-80 lg:rounded-xl lg:shadow-2xl lg:ring-1 lg:ring-black lg:ring-opacity-5 lg:py-2 lg:overflow-hidden animate-in fade-in slide-in-from-top-2 origin-top-left border dark:border-gray-700">
+                 class="fixed inset-x-0 top-20 bottom-0 bg-white dark:bg-slate-900 z-[60] overflow-y-auto lg:absolute lg:inset-auto lg:top-[calc(100%+8px)] lg:left-0 lg:w-[480px] lg:rounded-[2.5rem] lg:shadow-2xl lg:ring-1 lg:ring-black lg:ring-opacity-5 lg:py-6 lg:overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 border border-slate-100 dark:border-slate-800">
               
-              <div class="lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto w-full">
+              <div class="lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto w-full custom-scrollbar">
+                <div class="px-8 pb-4 mb-4 border-b border-slate-50 dark:border-slate-800">
+                    <h3 class="text-[10px] font-black text-primary-500 uppercase tracking-[0.3em]">Centro de Navegación</h3>
+                    <p class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">Módulos habilitados por suscripción</p>
+                </div>
+
                 <ng-container *ngFor="let group of groupedModules()">
-                  <div class="px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-900 border-y border-gray-100 dark:border-gray-700 first:border-t-0 sticky top-0 z-10">
-                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ group.category }}</span>
+                  <div class="px-8 py-3 bg-slate-50/50 dark:bg-slate-800/30 border-y border-slate-50 dark:border-slate-800/30 first:border-t-0 sticky top-0 z-10 backdrop-blur-lg">
+                    <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{{ group.category }}</span>
                   </div>
                   
-                  <div class="py-1">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 p-4 px-6">
                     <a *ngFor="let module of group.modules"
                        [routerLink]="module.route_path"
                        (click)="closeMenu()"
-                       class="group flex items-center gap-4 px-6 py-4 lg:px-4 lg:py-3 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors border-l-4 border-transparent hover:border-indigo-500 cursor-pointer">
+                       class="group flex items-center gap-4 px-4 py-4 rounded-3xl hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl hover:shadow-indigo-500/5 transition-all cursor-pointer border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
                       <div 
-                        class="flex-shrink-0 w-10 h-10 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center transition-colors"
-                        [style.backgroundColor]="(module.color || '#6366f1') + '20'"
+                        class="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-inner"
+                        [style.backgroundColor]="(module.color || '#6366f1') + '15'"
                         [style.color]="module.color || '#6366f1'">
-                        <ng-icon [name]="resolveIcon(module.icon)" class="w-6 h-6 lg:w-5 lg:h-5"></ng-icon>
+                        <ng-icon [name]="resolveIcon(module.icon)" class="w-6 h-6"></ng-icon>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-base lg:text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 truncate">{{ module.name }}</p>
-                        <p class="text-sm lg:text-xs text-gray-500 dark:text-gray-400 truncate">{{ module.description }}</p>
+                        <p class="text-xs font-black text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors uppercase italic">{{ module.name }}</p>
+                        <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 truncate mt-0.5">{{ module.description }}</p>
                       </div>
                     </a>
                   </div>
                 </ng-container>
 
-                <div *ngIf="groupedModules().length === 0" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                  <ng-icon [name]="ICONS.empty" class="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600"></ng-icon>
-                  No hay módulos disponibles.
+                <div *ngIf="groupedModules().length === 0" class="px-8 py-12 text-center">
+                  <ng-icon [name]="ICONS.empty" class="w-10 h-10 mx-auto mb-3 text-slate-200 dark:text-slate-700"></ng-icon>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">No se encontraron módulos instalados para esta entidad.</p>
                 </div>
               </div>
 
-              <div class="border-t border-gray-100 dark:border-gray-700 p-4 lg:p-2 bg-gray-50 dark:bg-gray-900">
-                <a routerLink="/launcher" (click)="closeMenu()" class="block w-full text-center px-4 py-3 lg:py-2 text-lg lg:text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors">
-                  Ver Dashboard Principal
+              <div class="p-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-700">
+                <a routerLink="/launcher" (click)="closeMenu()" class="flex items-center justify-center w-full py-4 text-[10px] font-black uppercase tracking-[0.3em] text-white bg-primary-600 hover:bg-primary-700 rounded-2xl transition-all shadow-lg shadow-primary-500/20">
+                  <ng-icon name="heroQueueListSolid" class="w-4 h-4 mr-2"></ng-icon>
+                  Dashboard Principal
                 </a>
               </div>
             </div>
@@ -110,38 +135,36 @@ interface ModuleGroup {
         </div>
 
         <!-- RIGHT: User Profile & Context -->
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-3">
           <!-- SEARCH TRIGGER -->
-          <button (click)="openSearch()" class="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none transition-colors">
-            <span class="sr-only">Buscar</span>
-            <ng-icon name="heroMagnifyingGlassSolid" class="h-6 w-6"></ng-icon>
+          <button (click)="openSearch()" class="p-3 text-slate-400 hover:text-primary-500 dark:text-slate-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/10 rounded-2xl transition-all border border-transparent hover:border-primary-100 dark:hover:border-primary-500/10">
+            <ng-icon name="heroMagnifyingGlassSolid" class="h-5 w-5"></ng-icon>
           </button>
-
-          <!-- Context Info (Role) -->
-          <div class="hidden md:flex flex-col items-end mr-2">
-             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium" *ngIf="session.currentUserRole()">
-               {{ session.currentUserRole() | titlecase }}
-             </span>
-          </div>
           
-          <!-- Theme Switcher -->
-          <button (click)="toggleTheme()" id="header-theme-toggle" class="p-3 lg:p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500">
-             <ng-icon [name]="themeService.isDark() ? ICONS.themeSun : ICONS.themeMoon" class="w-6 h-6 lg:w-5 lg:h-5"></ng-icon>
+          <!-- Dark Mode Toggle -->
+          <button (click)="themeService.toggleDarkMode()" class="p-3 text-slate-400 hover:text-amber-500 dark:text-slate-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-2xl transition-all border border-transparent hover:border-amber-100 dark:hover:border-amber-500/10 group">
+            <ng-icon [name]="themeService.isDark() ? 'heroSunSolid' : 'heroMoonSolid'" class="h-5 w-5"></ng-icon>
           </button>
 
-          <div class="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
+
+
+          <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2 hidden md:block"></div>
 
           <!-- User Avatar -->
-          <button (click)="goSettings()" class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 group">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm group-hover:shadow-md transition-shadow">
+          <button (click)="goSettings()" class="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 p-2 pr-6 rounded-full transition-all group border border-transparent hover:border-slate-100 dark:hover:border-slate-800 focus:outline-none">
+            <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-lg group-hover:scale-105 transition-transform">
               {{ getUserInitials() }}
+            </div>
+            <div class="hidden sm:flex flex-col items-start">
+                <span class="text-[9px] font-black text-primary-500 uppercase tracking-widest leading-none mb-1">Operador</span>
+                <span class="text-[11px] font-black text-slate-900 dark:text-white uppercase italic leading-none">{{ session.currentUserRole() || 'Mi Perfil' }}</span>
             </div>
           </button>
         </div>
       </div>
     </header>
     <!-- Spacer to prevent content overlap -->
-    <div class="h-16"></div>
+    <div class="h-20"></div>
 
     <!-- GLOBAL SEARCH MODAL -->
     <ng-container *ngIf="isSearchOpen()">
@@ -184,7 +207,32 @@ export class HeaderComponent {
 
   constructor() {
     this.loadModules();
+    this.setupAutoTheme();
   }
+
+  private setupAutoTheme() {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntilDestroyed()
+    ).subscribe(() => {
+      this.updateThemeFromRoute();
+    });
+  }
+
+  private updateThemeFromRoute() {
+    const currentUrl = this.router.url;
+    const modules = this.modules();
+
+    // Buscar el módulo cuya ruta coincida con el inicio de la URL actual
+    const activeModule = modules.find(m => m.route_path && currentUrl.startsWith(m.route_path));
+
+    if (activeModule) {
+      this.themeService.applyThemeByColor(activeModule.color);
+    } else if (currentUrl === '/launcher' || currentUrl === '/') {
+      this.themeService.applyThemeByColor('#135bec'); // Azul por defecto para el launcher
+    }
+  }
+
 
   @HostListener('document:click', ['$event'])
   onClickOutside(event: MouseEvent) {
@@ -202,8 +250,8 @@ export class HeaderComponent {
     this.isMenuOpen.set(false);
   }
 
-  toggleTheme() {
-    this.themeService.toggleTheme();
+  cycleThemeColor() {
+    this.themeService.cycleColorTheme();
   }
 
   openSearch() {
@@ -217,7 +265,9 @@ export class HeaderComponent {
         const mods = await this.moduleRepo.getInstalledModules(tenantId);
         // Only show modules with a route path
         this.modules.set(mods.filter(m => m.route_path));
+        this.updateThemeFromRoute(); // Actualizar tema después de cargar módulos
       } catch (err) {
+
         console.error('Error loading modules for menu', err);
       }
     }

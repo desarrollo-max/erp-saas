@@ -13,4 +13,7 @@ export abstract class PurchaseOrderRepository {
     abstract addLine(line: Partial<PurchaseOrderLine>): Promise<PurchaseOrderLine>;
     abstract updateLine(id: string, line: Partial<PurchaseOrderLine>): Promise<PurchaseOrderLine>;
     abstract deleteLine(id: string): Promise<void>;
+    abstract updateLineQuantity(lineId: string, receivedNow: number): Promise<void>;
+    abstract receivePo(poId: string): Promise<void>;
+    abstract getPendingOrdersCount(): Promise<number>;
 }

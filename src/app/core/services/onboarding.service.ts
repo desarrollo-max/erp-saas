@@ -69,6 +69,25 @@ export class OnboardingService {
         this.isTourActive.set(true);
     }
 
+    startSupplyChainTour() {
+        this.tourSteps = [
+            {
+                id: 'sphere-assistant',
+                title: '🆘 Alerta Inteligente',
+                content: '¡Hoola! Soy tu asistente. He detectado que tus órdenes de producción están detenidas por falta de materiales. Mi trabajo es ayudarte a resolverlo antes de que afecte tus entregas.',
+                placement: 'left'
+            },
+            {
+                id: 'nav-marketplace',
+                title: '🛒 Marketplace de Suministros',
+                content: 'He habilitado una sección especial en nuestra tienda donde puedes buscar proveedores externos y comparar precios de materiales críticos en tiempo real.',
+                placement: 'bottom'
+            }
+        ];
+        this.currentStepIndex.set(0);
+        this.isTourActive.set(true);
+    }
+
     nextStep() {
         const next = this.currentStepIndex() + 1;
         if (next < this.tourSteps.length) {

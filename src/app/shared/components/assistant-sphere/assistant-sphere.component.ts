@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { Router, NavigationEnd } from '@angular/router';
@@ -7,8 +7,10 @@ import { KnowledgeBaseWidgetComponent } from '../knowledge-base-widget/knowledge
 import { Observable } from 'rxjs';
 import { AiCoreComponent } from '../ai-core/ai-core.component';
 import { OnboardingService } from '@core/services/onboarding.service'; // Added
+import { AssistantService } from '@core/services/assistant.service'; // Added
 import { NgIconsModule, provideIcons } from '@ng-icons/core';
-import { heroAcademicCap } from '@ng-icons/heroicons/outline';
+import { heroAcademicCap, heroExclamationTriangle } from '@ng-icons/heroicons/outline';
+import { heroExclamationTriangleSolid } from '@ng-icons/heroicons/solid';
 
 export interface ModuleContext {
   title: string;
@@ -20,7 +22,7 @@ export interface ModuleContext {
   selector: 'app-assistant-sphere',
   standalone: true,
   imports: [CommonModule, DragDropModule, KnowledgeBaseWidgetComponent, AiCoreComponent, NgIconsModule],
-  viewProviders: [provideIcons({ heroAcademicCap })],
+  viewProviders: [provideIcons({ heroAcademicCap, heroExclamationTriangleSolid })],
   template: `
     <div class="sphere-wrapper fixed bottom-10 right-10 z-[1000] pointer-events-none" id="sphere-assistant">
 
@@ -35,13 +37,32 @@ export interface ModuleContext {
                 (click)="$event.stopPropagation()" [class.animate-pop-in]="isOpen">
                 
                 <!-- Onboarding Trigger (Custom Addition) -->
-                <div class="bg-white dark:bg-slate-800 rounded-t-xl border-t border-x border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between shadow-sm relative z-10 -mb-2 pb-4">
-                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2">Asistencia</span>
-                    <button (click)="startOnboarding()" 
-                            class="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                        <ng-icon name="heroAcademicCap" class="w-4 h-4"></ng-icon>
-                        Tour Guiado
-                    </button>
+                <div class="bg-white dark:bg-slate-800 rounded-t-xl border-t border-x border-gray-200 dark:border-gray-700 p-3 flex flex-col gap-3 shadow-sm relative z-10 -mb-2 pb-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider pl-2">Asistencia</span>
+                        <button (click)="startOnboarding()" 
+                                class="flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
+                            <ng-icon name="heroAcademicCap" class="w-4 h-4"></ng-icon>
+                            Tour Guiado
+                        </button>
+                    </div>
+
+                    <!-- Proactive Alert Banner -->
+                    <div *ngIf="isAlerting" class="bg-amber-50 dark:bg-amber-900/20 border-y border-amber-200 dark:border-amber-800/50 p-4 animate-pop-in">
+                        <div class="flex items-start gap-4">
+                            <div class="shrink-0 w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-amber-200 dark:shadow-none animate-pulse">
+                                <ng-icon name="heroExclamationTriangleSolid" class="w-6 h-6"></ng-icon>
+                            </div>
+                            <div class="flex-grow">
+                                <h4 class="text-[11px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-400 mb-1">Alerta de Suministros</h4>
+                                <p class="text-xs font-medium text-amber-900/80 dark:text-amber-200/80 leading-relaxed mb-3">{{ alertMessage }}</p>
+                                <button (click)="resolveAlert()" 
+                                        class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all transform active:scale-95 shadow-md shadow-amber-100 dark:shadow-none">
+                                    🛒 Resolver con Marketplace
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- stopPropagation prevents closing when clicking inside the widget -->
@@ -70,9 +91,27 @@ export interface ModuleContext {
 export class AssistantSphereComponent {
   private router = inject(Router);
   private onboardingService = inject(OnboardingService); // Inject Service
+  private assistantService = inject(AssistantService); // Inject Service
   isOpen = false;
+  isAlerting = false;
+  alertMessage = '';
 
   currentContext$: Observable<ModuleContext>;
+
+  triggerStockAlert(item: string) {
+    this.isAlerting = true;
+    this.alertMessage = `He detectado un faltante de "${item}" para completar tus órdenes de trabajo pendientes. ¿Quieres ver opciones de suministro externo?`;
+
+    // Abrir automáticamente si hay una alerta crítica
+    if (!this.isOpen) {
+      setTimeout(() => this.isOpen = true, 500);
+    }
+  }
+
+  resolveAlert() {
+    this.onboardingService.startSupplyChainTour();
+    this.isOpen = false;
+  }
 
   private contextMap: Record<string, ModuleContext> = {
     '/launcher': {
@@ -186,6 +225,14 @@ export class AssistantSphereComponent {
   };
 
   constructor() {
+    // React to alerts from the service
+    effect(() => {
+      const alert = this.assistantService.stockAlert();
+      if (alert) {
+        this.triggerStockAlert(alert.item);
+      }
+    });
+
     this.currentContext$ = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       map(() => this.router.url),

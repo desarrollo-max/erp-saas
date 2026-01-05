@@ -27,7 +27,7 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
                 <li>
                   <div class="flex items-center">
                     <ng-icon name="heroChevronRightSolid" class="w-2 h-2 mx-1"></ng-icon>
-                    <span class="text-indigo-500">{{ feature() }}</span>
+                    <span class="text-primary-500">{{ feature() }}</span>
                   </div>
                 </li>
               </ol>
@@ -37,10 +37,10 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
         </div>
 
         <div class="flex items-center gap-3">
-            <span class="hidden md:inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">
+            <span class="hidden md:inline-flex items-center rounded-full bg-primary-50 dark:bg-primary-900/30 px-3 py-1 text-xs font-bold text-primary-700 dark:text-primary-300 border border-primary-100 dark:border-primary-800/50">
               <span class="relative flex h-2 w-2 mr-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
               </span>
               Sincronizado
             </span>
@@ -84,15 +84,15 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
             </div>
 
             <div class="flex-grow flex flex-col items-center justify-center p-12 text-center relative z-10">
-                <div class="w-24 h-24 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mb-6 relative group-hover:scale-110 transition-transform">
-                    <div class="absolute inset-0 rounded-full border-2 border-dashed border-indigo-500/30 animate-[spin_15s_linear_infinite]"></div>
-                    <ng-icon [name]="getModuleIcon()" class="text-indigo-400 dark:text-indigo-600 w-10 h-10"></ng-icon>
+                <div class="w-24 h-24 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-6 relative group-hover:scale-110 transition-transform">
+                    <div class="absolute inset-0 rounded-full border-2 border-dashed border-primary-500/30 animate-[spin_15s_linear_infinite]"></div>
+                    <ng-icon [name]="getModuleIcon()" class="text-primary-400 dark:text-primary-600 w-10 h-10"></ng-icon>
                 </div>
                 <h3 class="text-2xl font-black mb-3 text-slate-900 dark:text-white capitalize">Inicia con {{ feature() }}</h3>
                 <p class="text-slate-500 dark:text-slate-400 mb-10 max-w-sm font-medium">Este módulo está listo para procesar información. Configura los parámetros básicos o importa registros para visualizar métricas de rendimiento.</p>
                 
                 <div class="flex flex-wrap justify-center gap-4">
-                    <button class="px-10 py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-sm shadow-2xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all hover:translate-y-[-2px]">
+                    <button class="px-10 py-5 bg-primary-600 text-white rounded-[2rem] font-black text-sm shadow-2xl shadow-primary-200 dark:shadow-none hover:bg-primary-700 transition-all hover:translate-y-[-2px]">
                         Configurar Ahora
                     </button>
                     <button class="px-10 py-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2rem] font-black text-xs hover:bg-slate-50 dark:hover:bg-slate-750 transition-all uppercase tracking-widest">

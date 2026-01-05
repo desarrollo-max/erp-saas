@@ -26,119 +26,170 @@ interface TenantWithRole {
   imports: [CommonModule, ReactiveFormsModule, AssistantSphereComponent, NgIconsModule],
   viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300" style="background-color: var(--app-bg); color: var(--app-text);">
-      
-      <!-- Theme Switcher Absolute Top Right -->
-      <div class="absolute top-4 right-4">
-         <button (click)="themeService.toggleTheme()" class="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition focus:outline-none bg-white dark:bg-slate-800 shadow-sm">
-            <ng-icon [name]="themeService.isDark() ? ICONS.themeSun : ICONS.themeMoon" class="w-6 h-6"></ng-icon>
-         </button>
-      </div>
+    <div class="relative flex h-auto min-h-screen w-full flex-col bg-slate-950 group/design-root overflow-x-hidden" style='font-family: Inter, "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
 
-      <div class="w-full max-w-lg shadow-xl rounded-xl p-6 sm:p-8 text-center relative transition-colors duration-300" style="background-color: var(--card-bg);">
-        
-        <h1 class="text-2xl sm:text-3xl font-extrabold mb-2" style="color: var(--app-text);">Selecciona una Empresa</h1>
-        <p class="mb-8 text-sm sm:text-base" style="color: var(--app-text-muted);">Elige la empresa con la que deseas trabajar para establecer el contexto.</p>
-
-        <div *ngIf="isLoading()" class="py-10 text-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-3 text-indigo-600">Cargando tus empresas...</p>
-        </div>
-
-        <div *ngIf="!isLoading()">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            <!-- Tarjetas de Selección de Empresa -->
-            <div *ngFor="let company of userCompanies()" 
-                 (click)="selectCompany(company)"
-                 class="group p-4 sm:p-6 rounded-lg border-2 border-transparent hover:border-indigo-500 transition cursor-pointer relative min-h-[140px] flex flex-col items-center justify-center"
-                 style="background-color: var(--subtle-bg);">
-              
-              <div class="mb-3">
-                 <ng-container *ngIf="company.logo_url; else defaultInitial">
-                    <img [src]="company.logo_url" alt="Logo" class="h-16 w-16 object-contain rounded-md bg-white border border-gray-100">
-                 </ng-container>
-                 <ng-template #defaultInitial>
-                    <div class="text-3xl font-bold" style="color: var(--ai-core-secondary);">
-                      {{ company.name.charAt(0) }}
-                    </div>
-                 </ng-template>
-              </div>
-
-              <p class="font-semibold text-lg" style="color: var(--app-text);">{{ company.name }}</p>
-              <p class="text-sm" style="color: var(--app-text-muted);">{{ company.code }}</p>
-
+        <!-- HEADER -->
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-slate-800 px-10 py-4 bg-slate-900 shadow-sm z-10">
+          <div class="flex items-center gap-4 text-white">
+            <div class="size-8 text-primary-500">
+              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z" fill="currentColor"></path>
+              </svg>
             </div>
-
-            <!-- Botón para Agregar Nueva Empresa (Modal) -->
-            <div (click)="openCreateModal()"
-                 class="group border-2 border-dashed border-gray-400 dark:border-gray-600 bg-transparent p-4 sm:p-6 rounded-lg transition cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 min-h-[140px] flex flex-col items-center justify-center">
-              
-              <div class="text-2xl font-bold text-gray-400 dark:text-gray-500 mb-1">
-                +
+            <h2 class="text-white text-2xl font-bold leading-tight tracking-[-0.015em]">SIAC ERP</h2>
+          </div>
+          <div class="flex flex-1 justify-end gap-8">
+            <div class="flex items-center gap-4">
+              <div class="hidden sm:flex flex-col items-end">
+                <span class="text-sm font-bold text-white">{{ sessionService.user()?.email || 'Admin User' }}</span>
+                <span class="text-xs text-slate-400">System Administrator</span>
               </div>
-              <p class="font-semibold text-lg text-gray-600 dark:text-gray-400">Nueva Empresa</p>
-              <p class="text-sm text-gray-500 dark:text-gray-500">Crear organización</p>
+              <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-offset-2 ring-slate-800 ring-offset-slate-900">
+                <div class="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">
+                  {{ (sessionService.user()?.email || 'A')[0].toUpperCase() }}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        <button (click)="logout()" class="mt-8 text-sm text-gray-600 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400">
-          Cerrar Sesión
-        </button>
+        <!-- MAIN CONTENT -->
+        <main class="flex flex-1 justify-center items-center py-12 px-6 sm:px-10 bg-slate-950">
+          <div class="flex flex-col w-full max-w-[1200px]">
+
+            <!-- TITLE SECTION -->
+            <div class="text-center mb-12">
+              <h1 class="text-white text-3xl md:text-4xl font-black leading-tight mb-3">Select Company</h1>
+              <p class="text-slate-400 text-lg max-w-2xl mx-auto">Access your workspace by selecting a company below, or create a new organization to get started.</p>
+            </div>
+
+            <!-- COMPANIES GRID -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-2">
+
+              <!-- EXISTING COMPANIES -->
+              <button *ngFor="let company of userCompanies()"
+                      (click)="selectCompany(company)"
+                      class="group flex flex-col items-center gap-6 rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-sm transition-all duration-200 hover:shadow-xl hover:border-primary-500 hover:-translate-y-1 cursor-pointer">
+
+                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-2xl w-28 h-28 shadow-inner ring-1 ring-slate-700 group-hover:scale-105 transition-transform duration-300"
+                     [style.background-image]="company.logo_url ? 'url(' + company.logo_url + ')' : 'linear-gradient(135deg, var(--primary-500), var(--primary-600))'">
+                  <div *ngIf="!company.logo_url" class="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
+                    {{ company.name.charAt(0).toUpperCase() }}
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-center">
+                  <h2 class="text-white text-xl font-bold leading-tight group-hover:text-primary-400 transition-colors">{{ company.name }}</h2>
+                  <span class="text-sm text-slate-400 mt-1">{{ company.code }}</span>
+                </div>
+              </button>
+
+              <!-- CREATE COMPANY BUTTON -->
+              <button (click)="openCreateModal()"
+                      class="group flex flex-col items-center justify-center gap-6 rounded-2xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 shadow-sm transition-all duration-200 hover:shadow-xl hover:border-primary-400 hover:bg-slate-800/80 hover:-translate-y-1 cursor-pointer h-full min-h-[260px]">
+
+                <div class="flex items-center justify-center w-24 h-24 rounded-full bg-slate-800 shadow-sm border border-slate-700 group-hover:scale-110 group-hover:border-primary-400 transition-all duration-300">
+                  <ng-icon name="heroPlusSolid" class="text-5xl text-slate-400 group-hover:text-primary-400 transition-colors"></ng-icon>
+                </div>
+
+                <div class="flex flex-col items-center">
+                  <h2 class="text-slate-400 text-xl font-bold leading-tight group-hover:text-primary-400 transition-colors">Create Company</h2>
+                  <span class="text-sm text-slate-500 mt-1">Setup new entity</span>
+                </div>
+              </button>
+
+            </div>
+
+            <!-- LOGOUT BUTTON -->
+            <div class="text-center mt-12">
+              <button (click)="logout()" class="text-sm text-slate-400 hover:text-rose-400 transition-colors">
+                Sign Out
+              </button>
+            </div>
+
+          </div>
+        </main>
+
       </div>
     </div>
 
     <!-- MODAL DE CREACIÓN DE EMPRESA -->
-    <div *ngIf="isModalOpen()" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
-      <div class="w-full max-w-md p-6 rounded-lg shadow-xl" style="background-color: var(--card-bg); color: var(--app-text);">
-        <h2 class="text-xl font-bold mb-4">Crear Nueva Empresa</h2>
-        
-        <form [formGroup]="createCompanyForm" (ngSubmit)="createCompany()">
-          <!-- Nombre -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Nombre de la Empresa</label>
-            <input type="text" formControlName="name" placeholder="Ej: Mi Negocio S.A."
-                   class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-            <div *ngIf="createCompanyForm.controls.name.invalid && createCompanyForm.controls.name.touched" class="text-xs text-red-500 mt-1">
-              Nombre requerido.
-            </div>
+    <div *ngIf="isModalOpen()" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-md" (click)="closeCreateModal()"></div>
+
+      <div class="w-full max-w-md p-10 rounded-[2.5rem] bg-slate-900 shadow-2xl relative z-10 border border-slate-800 animate-in zoom-in-95 duration-300">
+        <h2 class="text-2xl font-black text-white uppercase italic mb-8">Nueva Organización</h2>
+
+        <form [formGroup]="createCompanyForm" (ngSubmit)="createCompany()" class="space-y-8">
+          <div>
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-4">Nombre Legal</label>
+            <input type="text" formControlName="name" placeholder="Ej: Corporativo Alpha"
+                   class="w-full px-6 py-4 bg-slate-800 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
           </div>
 
-          <!-- Moneda -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-1">Moneda Principal</label>
-            <select formControlName="currency" class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-              <option value="USD">USD - Dólar Americano</option>
-              <option value="MXN">MXN - Peso Mexicano</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="COP">COP - Peso Colombiano</option>
+          <div>
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-4">Moneda Base</label>
+            <select formControlName="currency" class="w-full px-6 py-4 bg-slate-800 border border-slate-700 rounded-2xl text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none">
+              <option value="USD" class="bg-slate-800">USD - Dólar Americano</option>
+              <option value="MXN" class="bg-slate-800">MXN - Peso Mexicano</option>
+              <option value="EUR" class="bg-slate-800">EUR - Euro</option>
+              <option value="COP" class="bg-slate-800">COP - Peso Colombiano</option>
             </select>
           </div>
 
-          <div class="flex justify-end gap-3">
-            <button type="button" (click)="closeCreateModal()" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+          <div class="flex gap-4 pt-4">
+            <button type="button" (click)="closeCreateModal()" class="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-300 transition-colors">
               Cancelar
             </button>
             <button type="submit" [disabled]="createCompanyForm.invalid || isCreating()"
-                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50">
-              {{ isCreating() ? 'Creando...' : 'Crear' }}
+                    class="flex-1 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ isCreating() ? 'Sincronizando...' : 'Crear Empresa' }}
             </button>
           </div>
         </form>
       </div>
     </div>
 
+    <!-- THEME SWITCHER -->
+    <div class="fixed top-8 right-8 z-20">
+       <button (click)="cycleThemeColor()" class="p-4 rounded-[2rem] text-slate-500 hover:bg-slate-800 transition-all focus:outline-none bg-slate-900/50 backdrop-blur-xl shadow-xl border border-slate-800/50">
+          <div class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">
+            <div class="w-4 h-4 rounded-full" [style.background-color]="themeService.getCurrentPrimaryColor()"></div>
+          </div>
+       </button>
+    </div>
+
     <!-- ESFERA FLOTANTE SIEMPRE VISIBLE -->
     <app-assistant-sphere></app-assistant-sphere>
   `,
   styles: [`
+    :host {
+      display: block;
+      height: 100vh;
+      width: 100%;
+      font-family: Inter, "Noto Sans", sans-serif;
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+        filter: blur(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
     .company-card {
       min-height: 100px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
     }
   `]
 })
@@ -149,7 +200,7 @@ export class CompanySelectorComponent implements OnInit {
   private notification = inject(NotificationService);
   private supabase = inject(SupabaseService);
   private fb = inject(FormBuilder);
-  public session = inject(SessionService);
+  public sessionService = inject(SessionService);
   public themeService = inject(ThemeService);
 
   public readonly ICONS = APP_ICONS;
@@ -165,9 +216,9 @@ export class CompanySelectorComponent implements OnInit {
     name: ['', [Validators.required, Validators.minLength(3)]],
     currency: ['USD', [Validators.required]]
   });
+async ngOnInit(): Promise<void> {
 
-  async ngOnInit(): Promise<void> {
-    const userId = this.session.currentUserId();
+  const userId = this.sessionService.currentUserId();
 
     if (!userId) {
       this.router.navigate(['/login']);
@@ -250,10 +301,10 @@ export class CompanySelectorComponent implements OnInit {
     const companyId = company.id;
 
     // Set Tenant Context first (which triggers auto-load of company, but we will override)
-    await this.session.setTenantContext(tenantId, role, name);
+    await this.sessionService.setTenantContext(tenantId, role, name);
 
     // Explicitly enforce the selected Company ID
-    this.session.setCompanyContext(companyId);
+    this.sessionService.setCompanyContext(companyId);
   }
 
   // --- MODAL LOGIC ---
@@ -272,8 +323,8 @@ export class CompanySelectorComponent implements OnInit {
 
     this.isCreating.set(true);
     const { name, currency } = this.createCompanyForm.value;
-    const userId = this.session.currentUserId();
-
+    const userId = this.sessionService.currentUserId();
+    
     try {
       // 1. Crear Tenant (Contenedor Principal)
       const slug = name!.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(Math.random() * 1000);
@@ -332,6 +383,10 @@ export class CompanySelectorComponent implements OnInit {
   }
 
   logout(): void {
-    this.session.logout();
+    this.sessionService.logout();
+  }
+
+  cycleThemeColor(): void {
+    this.themeService.cycleColorTheme();
   }
 }

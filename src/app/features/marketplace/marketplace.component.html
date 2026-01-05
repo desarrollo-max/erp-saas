@@ -1,30 +1,51 @@
-<div class="min-h-screen bg-gray-50 p-6 md:p-10">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10 transition-colors duration-500">
   <div class="max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Aplicaciones</h1>
-
-    <div *ngIf="isLoading()" class="flex justify-center py-20">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+    <div class="mb-10">
+      <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight italic uppercase">Marketplace</h1>
+      <p class="text-slate-400 font-bold text-xs uppercase tracking-[0.3em] mt-1">Explora e Instala Módulos de Potencia
+      </p>
     </div>
 
-    <div *ngIf="!isLoading()">
-      <div *ngFor="let category of categories" class="mb-10">
-        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 pl-1">
+    <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-24">
+      <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest animate-pulse">Sincronizando
+        Repositorios...</p>
+    </div>
+
+    <div *ngIf="!isLoading()" class="animate-fade-in">
+      <div *ngFor="let category of categories" class="mb-12">
+        <h2
+          class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+          <span class="w-8 h-px bg-slate-200 dark:bg-slate-800"></span>
           {{ category }}
         </h2>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           <button *ngFor="let module of modulesByCategory()[category]" (click)="onModuleClick(module)"
-            class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all duration-200 group h-32 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-            <!-- Icon -->
-            <div class="w-12 h-12 mb-3 rounded-lg flex items-center justify-center transition-colors"
-              [style.background-color]="module.color ? module.color + '20' : '#f3f4f6'"
-              [style.color]="module.color || '#4b5563'">
+            class="group flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:scale-[1.05] hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 h-44 relative overflow-hidden">
+
+            <!-- Glow effect on hover -->
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/5 group-hover:to-purple-500/5 transition-all">
+            </div>
+
+            <!-- Icon Container -->
+            <div
+              class="w-16 h-16 mb-4 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-lg shadow-black/5"
+              [style.background-color]="module.color ? module.color + '15' : 'var(--subtle-bg)'"
+              [style.color]="module.color || 'var(--app-text)'">
               <lucide-icon [name]="getIconName(module)" class="w-8 h-8"></lucide-icon>
             </div>
 
-            <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900 text-center leading-tight px-2">
+            <span
+              class="text-xs font-black text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 text-center leading-tight px-2 uppercase tracking-tight transition-colors">
               {{ module.name }}
             </span>
+
+            <!-- Status Badge if applicable -->
+            <div *ngIf="module.is_installed" class="absolute top-4 right-4">
+              <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+            </div>
           </button>
         </div>
       </div>

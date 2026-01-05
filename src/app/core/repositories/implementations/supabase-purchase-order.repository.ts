@@ -38,10 +38,12 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     }
 
     async getById(id: string): Promise<PurchaseOrder | null> {
+        const companyId = this.getCompanyId();
         const { data, error } = await this.supabase.client
             .from('scm_purchase_orders')
             .select('*')
             .eq('id', id)
+            .eq('company_id', companyId)
             .single();
 
         if (error) return null;
@@ -72,6 +74,7 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     }
 
     async update(id: string, po: Partial<PurchaseOrder>): Promise<PurchaseOrder> {
+        const companyId = this.getCompanyId();
         const { data, error } = await this.supabase.client
             .from('scm_purchase_orders')
             .update({
@@ -79,6 +82,7 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)
+            .eq('company_id', companyId)
             .select()
             .single();
 
@@ -87,10 +91,12 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     }
 
     async delete(id: string): Promise<void> {
+        const companyId = this.getCompanyId();
         const { error } = await this.supabase.client
             .from('scm_purchase_orders')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('company_id', companyId);
 
         if (error) throw error;
     }
@@ -98,10 +104,12 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     // --- LINES ---
 
     async getLines(purchaseOrderId: string): Promise<PurchaseOrderLine[]> {
+        const companyId = this.getCompanyId();
         const { data, error } = await this.supabase.client
             .from('scm_po_lines')
             .select('*')
             .eq('purchase_order_id', purchaseOrderId)
+            .eq('company_id', companyId)
             .order('line_number');
 
         if (error) throw error;
@@ -109,14 +117,15 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     }
 
     async addLine(line: Partial<PurchaseOrderLine>): Promise<PurchaseOrderLine> {
-        // Basic implementation without fancy logic like auto-line-number for now, unless needed.
         const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
 
         const { data, error } = await this.supabase.client
             .from('scm_po_lines')
             .insert({
                 ...line,
                 tenant_id: tenantId,
+                company_id: companyId,
                 created_at: new Date().toISOString()
             })
             .select()
@@ -127,10 +136,12 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     }
 
     async updateLine(id: string, line: Partial<PurchaseOrderLine>): Promise<PurchaseOrderLine> {
+        const companyId = this.getCompanyId();
         const { data, error } = await this.supabase.client
             .from('scm_po_lines')
             .update(line)
             .eq('id', id)
+            .eq('company_id', companyId)
             .select()
             .single();
 
@@ -139,11 +150,99 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     }
 
     async deleteLine(id: string): Promise<void> {
+        const companyId = this.getCompanyId();
         const { error } = await this.supabase.client
             .from('scm_po_lines')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('company_id', companyId);
 
         if (error) throw error;
+    }
+
+    async updateLineQuantity(lineId: string, receivedNow: number): Promise<void> {
+        const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
+
+        // 1. Fetch current received quantity
+        const { data: line, error: fetchError } = await this.supabase.client
+            .from('scm_po_lines')
+            .select('quantity_received')
+            .eq('id', lineId)
+            .eq('tenant_id', tenantId)
+            .eq('company_id', companyId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newReceived = (line.quantity_received || 0) + receivedNow;
+
+        // 2. Update with the new total
+        const { error: updateError } = await this.supabase.client
+            .from('scm_po_lines')
+            .update({ quantity_received: newReceived })
+            .eq('id', lineId)
+            .eq('tenant_id', tenantId)
+            .eq('company_id', companyId);
+
+        if (updateError) throw updateError;
+    }
+
+    async receivePo(poId: string): Promise<void> {
+        const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
+
+        // 1. Fetch all lines for this Purchase Order
+        const { data: lines, error: linesError } = await this.supabase.client
+            .from('scm_po_lines')
+            .select('quantity_ordered, quantity_received')
+            .eq('purchase_order_id', poId)
+            .eq('tenant_id', tenantId)
+            .eq('company_id', companyId);
+
+        if (linesError) throw linesError;
+
+        // 2. Check if all lines are fully received
+        const allCompleted = lines.length > 0 && lines.every(
+            line => (line.quantity_received || 0) >= line.quantity_ordered
+        );
+
+        // 3. Update PO status if all items are received
+        if (allCompleted) {
+            const { error: poError } = await this.supabase.client
+                .from('scm_purchase_orders')
+                .update({
+                    status: 'RECEIVED',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', poId)
+                .eq('tenant_id', tenantId)
+                .eq('company_id', companyId);
+
+            if (poError) throw poError;
+        }
+    }
+
+    /**
+     * Cuenta las órdenes de compra pendientes (APPROVED o PENDING_APPROVAL).
+     * @returns Promesa con el conteo de órdenes pendientes.
+     */
+    async getPendingOrdersCount(): Promise<number> {
+        const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
+
+        const { count, error } = await this.supabase.client
+            .from('scm_purchase_orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('company_id', companyId)
+            .in('status', ['APPROVED', 'PENDING_APPROVAL']);
+
+        if (error) {
+            console.error('Error counting pending orders:', error);
+            return 0;
+        }
+
+        return count || 0;
     }
 }

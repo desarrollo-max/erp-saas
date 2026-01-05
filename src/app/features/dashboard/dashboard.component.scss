@@ -1,1 +1,103 @@
-/* Dashbord specific styles overrides if needed */
+@reference "tailwindcss";
+
+.app-kpi-card {
+  @apply p-6 rounded-3xl border transition-all duration-500 relative overflow-hidden;
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+
+  &::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  &:hover {
+    @apply transform -translate-y-2;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2);
+    border-color: var(--ai-core-primary);
+
+    &::before {
+      @apply opacity-100;
+    }
+  }
+
+  .kpi-header {
+    @apply flex items-center justify-between mb-4;
+
+    .kpi-title {
+      @apply text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em];
+    }
+
+    .kpi-icon-wrapper {
+      @apply p-3 rounded-2xl transition-all duration-300;
+
+      ng-icon {
+        @apply transition-transform duration-300;
+      }
+
+      &.accent-green {
+        background-color: rgba(var(--primary-500-rgb), 0.1);
+        color: var(--primary-500);
+        filter: drop-shadow(0 0 8px rgba(var(--primary-500-rgb, 16, 185, 129), 0.4));
+      }
+
+      &.accent-orange {
+        background-color: rgba(var(--primary-500-rgb), 0.1);
+        color: var(--primary-500);
+        filter: drop-shadow(0 0 8px rgba(var(--primary-500-rgb, 249, 115, 22), 0.4));
+      }
+
+      &.accent-red {
+        background-color: rgba(var(--primary-500-rgb), 0.1);
+        color: var(--primary-500);
+        filter: drop-shadow(0 0 8px rgba(var(--primary-500-rgb, 244, 63, 94), 0.4));
+      }
+
+      &.accent-blue {
+        background-color: rgba(var(--primary-500-rgb), 0.1);
+        color: var(--primary-500);
+        filter: drop-shadow(0 0 8px rgba(var(--primary-500-rgb, 99, 102, 241), 0.4));
+      }
+    }
+  }
+
+  .kpi-content {
+    .kpi-value {
+      @apply text-4xl font-black tracking-tight text-slate-900 dark:text-white;
+    }
+
+    .kpi-footer {
+      @apply flex items-center gap-2 mt-4;
+
+      .kpi-trend {
+        @apply flex items-center text-xs font-bold px-2 py-1 rounded-lg;
+
+        &.positive {
+          @apply bg-emerald-500/10 text-emerald-600 dark:text-emerald-400;
+        }
+
+        &.negative {
+          @apply bg-rose-500/10 text-rose-600 dark:text-rose-400;
+        }
+      }
+
+      .kpi-context {
+        @apply text-xs font-medium text-slate-400 dark:text-slate-500;
+      }
+    }
+  }
+}
+
+/* Dark mode specific refinement */
+.dark .app-kpi-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%);
+  backdrop-filter: blur(12px);
+
+  &:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px -5px var(--ai-core-glow);
+  }
+}

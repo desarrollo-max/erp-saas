@@ -72,4 +72,19 @@ export class SupabaseModuleRepository extends ModuleRepository {
 
     if (error) throw new Error(`Error uninstalling module: ${error.message}`);
   }
+
+  async getById(id: string): Promise<Module | null> {
+    const { data, error } = await this.supabase.client
+      .from('modules')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error(`Error fetching module by ID ${id}:`, error);
+      return null;
+    }
+
+    return data as Module;
+  }
 }

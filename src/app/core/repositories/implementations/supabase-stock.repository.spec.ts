@@ -52,7 +52,7 @@ describe('SupabaseStockRepository', () => {
 
             await expect(repository.createStockMovement(mockMovement))
                 .rejects
-                .toThrow('Usuario no identificado. No se puede registrar el movimiento de stock sin un usuario autenticado válido.');
+                .toThrow('Operación denegada: Se requiere un usuario autenticado para registrar movimientos.');
         });
 
         it('should proceed if user ID is present', async () => {
@@ -70,7 +70,7 @@ describe('SupabaseStockRepository', () => {
                     eq: vi.fn().mockReturnValue({ // company
                         eq: vi.fn().mockReturnValue({ // warehouse
                             eq: vi.fn().mockReturnValue({ // variant
-                                single: vi.fn().mockResolvedValue({ data: { quantity_on_hand: 5, quantity_available: 5 }, error: null })
+                                maybeSingle: vi.fn().mockResolvedValue({ data: { quantity_on_hand: 5, quantity_available: 5 }, error: null })
                             })
                         })
                     })
@@ -94,6 +94,31 @@ describe('SupabaseStockRepository', () => {
 
             expect(sessionSpy.currentUserId).toHaveBeenCalled();
             expect(supabaseSpy.client.from).toHaveBeenCalledWith('scm_stock_movements');
+        });
+    });
+
+    describe('getCriticalStockCount', () => {
+        it('should return the count of items with stock below or equal to the limit', async () => {
+            const limit = 4;
+            const mockCount = 12;
+
+            const mockLte = vi.fn().mockResolvedValue({ count: mockCount, error: null });
+            const mockEq2 = vi.fn().mockReturnValue({ lte: mockLte });
+            const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+            const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
+
+            supabaseSpy.client.from.mockImplementation((table: string) => {
+                if (table === 'scm_stock_levels') {
+                    return { select: mockSelect };
+                }
+                return {};
+            });
+
+            const count = await repository.getCriticalStockCount(limit);
+
+            expect(count).toBe(mockCount);
+            expect(mockSelect).toHaveBeenCalledWith('*', { count: 'exact', head: true });
+            expect(mockLte).toHaveBeenCalledWith('quantity_on_hand', limit);
         });
     });
 });

@@ -5,4 +5,5 @@ export abstract class ModuleRepository {
   abstract getInstalledModules(clientId: string): Promise<Module[]>;
   abstract installModule(clientId: string, moduleId: string): Promise<void>;
   abstract uninstallModule(clientId: string, moduleId: string): Promise<void>;
+  abstract getById(id: string): Promise<Module | null>;
 }

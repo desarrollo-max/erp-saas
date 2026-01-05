@@ -26,6 +26,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/launcher/launcher.component').then(m => m.LauncherComponent),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'theme-test',
+    loadComponent: () => import('./features/theme-test/theme-test.component').then(m => m.ThemeTestComponent),
+    canActivate: [AuthGuard]
+  },
 
   // RUTA DE SUPER ADMINISTRACIÓN ELIMINADA POR SOLICITUD
 
@@ -45,6 +50,10 @@ export const routes: Routes = [
       {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
+      },
+      {
+        path: 'modules/definition/:id',
+        loadComponent: () => import('./features/modules/module-definition/module-definition.component').then(m => m.ModuleDefinitionComponent)
       },
 
       // RUTAS DE UTILIDAD DEL MÓDULO INVENTARIO (Especificas antes de la dinámica)

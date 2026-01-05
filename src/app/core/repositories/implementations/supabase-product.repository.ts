@@ -4,6 +4,11 @@ import { SupabaseService } from "@core/services/supabase.service";
 import { ProductRepository } from "@core/repositories/product.repository";
 import { SessionService } from "@core/services/session.service";
 
+/**
+ * @class SupabaseProductRepository
+ * @description Repositorio basado en Supabase para la gestión de productos dentro del ERP.
+ * Implementa la interfaz ProductRepository con soporte para multi-tenancy y filtrado por compañía.
+ */
 @Injectable({
     providedIn: 'root'
 })
@@ -11,17 +16,28 @@ export class SupabaseProductRepository extends ProductRepository {
     private supabase = inject(SupabaseService);
     private session = inject(SessionService);
 
+    /**
+     * Obtiene el ID de la compañía activa desde el contexto de sesión.
+     * @returns ID único de la compañía.
+     * @throws Error si no hay una compañía activa en sesión.
+     * @private
+     */
     private getCompanyId(): string {
         const id = this.session.currentCompanyId();
-        if (!id) throw new Error('No active company found.');
+        if (!id) throw new Error('No se ha detectado una compañía activa en la sesión.');
         return id;
     }
 
+    /**
+     * Crea un nuevo producto en la base de datos.
+     * @param product Datos parciales del producto a crear.
+     * @async
+     */
     async create(product: Partial<ScmProduct>): Promise<void> {
         const tenant_id = this.session.currentTenantId();
         const company_id = this.getCompanyId();
 
-        if (!tenant_id) throw new Error("No tenant_id");
+        if (!tenant_id) throw new Error("ID de Tenant no disponible en la sesión.");
 
         const dataToInsert = {
             ...product,
@@ -33,10 +49,17 @@ export class SupabaseProductRepository extends ProductRepository {
             .from('scm_products')
             .insert([dataToInsert]);
         if (error) {
-            throw new Error(`Error creating product: ${error.message}`);
+            throw new Error(`Error al crear el producto: ${error.message}`);
         }
     }
 
+    /**
+     * Crea o actualiza múltiples productos en lote.
+     * @param products Lista de productos a procesar.
+     * @param updateIfExists Indica si se debe actualizar el registro si el SKU ya existe (Upsert).
+     * @returns Estadísticas de productos añadidos, actualizados y fallidos.
+     * @async
+     */
     async createBulk(products: Partial<ScmProduct>[], updateIfExists: boolean = false): Promise<{ added: number; updated: number; failed: number; errors: any[] }> {
         let added = 0;
         let updated = 0;
@@ -46,7 +69,7 @@ export class SupabaseProductRepository extends ProductRepository {
         const tenant_id = this.session.currentTenantId();
         const company_id = this.getCompanyId();
 
-        if (!tenant_id) throw new Error("No tenant_id");
+        if (!tenant_id) throw new Error("ID de Tenant no disponible en la sesión.");
 
         for (const product of products) {
             try {
@@ -57,7 +80,6 @@ export class SupabaseProductRepository extends ProductRepository {
                 };
 
                 if (updateIfExists) {
-                    // Upsert individual (removed client_id from flow)
                     const { data, error } = await this.supabase.client
                         .from('scm_products')
                         .upsert(productWithContext, { onConflict: 'tenant_id, sku', ignoreDuplicates: false })
@@ -70,7 +92,7 @@ export class SupabaseProductRepository extends ProductRepository {
                         const createdAt = new Date(data.created_at).getTime();
                         const updatedAt = new Date(data.updated_at).getTime();
 
-                        // Si created_at es igual a updated_at (margen < 100ms), es nuevo.
+                        // Determinamos si es nuevo comparando fechas de creación y actualización (margen < 100ms)
                         if (Math.abs(updatedAt - createdAt) < 100) {
                             added++;
                         } else {
@@ -78,7 +100,6 @@ export class SupabaseProductRepository extends ProductRepository {
                         }
                     }
                 } else {
-                    // Insert individual
                     const { error } = await this.supabase.client
                         .from('scm_products')
                         .insert(productWithContext);
@@ -90,11 +111,11 @@ export class SupabaseProductRepository extends ProductRepository {
                 failed++;
                 let errorMessage = err.message || 'Error desconocido';
 
-                // Manejo de errores específicos de Postgres
+                // Mapeo detallado de códigos de error de base de datos
                 if (err.code === '23503') {
-                    errorMessage = 'La categoría o unidad no existe';
+                    errorMessage = 'Violación de clave externa: La categoría o unidad no existe.';
                 } else if (err.code === '23505') {
-                    errorMessage = 'Producto duplicado (SKU ya existe)';
+                    errorMessage = 'Violación de restricción: Producto duplicado (SKU ya existe).';
                 }
 
                 errors.push(`SKU ${product.sku}: ${errorMessage}`);
@@ -104,10 +125,16 @@ export class SupabaseProductRepository extends ProductRepository {
         return { added, updated, failed, errors };
     }
 
+    /**
+     * Recupera todos los productos asociados al tenant y compañía activa.
+     * Incluye desgloses de variantes y niveles de stock por almacén.
+     * @param tenantId ID único del tenant.
+     * @returns Lista completa de productos.
+     * @async
+     */
     async getAll(tenantId: string): Promise<ScmProduct[]> {
         const company_id = this.getCompanyId();
 
-        // Double Context Filter (Tenant + Company only)
         const { data, error } = await this.supabase.client
             .from('scm_products')
             .select(`
@@ -125,11 +152,20 @@ export class SupabaseProductRepository extends ProductRepository {
             .eq('company_id', company_id);
 
         if (error) {
-            throw new Error(`Error fetching products: ${error.message}`);
+            throw new Error(`Error al obtener los productos: ${error.message}`);
         }
         return data as ScmProduct[];
     }
 
+    /**
+     * Obtiene una lista paginada de productos con soporte para búsquedas y filtros de estado.
+     * @param tenantId ID único del tenant.
+     * @param page Número de página solicitado.
+     * @param pageSize Cantidad de registros por página.
+     * @param filters Criterios de búsqueda (nombre, sku, estado).
+     * @returns Objeto con los datos de la página y el conteo total.
+     * @async
+     */
     async getPaginated(tenantId: string, page: number, pageSize: number, filters?: any): Promise<{ data: ScmProduct[], totalCount: number }> {
         const company_id = this.getCompanyId();
         const from = (page - 1) * pageSize;
@@ -164,7 +200,7 @@ export class SupabaseProductRepository extends ProductRepository {
             .range(from, to);
 
         if (error) {
-            throw new Error(`Error fetching paginated products: ${error.message}`);
+            throw new Error(`Error al obtener productos paginados: ${error.message}`);
         }
 
         return {
@@ -173,6 +209,13 @@ export class SupabaseProductRepository extends ProductRepository {
         };
     }
 
+    /**
+     * Obtiene una versión simplificada de los productos (solo campos esenciales).
+     * Ideal para su uso en selectores y buscadores rápidos.
+     * @param tenantId ID único del tenant.
+     * @returns Lista parcial de productos activos.
+     * @async
+     */
     async getLightweightList(tenantId: string): Promise<Partial<ScmProduct>[]> {
         const company_id = this.getCompanyId();
 
@@ -181,15 +224,21 @@ export class SupabaseProductRepository extends ProductRepository {
             .select('id, name, sku, cost_price, sale_price, is_active, size_config')
             .eq('tenant_id', tenantId)
             .eq('company_id', company_id)
-            .eq('is_active', true) // Typically we only want active products for selectors
+            .eq('is_active', true)
             .order('name');
 
         if (error) {
-            throw new Error(`Error fetching products list: ${error.message}`);
+            throw new Error(`Error al obtener lista simplificada de productos: ${error.message}`);
         }
         return data as Partial<ScmProduct>[];
     }
 
+    /**
+     * Recupera un producto específico por su ID único.
+     * @param id ID del producto.
+     * @returns El producto encontrado o null si no existe.
+     * @async
+     */
     async getById(id: string): Promise<ScmProduct | null> {
         const company_id = this.getCompanyId();
 
@@ -201,12 +250,17 @@ export class SupabaseProductRepository extends ProductRepository {
             .single();
 
         if (error) {
-            console.error('Error fetching product by ID:', error);
             return null;
         }
         return data as ScmProduct;
     }
 
+    /**
+     * Actualiza los datos de un producto existente.
+     * @param id ID único del producto.
+     * @param product Conjunto de datos parciales a actualizar.
+     * @async
+     */
     async update(id: string, product: Partial<ScmProduct>): Promise<void> {
         const company_id = this.getCompanyId();
 
@@ -217,10 +271,15 @@ export class SupabaseProductRepository extends ProductRepository {
             .eq('company_id', company_id);
 
         if (error) {
-            throw new Error(`Error updating product: ${error.message}`);
+            throw new Error(`Error al actualizar el producto: ${error.message}`);
         }
     }
 
+    /**
+     * Elimina un producto de la base de datos de forma permanente.
+     * @param id ID único del producto.
+     * @async
+     */
     async delete(id: string): Promise<void> {
         const company_id = this.getCompanyId();
 
@@ -231,7 +290,7 @@ export class SupabaseProductRepository extends ProductRepository {
             .eq('company_id', company_id);
 
         if (error) {
-            throw new Error(`Error deleting product: ${error.message}`);
+            throw new Error(`Error al eliminar el producto: ${error.message}`);
         }
     }
 
@@ -239,6 +298,12 @@ export class SupabaseProductRepository extends ProductRepository {
     // Image Management Implementation
     // ==========================================
 
+    /**
+     * Obtiene todas las imágenes asociadas a un producto.
+     * @param productId ID único del producto.
+     * @returns Lista de imágenes del producto.
+     * @async
+     */
     async getImages(productId: string): Promise<ScmProductImage[]> {
         const { data, error } = await this.supabase.client
             .from('scm_product_media')
@@ -247,7 +312,6 @@ export class SupabaseProductRepository extends ProductRepository {
             .order('sort_order', { ascending: true });
 
         if (error) {
-            console.error('Error fetching product images:', error);
             return [];
         }
         return data as ScmProductImage[];
@@ -277,6 +341,12 @@ export class SupabaseProductRepository extends ProductRepository {
         }
     }
 
+    /**
+     * Obtiene las categorías de productos disponibles para el tenant.
+     * @param tenantId ID único del tenant.
+     * @returns Lista de categorías.
+     * @async
+     */
     async getCategories(tenantId: string): Promise<any[]> {
         const { data, error } = await this.supabase.client
             .from('scm_product_categories')
@@ -285,15 +355,17 @@ export class SupabaseProductRepository extends ProductRepository {
             .order('name');
 
         if (error) {
-            console.error('Error fetching categories:', error);
             return [];
         }
         return data || [];
     }
-    // ==========================================
-    // Variants Management Implementation
-    // ==========================================
 
+    /**
+     * Recupera las variantes registradas para un producto específico.
+     * @param productId ID único del producto.
+     * @returns Lista de variantes.
+     * @async
+     */
     async getVariantsByProductId(productId: string): Promise<any[]> {
         const { data, error } = await this.supabase.client
             .from('scm_product_variants')
@@ -302,15 +374,18 @@ export class SupabaseProductRepository extends ProductRepository {
             .order('attribute_value');
 
         if (error) {
-            console.error('Error fetching variants:', error);
             return [];
         }
         return data || [];
     }
 
     /**
-     * Generates hypothetical variants based on configuration.
-     * Does NOT save to DB directly, returns them for preview or batch saving.
+     * Genera variantes hipotéticas basadas en la configuración de tallas del producto.
+     * No persiste los datos, solo retorna la estructura para previsualización.
+     * @param productId ID del producto.
+     * @param config Configuración de tallas (rango numérico o lista explícita).
+     * @returns Lista de variantes generadas.
+     * @async
      */
     async generateVariants(productId: string, config: any): Promise<any[]> {
         const variants: any[] = [];
@@ -318,7 +393,7 @@ export class SupabaseProductRepository extends ProductRepository {
 
         if (!config || !tenant_id) return [];
 
-        // CASE 1: Numeric Range (Shoes, etc)
+        // CASO 1: Rango Numérico (Calzado, etc.)
         if (config.min && config.max) {
             const min = parseFloat(config.min);
             const max = parseFloat(config.max);
@@ -326,23 +401,23 @@ export class SupabaseProductRepository extends ProductRepository {
 
             let currentSize = min;
             while (currentSize <= max) {
-                const sizeLabel = currentSize.toFixed(1).replace('.0', ''); // 25.0 -> 25, 25.5 -> 25.5
+                const sizeLabel = currentSize.toFixed(1).replace('.0', '');
 
                 variants.push({
-                    id: crypto.randomUUID(), // Temp ID
+                    id: crypto.randomUUID(),
                     product_id: productId,
                     tenant_id: tenant_id,
                     company_id: this.getCompanyId(),
-                    sku: `${productId}-${sizeLabel.replace('.', '')}`, // Temp SKU Pattern
+                    sku: `${productId}-${sizeLabel.replace('.', '')}`,
                     attribute_name: 'Size',
-                    attribute_value: `${sizeLabel} MX`, // e.g., "25.5 MX"
+                    attribute_value: `${sizeLabel} MX`,
                     is_active: true
                 });
 
                 currentSize += step;
             }
         }
-        // CASE 2: Explicit List (S, M, L, XL)
+        // CASO 2: Lista Explícita (S, M, L, XL, etc.)
         else if (Array.isArray(config.sizes)) {
             config.sizes.forEach((size: string) => {
                 variants.push({
@@ -381,16 +456,18 @@ export class SupabaseProductRepository extends ProductRepository {
         }
     }
 
+    /**
+     * Crea una variante individual. Si ya existe, se actualiza (Upsert).
+     * @param variant Datos de la variante a crear.
+     * @returns La variante creada o actualizada.
+     * @async
+     */
     async createVariant(variant: any): Promise<any> {
         const company_id = this.getCompanyId();
-
-        // DEBUG: Log the variant being created to diagnose null values
-        console.log('Creating Variant Payload:', variant);
 
         const variantWithContext = {
             ...variant,
             company_id,
-            // Priority: Existing variant_sku -> mapped from sku -> fallback to generated
             variant_sku: variant.variant_sku || variant.sku || `${variant.product_id}-${Math.floor(Math.random() * 1000)}`
         };
 
@@ -401,11 +478,17 @@ export class SupabaseProductRepository extends ProductRepository {
             .single();
 
         if (error) {
-            throw new Error(`Error creating variant: ${error.message}`);
+            throw new Error(`Error al crear la variante: ${error.message}`);
         }
         return data;
     }
 
+    /**
+     * Recupera todas las variantes registradas para el tenant y compañía actual.
+     * @param tenantId ID único del tenant.
+     * @returns Lista de todas las variantes.
+     * @async
+     */
     async getAllVariants(tenantId: string): Promise<any[]> {
         const company_id = this.getCompanyId();
 
@@ -416,16 +499,19 @@ export class SupabaseProductRepository extends ProductRepository {
             .eq('company_id', company_id);
 
         if (error) {
-            console.error('Error fetching all variants:', error);
             return [];
         }
         return data || [];
     }
+    /**
+     * Sincroniza y genera variantes faltantes para todos los productos con configuración de tallas.
+     * @returns Cantidad total de variantes generadas.
+     * @async
+     */
     async syncMissingVariants(): Promise<number> {
         const tenantId = this.session.currentTenantId();
         const companyId = this.getCompanyId();
 
-        // 1. Fetch potential products
         const { data: products } = await this.supabase.client
             .from('scm_products')
             .select('id, sku, size_config')
@@ -438,27 +524,16 @@ export class SupabaseProductRepository extends ProductRepository {
         let totalGenerated = 0;
         const allNewVariants: any[] = [];
 
-        // 2. Iterate and Generate
         for (const p of products) {
             const config = p.size_config as any;
-
-            // Generate variants using existing logic
-            // Note: generateVariants generates 'Size' attribute. 
-            // We should ensure we don't duplicate logic.
             const generated = await this.generateVariants(p.id, config);
 
             if (generated.length > 0) {
-                // Adapt SKU to be robust: P-SKU-SIZE
                 generated.forEach(g => {
-                    // Ensure sku is unique-ish
-                    // If generateVariants uses specific logic, keep it.
-                    // But verify if base SKU is available.
-                    // generateVariants uses: `${productId}-${sizeLabel}` which is ugly UUID based.
-                    // Better: `${p.sku}-${sizeLabel}`
+                    // Generación robusta de SKU para la variante
                     if (p.sku) {
                         const sizeLabel = g.attribute_value.replace(' MX', '').replace('.', '');
                         g.sku = `${p.sku}-${sizeLabel}`;
-                        // Also set variant_sku
                         g.variant_sku = g.sku;
                     }
                     allNewVariants.push(g);
@@ -466,8 +541,7 @@ export class SupabaseProductRepository extends ProductRepository {
             }
         }
 
-        // 3. Batch Upsert
-        // We do chunks of 50 to be safe
+        // Persistencia en lotes de 50 para evitar exceder límites de parámetros
         const chunkSize = 50;
         for (let i = 0; i < allNewVariants.length; i += chunkSize) {
             const chunk = allNewVariants.slice(i, i + chunkSize);
@@ -475,7 +549,6 @@ export class SupabaseProductRepository extends ProductRepository {
             totalGenerated += chunk.length;
         }
 
-        console.log(`Synced ${totalGenerated} variants for ${products.length} products.`);
         return totalGenerated;
     }
 }

@@ -1,4 +1,3 @@
-
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -15,77 +14,93 @@ import { NotificationService } from '@core/services/notification.service';
   imports: [CommonModule, NgIconsModule],
   viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 animate-fade-in relative overflow-hidden text-slate-800 dark:text-slate-100">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 sm:p-10 animate-fade-in relative overflow-hidden transition-colors duration-500">
       
-      <!-- Background Decorative Elements -->
-      <div class="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
-      <div class="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -ml-48 -mb-48"></div>
+      <!-- Premium Background Elements -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(79,70,229,0.05)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_30%,rgba(79,70,229,0.1)_0%,transparent_50%)] pointer-events-none"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(139,92,246,0.05)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_70%_70%,rgba(139,92,246,0.1)_0%,transparent_50%)] pointer-events-none"></div>
 
       <!-- Header -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 relative z-10">
-        <div>
-           <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2 italic uppercase">Ingeniería de Procesos</h1>
-           <p class="text-slate-400 font-bold text-xs uppercase tracking-[0.3em]">Rutas de Manufactura & Etapas de Valor</p>
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12 relative z-10">
+        <div class="space-y-2">
+          <h1 class="text-4xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic drop-shadow-sm">
+            Ingeniería de <span class="text-indigo-600 dark:text-indigo-400">Procesos</span>
+          </h1>
+          <p class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500 ml-1">Estandarización y Rutas de Producción</p>
         </div>
         
         <button (click)="createProcess()" 
-                class="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none flex items-center gap-2">
-            <ng-icon name="heroPlusCircleSolid" class="w-5 h-5"></ng-icon>
-            Nuevo Proceso
+                class="px-8 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-950 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-indigo-600 dark:hover:bg-indigo-400 hover:text-white transition-all shadow-2xl flex items-center gap-3 group active:scale-95">
+          <ng-icon name="heroPlusCircleSolid" class="w-6 h-6 group-hover:rotate-90 transition-transform duration-500"></ng-icon>
+          Nuevo Método
         </button>
       </div>
 
       <!-- Content -->
       <div class="relative z-10">
-          
-          <div *ngIf="isLoading()" class="h-64 flex flex-col items-center justify-center">
-              <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-              <p class="text-slate-400 text-xs font-black uppercase tracking-widest">Cargando Ingeniería...</p>
-          </div>
+        <div *ngIf="isLoading()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div *ngFor="let i of [1,2,3]" class="h-64 bg-white dark:bg-slate-900/50 rounded-[3rem] animate-pulse border border-slate-100 dark:border-slate-800"></div>
+        </div>
 
-          <div *ngIf="!isLoading() && processes().length === 0" class="py-20 text-center">
-              <ng-icon name="heroCpuChipSolid" class="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4"></ng-icon>
-              <p class="text-slate-400 font-bold">No se han definido rutas de producción.</p>
-              <button (click)="createProcess()" class="mt-4 text-indigo-600 font-black uppercase text-[10px] tracking-widest hover:underline">Comenzar Ahora</button>
-          </div>
+        <div *ngIf="!isLoading() && processes().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div *ngFor="let p of processes()" 
+               class="group bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl rounded-[3rem] p-8 border border-white dark:border-slate-800/50 shadow-xl hover:shadow-2xl hover:shadow-indigo-500/10 dark:hover:border-indigo-500/30 transition-all duration-500 cursor-pointer relative overflow-hidden"
+               (click)="editProcess(p)">
+            
+            <div class="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_70%_30%,rgba(79,70,229,0.05)_0%,transparent_70%)] group-hover:scale-150 transition-transform duration-700"></div>
 
-          <div *ngIf="!isLoading() && processes().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div *ngFor="let process of processes()" 
-                   class="group bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 relative overflow-hidden cursor-pointer"
-                   (click)="editProcess(process)">
-                  
-                  <div class="flex items-start justify-between mb-8">
-                      <div class="w-16 h-16 bg-purple-50 dark:bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 transition-all group-hover:bg-purple-600 group-hover:text-white group-hover:rotate-12">
-                          <ng-icon name="heroCpuChipSolid" class="w-8 h-8"></ng-icon>
-                      </div>
-                      <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                          <button (click)="deleteProcess($event, process)" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all">
-                              <ng-icon name="heroTrashSolid" class="w-5 h-5"></ng-icon>
-                          </button>
-                      </div>
+            <div class="relative z-10">
+                <div class="flex justify-between items-start mb-6">
+                  <div class="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-[1.25rem] flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                    <ng-icon name="heroArrowPathSolid" class="w-7 h-7 group-hover:rotate-180 transition-transform duration-700"></ng-icon>
                   </div>
+                  <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <div class="w-1.5 h-1.5 rounded-full" [class.bg-emerald-500]="p.is_active" [class.bg-slate-400]="!p.is_active"></div>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        {{ p.is_active ? 'OPERATIVO' : 'DESCATALOGADO' }}
+                    </span>
+                  </div>
+                </div>
 
-                  <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2 uppercase italic leading-tight group-hover:text-purple-600 transition-colors">{{ process.name }}</h3>
-                  <p class="text-sm text-slate-400 font-medium line-clamp-2 h-10 leading-relaxed mb-6">{{ process.description || 'Sin descripción detallada' }}</p>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {{ p.name }}
+                </h3>
+                
+                <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-8 font-medium leading-relaxed opacity-80">
+                  {{ p.description || 'Sin especificaciones técnicas documentadas...' }}
+                </p>
 
-                  <div class="flex justify-between items-center pt-6 border-t border-slate-50 dark:border-slate-800">
-                      <div class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          <ng-icon name="heroClockSolid" class="w-4 h-4"></ng-icon>
-                          {{ process.standard_duration_minutes || 0 }} MIN ESTÁNDAR
+                <div class="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800/50">
+                   <div class="flex flex-col">
+                      <span class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Ciclo Estándar</span>
+                      <div class="flex items-center gap-2">
+                        <ng-icon name="heroClockSolid" class="text-indigo-500"></ng-icon>
+                        <span class="text-sm font-black text-slate-700 dark:text-slate-300">{{ p.standard_duration_minutes || 0 }} <span class="text-[10px] opacity-50 uppercase">Minutos</span></span>
                       </div>
-                      
-                      <span *ngIf="process.is_active" class="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-full text-[8px] font-black uppercase">Activo</span>
-                      <span *ngIf="!process.is_active" class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full text-[8px] font-black uppercase">Inactivo</span>
-                  </div>
-
-                  <!-- Arrow Indicator on hover -->
-                  <div class="absolute bottom-8 right-8 text-purple-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all">
-                      <ng-icon name="heroArrowRightSolid" class="w-6 h-6"></ng-icon>
-                  </div>
-              </div>
+                   </div>
+                   
+                   <button (click)="deleteProcess($event, p)" 
+                           class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100">
+                      <ng-icon name="heroTrashSolid" class="w-5 h-5"></ng-icon>
+                   </button>
+                </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoading() && processes().length === 0" 
+             class="flex flex-col items-center justify-center py-32 text-center bg-white/40 dark:bg-slate-900/20 backdrop-blur-sm rounded-[4rem] border-2 border-dashed border-slate-200 dark:border-slate-800/50">
+            <div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center text-slate-200 dark:text-slate-700 mb-8 border border-white dark:border-slate-800">
+                <ng-icon name="heroQueueListSolid" class="w-12 h-12"></ng-icon>
+            </div>
+            <h3 class="text-2xl font-black text-slate-400 dark:text-white uppercase italic tracking-tighter mb-2">Ingeniería Vacía</h3>
+            <p class="text-xs font-black uppercase tracking-[0.3em] text-slate-300 dark:text-slate-600">No se han definido rutas de manufactura para este tenant</p>
+            <button (click)="createProcess()" class="mt-10 px-8 py-4 bg-indigo-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform">
+                Iniciar Configuración
+            </button>
+        </div>
       </div>
-
     </div>
   `,
   styles: [`
@@ -136,7 +151,7 @@ export class ProcessListComponent implements OnInit {
     event.stopPropagation();
     if (confirm(`¿Estás seguro de eliminar el proceso "${process.name}"?`)) {
       try {
-        await this.mfgRepo.deleteProcess(process.id);
+        await this.mfgRepo.deleteProcess(process.id!);
         this.notification.success('Proceso eliminado');
         this.loadProcesses();
       } catch (error) {

@@ -17,123 +17,162 @@ import { NotificationService } from '@core/services/notification.service';
   imports: [CommonModule, FormsModule, ReactiveFormsModule, NgIconsModule],
   viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 animate-fade-in relative overflow-hidden">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 sm:p-10 animate-fade-in relative overflow-hidden transition-colors duration-500">
       
-      <!-- Decorative -->
-      <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl"></div>
+      <!-- Premium Background Elements -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(79,70,229,0.05)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(79,70,229,0.08)_0%,transparent_50%)] pointer-events-none"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(139,92,246,0.05)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_80%_80%,rgba(139,92,246,0.08)_0%,transparent_50%)] pointer-events-none"></div>
 
       <!-- Header -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
-        <div>
-          <button (click)="goBack()" class="flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-colors text-xs font-black uppercase tracking-widest mb-4">
-            <ng-icon name="heroArrowLeftSolid"></ng-icon>
-            Volver a Órdenes
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12 relative z-10">
+        <div class="space-y-4">
+          <button (click)="goBack()" class="flex items-center gap-3 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all text-[10px] font-black uppercase tracking-[0.3em] group">
+            <ng-icon name="heroArrowLeftSolid" class="group-hover:-translate-x-1 transition-transform"></ng-icon>
+            Volver al Panel
           </button>
-          <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase italic">
-            {{ isNew() ? 'Nueva Orden de Trabajo' : 'Detalle de Orden' }}
+          <h1 class="text-4xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic drop-shadow-sm">
+            {{ isNew() ? 'Lanzar Nueva' : 'Detalle de' }} <span class="text-indigo-600 dark:text-indigo-400">Orden</span>
           </h1>
         </div>
         
-        <div class="flex gap-3">
+        <div class="flex gap-4">
           <button (click)="saveOrder()" 
                   [disabled]="orderForm.invalid || isSubmitting()"
-                  class="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 flex items-center gap-2">
-            <ng-icon name="heroCheckCircleSolid" class="w-4 h-4"></ng-icon>
-            {{ isNew() ? 'Lanzar Producción' : 'Actualizar Orden' }}
+                  class="px-8 py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-slate-900 dark:hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 disabled:opacity-50 flex items-center gap-3 group active:scale-95">
+            <ng-icon name="heroCheckCircleSolid" class="w-6 h-6 group-hover:scale-110 transition-transform"></ng-icon>
+            {{ isNew() ? 'Lanzar Producción' : 'Sincronizar Cambios' }}
           </button>
         </div>
       </div>
 
-      <div class="max-w-4xl mx-auto relative z-10">
-        <form [formGroup]="orderForm" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="max-w-5xl mx-auto relative z-10 pb-20">
+        <form [formGroup]="orderForm" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          <!-- Product & Process Selection -->
-          <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl space-y-6">
-            <h4 class="text-lg font-black text-slate-900 dark:text-white mb-2 uppercase italic">Configuración de Producto</h4>
-            
-            <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Producto a Producir</label>
-              <select formControlName="product_id" 
-                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none">
-                <option value="" disabled>Seleccionar Producto...</option>
-                <option *ngFor="let p of products()" [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
-              </select>
+          <!-- Product & Process Selection (Main Column) -->
+          <div class="lg:col-span-7 space-y-8">
+            <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-10 rounded-[3rem] border border-white dark:border-slate-800 shadow-xl space-y-8">
+                <div class="flex items-center gap-4 border-b border-slate-50 dark:border-slate-800 pb-6 mb-6">
+                    <div class="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center">
+                        <ng-icon name="heroSquare3Stack3dSolid" class="w-6 h-6"></ng-icon>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-900 dark:text-white uppercase italic tracking-tight">Núcleo de Producción</h4>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                      <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Especificación de Producto</label>
+                      <select formControlName="product_id" 
+                              class="app-input !rounded-[1.5rem] !bg-slate-50 dark:!bg-slate-800/50 !border-slate-100 dark:!border-slate-800 font-bold text-sm appearance-none cursor-pointer">
+                        <option value="" disabled>Elegir recurso técnico...</option>
+                        <option *ngFor="let p of products()" [value]="p.id">{{ p.name }} &bull; {{ p.sku }}</option>
+                      </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                      <div>
+                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Volumen Total</label>
+                        <div class="relative group">
+                            <input type="number" formControlName="quantity"
+                               class="app-input !rounded-[1.5rem] !bg-slate-50 dark:!bg-slate-800/50 !border-slate-100 dark:!border-slate-800 font-black text-indigo-600 dark:text-indigo-400">
+                            <span class="absolute right-6 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase">UNIDADES</span>
+                        </div>
+                      </div>
+                      <div>
+                         <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Nivel de Prioridad</label>
+                         <select formControlName="priority" 
+                                 class="app-input !rounded-[1.5rem] !bg-slate-50 dark:!bg-slate-800/50 !border-slate-100 dark:!border-slate-800 font-bold appearance-none cursor-pointer">
+                           <option value="LOW">BAJA &bull; P3</option>
+                           <option value="MEDIUM">MEDIA &bull; P2</option>
+                           <option value="HIGH">ALTA &bull; P1</option>
+                           <option value="URGENTE">CRÍTICA &bull; P0</option>
+                         </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Estrategia de Ruta (Workflow)</label>
+                      <select formControlName="process_id" (change)="onProcessChange()"
+                              class="app-input !rounded-[1.5rem] !bg-slate-50 dark:!bg-slate-800/50 !border-slate-100 dark:!border-slate-800 font-bold appearance-none cursor-pointer">
+                        <option value="" disabled>Definir flujo de trabajo...</option>
+                        <option *ngFor="let pr of processes()" [value]="pr.id">{{ pr.name }}</option>
+                      </select>
+                    </div>
+
+                    <div *ngIf="stages().length > 0" class="animate-in fade-in slide-in-from-top-2 duration-500">
+                      <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Punto de Inserción (Etapa)</label>
+                      <select formControlName="current_stage_id"
+                              class="app-input !rounded-[1.5rem] !bg-slate-100 dark:!bg-slate-900 border-indigo-500/20 font-bold text-indigo-600 dark:text-indigo-400 appearance-none cursor-pointer">
+                        <option *ngFor="let s of stages()" [value]="s.id">{{ s.name }}</option>
+                      </select>
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Cantidad</label>
-                <input type="number" formControlName="quantity"
-                       class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium">
-              </div>
-              <div>
-                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Prioridad</label>
-                 <select formControlName="priority" 
-                         class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none">
-                   <option value="LOW">Baja</option>
-                   <option value="MEDIUM">Media</option>
-                   <option value="HIGH">Alta</option>
-                   <option value="URGENTE">Urgente</option>
-                 </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Proceso de Manufactura (Ruta)</label>
-              <select formControlName="process_id" (change)="onProcessChange()"
-                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none">
-                <option value="" disabled>Seleccionar Ruta...</option>
-                <option *ngFor="let pr of processes()" [value]="pr.id">{{ pr.name }}</option>
-              </select>
-            </div>
-
-            <div *ngIf="stages().length > 0">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Etapa Inicial</label>
-              <select formControlName="current_stage_id"
-                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none">
-                <option *ngFor="let s of stages()" [value]="s.id">{{ s.name }}</option>
-              </select>
+            <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-10 rounded-[3rem] border border-white dark:border-slate-800 shadow-xl">
+                 <div class="flex items-center gap-4 mb-8">
+                    <div class="w-12 h-12 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl flex items-center justify-center">
+                        <ng-icon name="heroDocumentTextSolid" class="w-6 h-6"></ng-icon>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-900 dark:text-white uppercase italic tracking-tight">Memoria Técnica</h4>
+                 </div>
+                 <textarea formControlName="notes" rows="5" placeholder="Documentar especificaciones especiales, requerimientos de calidad o notas de ensamblaje..."
+                           class="app-input !rounded-[1.5rem] !bg-slate-50 dark:!bg-slate-800/50 !border-slate-100 dark:!border-slate-800 font-medium resize-none"></textarea>
             </div>
           </div>
 
-          <!-- Scheduling & Notes -->
-          <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-xl space-y-6">
-             <h4 class="text-lg font-black text-slate-900 dark:text-white mb-2 uppercase italic">Programación</h4>
-             
-             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Número de Orden</label>
-                <input type="text" formControlName="order_number" placeholder="WO-XXXX" [readonly]="!isNew()"
-                       class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium uppercase">
-                <p class="text-[9px] font-bold text-slate-400 mt-1 ml-1 uppercase italic">Generado automáticamente si se deja vacío</p>
+          <!-- Scheduling & Identity (Side Column) -->
+          <div class="lg:col-span-5 space-y-8">
+             <div class="bg-slate-900 dark:bg-indigo-950 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden text-white border border-slate-800 dark:border-indigo-900">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                
+                <h4 class="text-lg font-black text-white uppercase italic tracking-tight mb-8">Identidad Digital</h4>
+                
+                <div class="space-y-6 relative z-10">
+                    <div>
+                        <label class="block text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-2 ml-4">Codificación Global</label>
+                        <input type="text" formControlName="order_number" placeholder="WO-AUTOMATIC" [readonly]="!isNew()"
+                               class="w-full bg-white/10 border border-white/10 rounded-[1.5rem] px-6 py-4 font-black uppercase tracking-widest text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                        <p class="text-[8px] font-bold text-white/30 mt-3 ml-4 uppercase tracking-[0.2em] italic">Token único de rastreabilidad</p>
+                    </div>
+
+                    <div *ngIf="!isNew()" class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Estatus Vivo</span>
+                            <span class="text-xs font-black uppercase italic">{{ orderForm.get('status')?.value }}</span>
+                        </div>
+                        <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                           <div class="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" [style.width.%]="60"></div>
+                        </div>
+                    </div>
+                </div>
              </div>
 
-             <div class="grid grid-cols-2 gap-4">
-                <div>
-                   <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Fecha de Inicio</label>
-                   <input type="date" formControlName="start_date"
-                          class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium">
-                </div>
-                <div>
-                   <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Fecha de Entrega</label>
-                   <input type="date" formControlName="due_date"
-                          class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium">
-                </div>
-             </div>
+             <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-10 rounded-[3rem] border border-white dark:border-slate-800 shadow-xl space-y-8">
+                 <div class="flex items-center gap-4 border-b border-slate-50 dark:border-slate-800 pb-6 mb-6">
+                    <div class="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-2xl flex items-center justify-center">
+                        <ng-icon name="heroCalendarDaysSolid" class="w-6 h-6"></ng-icon>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-900 dark:text-white uppercase italic tracking-tight">Cronograma</h4>
+                 </div>
 
-             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Instrucciones / Notas</label>
-                <textarea formControlName="notes" rows="4" placeholder="Especificaciones adicionales de producción..."
-                          class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-medium"></textarea>
-             </div>
-
-             <div *ngIf="!isNew()" class="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-900">
-                <div class="flex justify-between items-center mb-1">
-                   <span class="text-[10px] font-black text-indigo-600 uppercase">Estado Actual</span>
-                   <span class="text-xs font-black text-indigo-900 dark:text-white uppercase italic">{{ orderForm.get('status')?.value }}</span>
-                </div>
-                <div class="h-1.5 w-full bg-indigo-100 dark:bg-indigo-900 rounded-full overflow-hidden">
-                   <div class="h-full bg-indigo-600" [style.width.%]="40"></div>
-                </div>
+                 <div class="space-y-6">
+                    <div>
+                       <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Apertura de Línea</label>
+                       <input type="date" formControlName="start_date"
+                              class="app-input !rounded-[1.5rem] !bg-slate-50 dark:!bg-slate-800/50 !border-slate-100 dark:!border-slate-800 font-bold appearance-none">
+                    </div>
+                    <div>
+                       <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2 ml-4">Límite de Despacho (Due)</label>
+                       <input type="date" formControlName="due_date"
+                              class="app-input !rounded-[1.5rem] !bg-indigo-50 dark:!bg-indigo-500/5 !border-indigo-100 dark:!border-indigo-500/20 font-black text-indigo-600 dark:text-indigo-400 appearance-none">
+                    </div>
+                 </div>
+                 
+                 <div class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-100 dark:border-slate-800">
+                    <p class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-relaxed">
+                        El sistema recalculará automáticamente la carga de trabajo en base al tiempo estándar definido en la ingeniería del proceso.
+                    </p>
+                 </div>
              </div>
           </div>
 

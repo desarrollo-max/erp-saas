@@ -4,6 +4,11 @@ import { ScmStockLevel, ScmStockMovement } from "@core/models/erp.types";
 import { SupabaseService } from "@core/services/supabase.service";
 import { SessionService } from "@core/services/session.service";
 
+/**
+ * @class SupabaseStockRepository
+ * @description Repositorio para la gestión de existencias y movimientos de almacén.
+ * Maneja la lógica transaccional de entrada/salida de stock y la integridad de los niveles de inventario.
+ */
 @Injectable({
     providedIn: 'root'
 })
@@ -11,12 +16,25 @@ export class SupabaseStockRepository extends StockRepository {
     private supabase = inject(SupabaseService);
     private session = inject(SessionService);
 
+    /**
+     * Obtiene el ID de la compañía activa garantizando el aislamiento de datos.
+     * @returns ID único de la compañía seleccionada.
+     * @throws Error si no hay contexto de compañía.
+     * @private
+     */
     private getCompanyId(): string {
         const id = this.session.currentCompanyId();
-        if (!id) throw new Error('No active Company Context found.');
+        if (!id) throw new Error('No se ha detectado una compañía activa en la sesión.');
         return id;
     }
 
+    /**
+     * Recupera el nivel de stock actual para una variante específica en un almacén determinado.
+     * @param variantId ID de la variante del producto.
+     * @param warehouseId ID del almacén.
+     * @returns Objeto ScmStockLevel o null si no existe registro (stock 0).
+     * @async
+     */
     async getStockByVariantAndWarehouse(variantId: string, warehouseId: string): Promise<ScmStockLevel | null> {
         const tenantId = this.session.currentTenantId();
         const companyId = this.getCompanyId();
@@ -31,21 +49,23 @@ export class SupabaseStockRepository extends StockRepository {
             .single();
 
         if (error) {
-            // Code PGRST116 means no rows found, suggesting 0 stock or record doesn't exist yet
-            if (error.code !== 'PGRST116') {
-                console.error('Error fetching stock level:', error);
-            }
+            // El código PGRST116 indica que no hay filas, lo cual es un estado válido (sin stock inicial)
             return null;
         }
 
         return data as ScmStockLevel;
     }
 
+    /**
+     * Calcula la suma agregada de stock disponible para una variante en todos los almacenes de la compañía.
+     * @param variantId ID único de la variante.
+     * @returns Cantidad total disponible.
+     * @async
+     */
     async getAggregatedStockByVariant(variantId: string): Promise<number> {
         const tenantId = this.session.currentTenantId();
         const companyId = this.getCompanyId();
 
-        // Sum quantity_on_hand for this variant across all warehouses of the company
         const { data, error } = await this.supabase.client
             .from('scm_stock_levels')
             .select('quantity_on_hand')
@@ -54,7 +74,6 @@ export class SupabaseStockRepository extends StockRepository {
             .eq('variant_id', variantId);
 
         if (error) {
-            console.error('Error fetching aggregated stock:', error);
             return 0;
         }
 
@@ -67,30 +86,29 @@ export class SupabaseStockRepository extends StockRepository {
         await this.createStockMovement(movement);
     }
 
+    /**
+     * Registra un nuevo movimiento de stock y actualiza automáticamente los niveles de inventario.
+     * Esta función actúa como una "pseudo-transacción" asegurando que el stock no sea negativo.
+     * @param movement Datos del movimiento (origen, destino, cantidad, tipo).
+     * @returns El objeto de movimiento persistido.
+     * @async
+     */
     async createStockMovement(movement: Partial<ScmStockMovement>): Promise<ScmStockMovement> {
-        console.group('Stock Transaction Debug');
-        console.log('1. Initiating Stock Movement:', movement);
-
         const tenant_id = this.session.currentTenantId();
-        const company_id = this.getCompanyId(); // Context validation
+        const company_id = this.getCompanyId();
 
-        // 1. Validate
+        // Validación inicial de datos obligatorios
         if (!movement.variant_id || !movement.warehouse_id || !movement.quantity) {
-            console.groupEnd();
-            throw new Error('Datos incompletos para el movimiento de inventario.');
+            throw new Error('Datos incompletos para procesar el movimiento de inventario.');
         }
 
-        // 2. Prepare Data
         const userId = this.session.currentUserId();
-        console.log('2. User Context:', userId);
-
         if (!userId) {
-            console.groupEnd();
-            throw new Error('Usuario no identificado. No se puede registrar el movimiento de stock sin un usuario autenticado válido.');
+            throw new Error('Operación denegada: Se requiere un usuario autenticado para registrar movimientos.');
         }
 
+        // 1. Preparación del registro de movimiento para auditoría
         const dataToInsert = {
-            // Strictly whitelist columns to prevent "column not found" errors
             tenant_id,
             company_id,
             created_by: userId,
@@ -102,11 +120,8 @@ export class SupabaseStockRepository extends StockRepository {
             notes: movement.notes || null,
             reference_type: movement.reference_type || null,
             reference_id: movement.reference_id || null
-            // Do NOT spread ...movement here. This ensures we don't send 'product_id' or 'id' if mistakenly passed.
         };
 
-        // 3. Insert Movement
-        console.log('3. Inserting Movement Record...');
         const { data: insertedMovement, error: moveError } = await this.supabase.client
             .from('scm_stock_movements')
             .insert(dataToInsert)
@@ -114,29 +129,22 @@ export class SupabaseStockRepository extends StockRepository {
             .single();
 
         if (moveError) {
-            console.error('Movement Insert Failed:', moveError);
-            console.groupEnd();
-            throw new Error(`Error registrando movimiento: ${moveError.message}`);
+            throw new Error(`Error al registrar el movimiento en la base de datos: ${moveError.message}`);
         }
-        console.log('   Movement Record Created:', insertedMovement?.id);
 
-        // 4. Update Stock Level (Atomic-like operation via Supabase Logic or Manual Upsert)
-        // Fetch current level to be safe
-        console.log('4. Fetching Current Stock Level...');
+        // 2. Consulta de niveles de stock actuales para el ajuste
         const { data: currentLevel, error: fetchError } = await this.supabase.client
             .from('scm_stock_levels')
             .select('*')
             .eq('tenant_id', tenant_id)
-            .eq('company_id', company_id) // Security Constraint: Strict Company Isolation
+            .eq('company_id', company_id)
             .eq('warehouse_id', movement.warehouse_id!)
             .eq('variant_id', movement.variant_id!)
-            .maybeSingle(); // Use maybeSingle to avoid 406/errors on empty
+            .maybeSingle();
 
         if (fetchError) {
-            console.error('Stock Level Fetch Error:', fetchError);
+            // Log de error interno pero intentamos continuar con lo recolectado
         }
-
-        console.log('   Current Level Found:', currentLevel);
 
         let newOnHand = 0;
         let newAvailable = 0;
@@ -146,9 +154,7 @@ export class SupabaseStockRepository extends StockRepository {
             newAvailable = currentLevel.quantity_available;
         }
 
-        console.log(`   Baseline Stock: OnHand=${newOnHand}, Available=${newAvailable}`);
-
-        // Apply Logic
+        // 3. Lógica de incremento o decremento según el tipo de movimiento
         const isPositive = movement.movement_type === 'IN' ||
             movement.movement_type === 'PRODUCTION_OUTPUT' ||
             (movement.movement_type === 'ADJUSTMENT' && movement.quantity! > 0);
@@ -157,24 +163,20 @@ export class SupabaseStockRepository extends StockRepository {
             newOnHand += movement.quantity!;
             newAvailable += movement.quantity!;
         } else {
-            // OUT, PRODUCTION_CONSUMPTION, TRANSFER (Source), ADJUSTMENT (Negative)
             newOnHand -= movement.quantity!;
             newAvailable -= movement.quantity!;
         }
 
-        console.log(`   Calculated New Stock: OnHand=${newOnHand}, Available=${newAvailable}, Change=${isPositive ? '+' : '-'}${movement.quantity}`);
-
-        // Prevent negative stock
+        // Mantenimiento de integridad: El stock no puede ser negativo en el sistema físico
         if (newOnHand < 0) {
-            console.error('Logic Error: Negative Stock Result');
-            console.groupEnd();
-            throw new Error(`Operación rechazada: El stock resultante sería negativo (${newOnHand}).`);
+            throw new Error(`Operación rechazada: Stock insuficiente. El resultado sería negativo (${newOnHand}).`);
         }
 
+        // 4. Actualización atómica del nivel de stock (Sincronización de existencia real)
         const levelData = {
-            id: currentLevel?.id || crypto.randomUUID(), // Ensure UUID for new rows
+            id: currentLevel?.id || crypto.randomUUID(),
             tenant_id,
-            company_id, // Ensure company context is set on level
+            company_id,
             warehouse_id: movement.warehouse_id,
             variant_id: movement.variant_id,
             quantity_on_hand: newOnHand,
@@ -182,22 +184,13 @@ export class SupabaseStockRepository extends StockRepository {
             last_movement_date: new Date().toISOString()
         };
 
-        console.log('5. Executing Stock Level Upsert:', levelData);
-
-        const { error: levelError, data: upsertData } = await this.supabase.client
+        const { error: levelError } = await this.supabase.client
             .from('scm_stock_levels')
-            .upsert(levelData, { onConflict: 'variant_id, warehouse_id, tenant_id' })
-            .select()
-            .single();
+            .upsert(levelData, { onConflict: 'variant_id, warehouse_id, tenant_id, company_id' });
 
         if (levelError) {
-            console.error('CRITICAL: Stock movement recorded but level update failed.', levelError);
-            console.groupEnd();
-            throw new Error(`CRITICAL SYSTEM ERROR: Stock consistency failed. ${levelError.message}`);
+            throw new Error(`ERROR CRÍTICO: Movimiento registrado pero fallo en actualización de niveles. ${levelError.message}`);
         }
-
-        console.log('   Stock Level Updated Successfully:', upsertData);
-        console.groupEnd();
 
         return insertedMovement as ScmStockMovement;
     }
@@ -220,6 +213,12 @@ export class SupabaseStockRepository extends StockRepository {
         return data as ScmStockLevel[];
     }
 
+    /**
+     * Obtiene el historial completo de movimientos de stock para la compañía actual.
+     * Ordenados por fecha de creación descendente.
+     * @returns Lista de movimientos de stock.
+     * @async
+     */
     async getMovementHistory(): Promise<ScmStockMovement[]> {
         const tenantId = this.session.currentTenantId();
         const companyId = this.getCompanyId();
@@ -232,10 +231,33 @@ export class SupabaseStockRepository extends StockRepository {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching movement history:', error);
             return [];
         }
 
         return data as ScmStockMovement[];
+    }
+
+    /**
+     * Cuenta cuántos productos tienen un nivel de stock crítico (por debajo o igual al límite).
+     * @param limit Cantidad máxima para considerar un stock como crítico.
+     * @returns Promesa con el conteo de registros críticos.
+     */
+    async getCriticalStockCount(limit: number): Promise<number> {
+        const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
+
+        const { count, error } = await this.supabase.client
+            .from('scm_stock_levels')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('company_id', companyId)
+            .lte('quantity_on_hand', limit);
+
+        if (error) {
+            console.error('Error counting critical stock:', error);
+            return 0;
+        }
+
+        return count || 0;
     }
 }

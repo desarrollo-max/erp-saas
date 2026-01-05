@@ -7,18 +7,20 @@ Sistema Integral de Administración Empresarial (ERP) de clase mundial, diseñad
 Este repositorio contiene la suite completa de módulos operativos, financieros y estratégicos, totalmente integrados mediante una arquitectura basada en repositorios y micro-servicios de frontend.
 
 ### 📦 Módulos Principales (100% Funcionales)
-1.  **Ventas & CRM**: Gestión de pedidos mayoristas, retail (POS) y seguimiento de oportunidades.
-2.  **Finanzas & Contabilidad**: Facturación CFDI, control de gastos, libro diario y cuentas por cobrar/pagar.
-3.  **Cadena de Suministro**: Inventario multi-almacén, logística de movimientos y compras.
-4.  **Manufactura (Producción)**: Tablero Kanban de órdenes de trabajo, explosión de materiales (BOM) y control de procesos.
-5.  **Recursos Humanos**: Gestión de plantilla de personal, esquemas de nómina y contratos.
-6.  **Marketing & Web**: Campañas de crecimiento, ROI publicitario y gestión de contenido (Blog).
+
+1. **Ventas & CRM**: Gestión de pedidos mayoristas, retail (POS) y seguimiento de oportunidades.
+2. **Finanzas & Contabilidad**: Facturación CFDI, control de gastos, libro diario y cuentas por cobrar/pagar.
+3. **Cadena de Suministro**: Inventario multi-almacén, logística de movimientos y compras.
+4. **Manufactura (Producción)**: Tablero Kanban de órdenes de trabajo, explosión de materiales (BOM) y control de procesos.
+5. **Recursos Humanos**: Gestión de plantilla de personal, esquemas de nómina y contratos.
+6. **Marketing & Web**: Campañas de crecimiento, ROI publicitario y gestión de contenido (Blog).
 
 ### 🛠️ Tecnología Core
-*   **Framework**: Angular 18+ (Signals, Standalone Components).
-*   **Backend**: Supabase (PostgreSQL, Auth, RLS).
-*   **Diseño**: CSS Moderno con Glassmorphism y micro-animaciones dinámicas.
-*   **Asistencia**: AI-Driven Assistant Sphere para onboarding contextual.
+
+* **Framework**: Angular 18+ (Signals, Standalone Components).
+* **Backend**: Supabase (PostgreSQL, Auth, RLS).
+* **Diseño**: CSS Moderno con Glassmorphism y micro-animaciones dinámicas.
+* **Asistencia**: AI-Driven Assistant Sphere para onboarding contextual.
 
 ![Estado de compilación](https://img.shields.io/badge/build-passing-brightgreen)
 ![Cobertura](https://img.shields.io/badge/coverage-80%25-green)
@@ -28,36 +30,36 @@ Este repositorio contiene la suite completa de módulos operativos, financieros 
 
 ## 🚀 Características
 
-- **Arquitectura Multi-Inquilino**: Soporte para múltiples organizaciones con datos aislados.
-- **Autenticación y Autorización**: Inicio de sesión seguro con Supabase Auth y Control de Acceso Basado en Roles (RBAC) utilizando Guards.
-- **Aprovisionamiento de Super Administrador**: Panel dedicado para crear inquilinos y gestionar licencias de módulos.
-- **Diseño Modular**:
-  - **Inventario**: Gestión de productos, seguimiento de stock, importaciones CSV y validación estricta de auditoría en movimientos.
-  - **Ventas**: CRM, Cotizaciones, Pedidos, POS (Retail y Restaurante) y Suscripciones.
-  - **Cadena de Suministro**: Manufactura, PLM, Compras (Complete con gestión de órdenes, proveedores y variantes), Control de Calidad y Logística (Transferencias).
-  - **Ventas**: CRM, Cotizaciones, Pedidos, POS (Punto de Venta) y Suscripciones.
-  - **Finanzas**: Contabilidad, Facturación, Gastos y Tesorería.
-  - **RRHH**: Gestión de empleados, Reclutamiento, Tiempo Libre y Nómina.
-  - **Web**: Constructor de Sitios Web, Comercio Electrónico, Blog y Foros.
-  - **Marketplace**: Instalación dinámica de módulos y gestión a través de una interfaz modal.
-- **UI/UX Moderna**: Diseño responsivo construido con Tailwind CSS, modo oscuro y componentes personalizados.
-- **Datos en Tiempo Real**: Aprovechando las capacidades en tiempo real de Supabase.
+* **Arquitectura Multi-Inquilino**: Soporte para múltiples organizaciones con datos aislados.
+* **Autenticación y Autorización**: Inicio de sesión seguro con Supabase Auth y Control de Acceso Basado en Roles (RBAC) utilizando Guards.
+* **Aprovisionamiento de Super Administrador**: Panel dedicado para crear inquilinos y gestionar licencias de módulos.
+* **Diseño Modular**:
+  * **Inventario**: Gestión de productos, seguimiento de stock, importaciones CSV y validación estricta de auditoría en movimientos.
+  * **Ventas**: CRM, Cotizaciones, Pedidos, POS (Retail y Restaurante) y Suscripciones.
+  * **Cadena de Suministro**: Manufactura, PLM, Compras (Complete con gestión de órdenes, proveedores y variantes), Control de Calidad y Logística (Transferencias).
+  * **Ventas**: CRM, Cotizaciones, Pedidos, POS (Punto de Venta) y Suscripciones.
+  * **Finanzas**: Contabilidad, Facturación, Gastos y Tesorería.
+  * **RRHH**: Gestión de empleados, Reclutamiento, Tiempo Libre y Nómina.
+  * **Web**: Constructor de Sitios Web, Comercio Electrónico, Blog y Foros.
+  * **Marketplace**: Instalación dinámica de módulos y gestión a través de una interfaz modal.
+* **UI/UX Moderna**: Diseño responsivo construido con Tailwind CSS, modo oscuro y componentes personalizados.
+* **Datos en Tiempo Real**: Aprovechando las capacidades en tiempo real de Supabase.
 
 ## 🛠️ Stack Tecnológico
 
-- **Frontend**: Angular 18+, TypeScript, RxJS
-- **Estilos**: Tailwind CSS, SCSS
-- **Backend / Base de Datos**: Supabase (PostgreSQL, Auth, Storage)
-- **Pruebas**: Vitest (Pruebas Unitarias)
-- **Herramienta de Construcción**: Angular CLI
+* **Frontend**: Angular 18+, TypeScript, RxJS
+* **Estilos**: Tailwind CSS, SCSS
+* **Backend / Base de Datos**: Supabase (PostgreSQL, Auth, Storage)
+* **Pruebas**: Vitest (Pruebas Unitarias)
+* **Herramienta de Construcción**: Angular CLI
 
 ## 📋 Prerrequisitos
 
 Asegúrate de tener instalado lo siguiente:
 
-- **Node.js** (v18 o superior)
-- **npm** (v10 o superior)
-- **Angular CLI** (`npm install -g @angular/cli`)
+* **Node.js** (v18 o superior)
+* **npm** (v10 o superior)
+* **Angular CLI** (`npm install -g @angular/cli`)
 
 ## ⚙️ Instalación
 
@@ -119,7 +121,7 @@ El reporte de cobertura se generará en el directorio `coverage/`.
 
 ## 📂 Estructura del Proyecto
 
-```
+```text
 src/
 ├── app/
 │   ├── core/           # Servicios singleton, guards, modelos e interceptores
@@ -149,13 +151,31 @@ Este proyecto está licenciado bajo la Licencia MIT - mira el archivo [LICENSE](
 
 ## 🔄 Actualizaciones Recientes
 
-### Diciembre 2025 - Manufactura Premium & Control de Procesos
-- **Manufactura**: Implementación completa de componentes para Gestión de Procesos (Rutas y Etapas), Explosión de Materiales (BOM) y Órdenes de Producción.
-- **UI/UX**: Rediseño premium del Centro de Mando (Dashboard) y Lanzador de Manufactura con estética 2026.
-- **Funcionalidad**: Integración total con Supabase para persistencia de datos industriales.
-- **Marketplace**: Implementación completa del control de instalación y desinstalación de módulos desde el Launcher.
-- **Rutas Dinámicas**: Sincronización automática de rutas del Launcher basadas en la tabla de módulos de Supabase.
-- **RRHH**: Integración del módulo de Recursos Humanos con gestión de empleados y rutas específicas (`/rrhh`).
-- **Inventario**: Nueva funcionalidad de **Impresión de Etiquetas** con códigos QR y generación dinámica de PDF/Vista de impresión.
-- **Estabilidad**: Corrección del error `oklch` en generación de PDFs y resolución de advertencia de múltiples instancias de Supabase.
+### Diciembre 2025 - Seguridad, Aislamiento & Neutralidad de Marca (Nano Banana)
 
+* **Aislamiento Multi-Company**: Implementación de filtrado obligatorio por `company_id` en todos los repositorios operativos para garantizar privacidad absoluta entre sedes.
+* **Neutralidad de Marca**: Desvinculación de referencias estáticas ("Agave Boots") en Header, Login y Dashboard para un ERP marca blanca (White Label).
+* **Esquema de Datos Robusto**: Conversión del campo `company_id` a `NOT NULL` en tablas críticas (`stock_levels`, `stock_movements`, `po_lines`) mediante migraciones controladas.
+* **Seguridad de Sesión**: Nuevo mecanismo `clearContext` en `SessionService` que erradica la fuga de datos al cambiar de tenant o compañía.
+* **KPIs Dinámicos**: Dashboard adaptado para mostrar métricas exclusivas de la compañía activa en tiempo real.
+
+### Diciembre 2025 - Manufactura Premium & Control de Procesos
+
+* **Manufactura**: Implementación completa de componentes para Gestión de Procesos (Rutas y Etapas), Explosión de Materiales (BOM) y Órdenes de Producción.
+
+* **UI/UX**: Rediseño premium del Centro de Mando (Dashboard) y Lanzador de Manufactura con estética 2026.
+* **Funcionalidad**: Integración total con Supabase para persistencia de datos industriales.
+* **Marketplace**: Implementación completa del control de instalación y desinstalación de módulos desde el Launcher.
+* **Rutas Dinámicas**: Sincronización automática de rutas del Launcher basadas en la tabla de módulos de Supabase.
+* **RRHH**: Integración del módulo de Recursos Humanos con gestión de empleados y rutas específicas (`/rrhh`).
+* **Inventario & Compras**: Capacidad de **Recepción Parcial de OC** en `SupabasePurchaseOrderRepository`, permitiendo actualizaciones granulares de líneas y cambio automático a estado `RECEIVED` al completar todas las partidas.
+* **Dashboard & BI**: Dinamización del panel principal con métricas reales de **Stock Crítico** y **Órdenes Pendientes** integradas directamente con la base de datos Supabase.
+* **Estabilidad**: Cobertura de pruebas unitarias para nuevos métodos de repositorios y corrección de errores en generación de PDFs.
+
+### Diciembre 2025 - Alertas Proactivas & Rediseño de Interfaz (Sphere Update)
+
+* **Alertas Proactivas de Suministro**: Implementación de un monitor de producción que detecta faltas de stock en tiempo real y activa alertas visuales en la esfera de IA.
+* **Tours de Resolución**: Integración de `OnboardingService` con la esfera para guiar al usuario directamente al Marketplace ante rupturas de stock.
+* **Rediseño del Launcher**: Organización de aplicaciones por categorías (Tabs) y reducción de escala visual para una navegación más densa y profesional.
+* **Buscador en Marketplace**: Inclusión de motor de búsqueda instantánea y tarjetas optimizadas para el catálogo de módulos.
+* **Optimización de Compilación**: Ajuste de presupuestos (budgets) de CSS para componentes complejos.

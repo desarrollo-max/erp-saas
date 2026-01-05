@@ -2,7 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
-import { Tenant } from '../models/erp.types';
+import { Tenant, Company } from '../models/erp.types';
 
 @Injectable({
   providedIn: 'root'
@@ -21,9 +21,13 @@ export class SessionService {
   // Signal para el usuario autenticado (Para HeaderComponent)
   public user = signal<{ email?: string; id?: string } | null>(null);
 
+  public currentUser() {
+    return this.user();
+  }
+
   // Signal para el objeto completo del tenant
   public currentTenant = signal<Tenant | null>(null);
-  public currentCompany = signal<any | null>(null);
+  public currentCompany = signal<Company | null>(null);
 
   // Computed Signal for Admin Check
   private _isAdmin = computed(() => {
@@ -60,10 +64,33 @@ export class SessionService {
   // --- MÉTODOS DE CONTEXTO ---
 
   /**
+   * Limpia profundamente el contexto de la sesión para evitar fugas de datos entre empresas.
+   */
+  public clearContext(): void {
+    // Reset Signals
+    this.currentTenantId.set(null);
+    this.currentTenantName.set(null);
+    this.currentUserRole.set(null);
+    this.currentTenant.set(null);
+    this.currentCompanyId.set(null);
+    this.currentCompany.set(null);
+    // userId and user stay until logout as they are identity-bound
+
+    // Clear LocalStorage
+    localStorage.removeItem('erp_tenant_id');
+    localStorage.removeItem('erp_user_role');
+    localStorage.removeItem('erp_tenant_name');
+    localStorage.removeItem('erp_company_id');
+    localStorage.removeItem('erp_client_id');
+  }
+
+  /**
    * Setea el contexto actual del Tenant seleccionado y lo persiste.
    * Contiene la lógica de redirección post-selección.
    */
   async setTenantContext(tenantId: string, role: string, name: string): Promise<void> {
+    this.clearContext(); // Seguridad: Limpiar rastro previo
+
     this.currentTenantId.set(tenantId);
     this.currentUserRole.set(role);
     this.currentTenantName.set(name);
@@ -73,27 +100,20 @@ export class SessionService {
     localStorage.setItem('erp_user_role', role);
     localStorage.setItem('erp_tenant_name', name);
 
-    // Reset company context initially
-    this.currentCompanyId.set(null);
-    localStorage.removeItem('erp_company_id');
-
-    // Explicit removal of legacy client_id
-    localStorage.removeItem('erp_client_id');
-
     // Load Company Context automatically
     await this.loadCompanyDetails(tenantId);
 
-    // Redirección post-selección:
-    // Tanto Admin como User van al Launcher al seleccionar una empresa.
+    // Redirección post-selección
     this.router.navigate(['/launcher']);
 
     // Buscar y setear el objeto completo del tenant
-    this.loadFullTenantDetails(tenantId);
+    await this.loadFullTenantDetails(tenantId);
   }
 
   setCompanyContext(companyId: string): void {
     this.currentCompanyId.set(companyId);
     localStorage.setItem('erp_company_id', companyId);
+    this.loadFullCompanyDetails(companyId);
   }
 
   /**
@@ -111,11 +131,23 @@ export class SessionService {
 
       if (!error && data) {
         this.setCompanyContext(data.id);
-      } else {
-        console.warn('No active company found for tenant:', tenantId);
       }
     } catch (err) {
       console.error('Error loading company details:', err);
+    }
+  }
+
+  /**
+   * Carga los detalles completos de la compañía activa.
+   */
+  private async loadFullCompanyDetails(companyId: string) {
+    const { data } = await this.supabase.client
+      .from('companies')
+      .select('*')
+      .eq('id', companyId)
+      .single();
+    if (data) {
+      this.currentCompany.set(data);
     }
   }
 
@@ -190,22 +222,9 @@ export class SessionService {
    */
   async logout(): Promise<void> {
     await this.supabase.client.auth.signOut();
-
-    // Clear Signals
-    this.currentTenantId.set(null);
-    this.currentTenantName.set(null);
-    this.currentUserRole.set(null);
-    this.currentTenant.set(null);
+    this.clearContext();
     this.currentUserId.set(null);
-    this.currentCompanyId.set(null);
-
-    // Clear LocalStorage
-    localStorage.removeItem('erp_tenant_id');
-    localStorage.removeItem('erp_user_role');
-    localStorage.removeItem('erp_tenant_name');
-    localStorage.removeItem('erp_company_id');
-    localStorage.removeItem('erp_client_id'); // Ensure legacy key is gone
-
+    this.user.set(null);
     this.router.navigate(['/login']);
   }
 }

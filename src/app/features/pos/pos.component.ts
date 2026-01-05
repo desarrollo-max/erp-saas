@@ -9,6 +9,7 @@ import { ProductRepository } from '@core/repositories/product.repository';
 import { SupabaseStockRepository } from '@core/repositories/implementations/supabase-stock.repository';
 import { SupabaseService } from '@core/services/supabase.service';
 import { SessionService } from '@core/services/session.service';
+import { ThemeService } from '@core/services/theme.service';
 import { ScmWarehouse, ScmProduct } from '@core/models/erp.types';
 
 @Component({
@@ -25,7 +26,7 @@ import { ScmWarehouse, ScmProduct } from '@core/models/erp.types';
             <ng-icon name="heroArrowLeftSolid" class="w-6 h-6"></ng-icon>
           </button>
           <h1 class="text-xl font-bold flex items-center gap-2">
-            <ng-icon name="heroCurrencyDollarSolid" class="text-orange-500 w-6 h-6"></ng-icon>
+            <ng-icon name="heroCurrencyDollarSolid" class="text-primary-500 w-6 h-6"></ng-icon>
             PdV
           </h1>
         </div>
@@ -33,11 +34,18 @@ import { ScmWarehouse, ScmProduct } from '@core/models/erp.types';
         <div class="flex items-center gap-4">
           <label class="text-sm font-medium opacity-70">Almacén de Salida:</label>
           <select [(ngModel)]="selectedWarehouseId" (change)="onWarehouseChange()"
-                  class="p-2 rounded-md border text-sm focus:ring-2 focus:ring-orange-500 outline-none transition-colors"
+                  class="p-2 rounded-md border text-sm focus:ring-2 focus:ring-primary-500 outline-none transition-colors"
                   style="background-color: var(--subtle-bg); border-color: var(--border-color); color: var(--app-text);">
             <option [ngValue]="null">Seleccionar Almacén</option>
             <option *ngFor="let w of warehouses()" [value]="w.id">{{ w.name }}</option>
           </select>
+          
+          <!-- Theme Selector -->
+          <button (click)="cycleThemeColor()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition">
+            <div class="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center">
+              <div class="w-3 h-3 rounded-full" [style.background-color]="themeService.getCurrentPrimaryColor()"></div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -180,6 +188,7 @@ export class PosComponent implements OnInit {
   private notification = inject(NotificationService);
   private supabase = inject(SupabaseService);
   private session = inject(SessionService);
+  public themeService = inject(ThemeService);
 
   warehouses = signal<ScmWarehouse[]>([]);
   products = signal<any[]>([]); // Using 'any' for now to mix product + variant info
@@ -455,5 +464,9 @@ export class PosComponent implements OnInit {
 
   calculateTotal(): number {
     return this.cart().reduce((acc, item) => acc + (item.quantity * item.price), 0);
+  }
+
+  cycleThemeColor(): void {
+    this.themeService.cycleColorTheme();
   }
 }

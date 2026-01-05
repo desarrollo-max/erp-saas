@@ -15,56 +15,56 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
     <div class="flex gap-8 p-0 overflow-x-auto h-full bg-transparent scrollbar-hide">
       
       <!-- COLUMNS dynamically loaded based on stages -->
-      <div *ngFor="let stage of stages(); let i = index" class="flex-1 min-w-[320px] flex flex-col group/col">
-        <div class="flex items-center justify-between mb-6 px-4">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-6 rounded-full shadow-sm" [ngClass]="getStageColor(i)"></div>
-                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 group-hover/col:text-slate-600 transition-colors">{{ stage.name }}</h3>
-                <span class="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-500">{{ getOrdersForStage(stage.id).length }}</span>
+      <div *ngFor="let stage of stages(); let i = index" class="flex-1 min-w-[280px] flex flex-col group/col">
+        <div class="flex items-center justify-between mb-4 px-4">
+            <div class="flex items-center gap-2">
+                <div class="w-1.5 h-5 rounded-full shadow-sm" [ngClass]="getStageColor(i)"></div>
+                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover/col:text-slate-600 transition-colors">{{ stage.name }}</h3>
+                <span class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded-md text-[9px] font-black text-slate-500">{{ getOrdersForStage(stage.id).length }}</span>
             </div>
         </div>
 
-        <div class="flex-grow space-y-4 min-h-[400px] border-2 border-transparent group-hover/col:bg-slate-100/50 dark:group-hover/col:bg-slate-900/50 rounded-[2.5rem] p-4 transition-all duration-500 overflow-y-auto custom-scrollbar">
+        <div class="flex-grow space-y-3 min-h-[300px] border-2 border-transparent group-hover/col:bg-slate-100/30 dark:group-hover/col:bg-slate-900/30 rounded-[2rem] p-3 transition-all duration-500 overflow-y-auto custom-scrollbar">
             <div *ngFor="let order of getOrdersForStage(stage.id)" 
-                 class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all group/card">
+                 class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:translate-y-[-2px] transition-all group/card">
                 
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-[10px] font-black tracking-widest text-indigo-500 uppercase">#{{ order.order_number }}</span>
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-[9px] font-black tracking-widest text-indigo-500 uppercase">#{{ order.order_number }}</span>
                     <div [ngClass]="getPriorityClass(order.priority)">
-                        <ng-icon name="heroFlagSolid" class="w-4 h-4"></ng-icon>
+                        <ng-icon name="heroFlagSolid" class="w-3.5 h-3.5"></ng-icon>
                     </div>
                 </div>
 
-                <h4 class="text-sm font-black text-slate-800 dark:text-slate-100 mb-2 line-clamp-2 leading-relaxed">{{ order.scm_products?.name || 'Producto Desconocido' }}</h4>
+                <h4 class="text-xs font-black text-slate-800 dark:text-slate-100 mb-1 line-clamp-2 leading-tight">{{ order.scm_products?.name || 'Producto Desconocido' }}</h4>
                 
-                <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400 mb-6 font-mono">
+                <div class="flex items-center gap-3 text-[9px] font-bold text-slate-400 mb-3 font-mono">
                     <div class="flex items-center gap-1">
-                        <ng-icon name="heroSquares2x2Solid" class="w-3.5 h-3.5"></ng-icon>
+                        <ng-icon name="heroSquares2x2Solid" class="w-3 h-3"></ng-icon>
                         {{ order.quantity }} unid.
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                <div class="pt-2 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center mt-2">
                     <!-- Backward button -->
                     <button *ngIf="i > 0" (click)="moveOrder(order, stages()[i-1])" 
-                            class="p-2 text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all opacity-0 group-hover/card:opacity-100"
+                            class="p-1.5 text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all opacity-0 group-hover/card:opacity-100"
                             title="Retroceder para reproceso">
-                        <ng-icon name="heroArrowUturnLeftSolid" class="w-4 h-4"></ng-icon>
+                        <ng-icon name="heroArrowUturnLeftSolid" class="w-3.5 h-3.5"></ng-icon>
                     </button>
                     
                     <div class="flex-grow"></div>
 
                     <!-- Forward button -->
                     <button (click)="moveOrder(order, stages()[i+1], i === stages().length - 1)" 
-                            class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover/card:opacity-100"
+                            class="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover/card:opacity-100"
                             [title]="i === stages().length - 1 ? 'Finalizar Orden' : 'Avanzar Etapa'">
-                        <ng-icon [name]="i === stages().length - 1 ? 'heroCheckCircleSolid' : 'heroArrowRightSolid'" class="w-4 h-4"></ng-icon>
+                        <ng-icon [name]="i === stages().length - 1 ? 'heroCheckCircleSolid' : 'heroArrowRightSolid'" class="w-3.5 h-3.5"></ng-icon>
                     </button>
                 </div>
             </div>
 
-            <div *ngIf="getOrdersForStage(stage.id).length === 0" class="h-24 border-2 border-dashed border-slate-50 dark:border-slate-800 rounded-[2rem] flex items-center justify-center text-center">
-                <p class="text-[10px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-widest italic">Etapa Vacía</p>
+            <div *ngIf="getOrdersForStage(stage.id).length === 0" class="h-16 border-2 border-dashed border-slate-50 dark:border-slate-800 rounded-2xl flex items-center justify-center text-center">
+                <p class="text-[9px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-widest italic">Vacía</p>
             </div>
         </div>
       </div>

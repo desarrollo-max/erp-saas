@@ -1,141 +1,187 @@
-import { Component, OnInit, signal, inject, Output, EventEmitter, Input } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, signal, inject, Output, EventEmitter, Input, effect, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ModuleRepository } from '@core/repositories/module.repository';
 import { SessionService } from '@core/services/session.service';
 import { Module } from '@core/models/module.model';
 import { NotificationService } from '@core/services/notification.service';
-import { NgIconsModule, provideIcons } from '@ng-icons/core';
-import * as heroIcons from '@ng-icons/heroicons/solid';
-
-interface ModuleCategoryMap {
-  [key: string]: Module[];
-}
+import { ExternalMarketplaceService, ExternalProduct } from '@core/services/external-marketplace.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-marketplace-modal',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, NgIconsModule],
-  viewProviders: [provideIcons(heroIcons)],
+  imports: [CommonModule],
   template: `
-    <!-- BACKDROP -->
-    <div class="fixed inset-0 bg-gray-900 bg-opacity-70 z-50 flex items-center justify-center p-4 backdrop-blur-md" (click)="close()">
-      
-      <!-- MODAL CONTAINER -->
-      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform scale-100 border border-white/20" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 transition-all animate-fade-in" (click)="close()">
+      <div class="flex flex-col w-full max-w-6xl h-[91vh] bg-[#1c212c] rounded-2xl shadow-2xl border border-[#2d3648] overflow-hidden animate-siac-in" (click)="$event.stopPropagation()">
         
-        <!-- HEADER -->
-        <div class="px-8 py-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 sticky top-0 z-10">
-          <div>
-            <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Marketplace Premium</h2>
-            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Potencia tu negocio con módulos especializados de alta fidelidad.</p>
+        <!-- Premium Header -->
+        <div class="flex items-center justify-between px-8 py-7 border-b border-[#2d3648] bg-[#1c212c] z-10 shrink-0">
+          <div class="flex items-center gap-5">
+            <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+               <span class="material-symbols-outlined text-3xl">storefront</span>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-white tracking-tighter uppercase">
+                Marketplace SIAC
+              </h2>
+              <p class="text-sm text-slate-400 font-medium">Arquitectura de módulos inteligentes para su ecosistema ERP.</p>
+            </div>
           </div>
-          <button (click)="close()" class="p-2 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 transition-all duration-200">
-            <ng-icon name="heroXMarkSolid" class="w-6 h-6"></ng-icon>
+          <button (click)="close()" class="group p-2.5 rounded-xl hover:bg-slate-800 transition-all text-slate-400 hover:text-white border border-transparent hover:border-[#2d3648]">
+            <span class="material-symbols-outlined text-2xl">close</span>
           </button>
         </div>
 
-        <!-- CONTENT -->
-        <div class="p-8 overflow-y-auto bg-gray-50/50 dark:bg-slate-950/50 flex-grow">
-          
-          <!-- LOADING/ERROR -->
-          <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-32">
-            <div class="relative w-16 h-16">
-              <div class="absolute inset-0 rounded-full border-4 border-indigo-100 dark:border-indigo-900/30"></div>
-              <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
-            </div>
-            <p class="mt-4 text-gray-500 dark:text-slate-400 font-medium animate-pulse">Cargando catálogo...</p>
-          </div>
-
-          <div *ngIf="error()" class="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-900/30 shadow-sm">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 mb-4">
-               <ng-icon name="heroExclamationTriangleSolid" class="w-8 h-8"></ng-icon>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Error al cargar el catálogo</h3>
-            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1 max-w-md mx-auto">{{ error() }}</p>
-            <button (click)="loadMarketplace()" class="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all font-semibold shadow-lg shadow-indigo-200 dark:shadow-none">Reintentar</button>
-          </div>
-
-          <!-- CATALOG -->
-          <div *ngIf="!isLoading() && !error()">
-            <div *ngFor="let category of getCategoryKeys(moduleCategories())" class="mb-14 last:mb-0">
+        <!-- Toolbar: Tabs & Search -->
+        <div class="flex flex-col flex-1 overflow-hidden bg-[#111318]/50">
+          <div class="px-8 py-6 border-b border-[#2d3648]/50 bg-[#1c212c]/50 shrink-0 shadow-sm z-20">
+            <div class="grid gap-6 grid-cols-1 lg:grid-cols-12 items-center">
               
-              <div class="flex items-center mb-8">
-                <div class="p-2 mr-4 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-200 dark:shadow-none">
-                  <ng-icon name="heroSquares2x2Solid" class="text-white w-5 h-5"></ng-icon>
-                </div>
-                <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-wide uppercase">
-                  {{ category.replace(/_/g, ' ') }}
-                </h3>
-                <div class="flex-grow ml-6 h-px bg-gradient-to-r from-gray-200 dark:from-slate-800 to-transparent"></div>
+              <!-- Premium Segmented Control -->
+              <div class="lg:col-span-3 flex p-1.5 bg-[#111318] rounded-xl border border-[#2d3648] shadow-inner">
+                <button (click)="currentTab.set('APPS')" 
+                        [class]="currentTab() === 'APPS' ? 'bg-[#1c212c] text-white shadow-lg border-slate-700' : 'text-slate-500 border-transparent'"
+                        class="flex-1 px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all border">Aplicaciones</button>
+                <button (click)="currentTab.set('SUPPLIES')" 
+                        [class]="currentTab() === 'SUPPLIES' ? 'bg-[#1c212c] text-white shadow-lg border-slate-700' : 'text-slate-500 border-transparent'"
+                        class="flex-1 px-4 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all border">Suministros</button>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                <div *ngFor="let module of moduleCategories().get(category)" 
-                     (click)="toggleModule(module)"
-                     [ngClass]="{
-                       'ring-2 ring-indigo-500 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 shadow-xl': isInstalled(module.id),
-                       'hover:shadow-2xl hover:-translate-y-1': true
-                     }"
-                     class="group bg-white dark:bg-slate-900 rounded-3xl p-7 transition-all duration-300 cursor-pointer border border-gray-100 dark:border-slate-800 relative overflow-hidden flex flex-col items-center text-center">
+              <!-- Integrated Search -->
+              <div class="lg:col-span-5 relative group">
+                <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+                <input class="w-full pl-12 pr-4 py-3.5 bg-[#111318] border border-[#2d3648] rounded-xl text-sm text-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-medium placeholder:text-slate-500" 
+                       placeholder="Buscar herramientas o servicios..." 
+                       type="text"
+                       [value]="searchTerm()"
+                       (input)="searchTerm.set($any($event.target).value)"/>
+              </div>
+
+              <!-- Category Select (Only APPS) -->
+              <div class="lg:col-span-4" *ngIf="currentTab() === 'APPS'">
+                <div class="relative">
+                  <select class="w-full pl-5 pr-12 py-3.5 bg-[#111318] border border-[#2d3648] rounded-xl text-sm text-slate-300 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary cursor-pointer appearance-none font-bold tracking-tight"
+                          (change)="selectedCategory.set($any($event.target).value)">
+                    <option value="">Todas las Categorías</option>
+                    <option *ngFor="let cat of allCategories()" [value]="cat">{{ cat }}</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-4 top-3.5 pointer-events-none text-slate-500">expand_more</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Area -->
+          <div class="flex-1 overflow-y-auto p-8 lg:p-10 scroll-smooth custom-scrollbar">
+            
+            <!-- APPS GRID -->
+            <ng-container *ngIf="currentTab() === 'APPS'">
+              <div *ngIf="isLoading()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div *ngFor="let i of [1,2,3,4,5,6]" class="h-72 rounded-3xl bg-[#1c212c] border border-[#2d3648] animate-pulse"></div>
+              </div>
+
+              <div *ngIf="!isLoading()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-siac-in">
+                <div *ngFor="let module of filteredModules()" 
+                     class="flex flex-col bg-[#1c212c] rounded-3xl border border-[#2d3648] p-8 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/5 transition-all group h-full relative overflow-hidden">
                   
-                  <!-- Glossy background effect -->
-                  <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-500"></div>
+                  <div class="flex justify-between items-start mb-8">
+                    <div class="h-16 w-16 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-3"
+                         [style.background-color]="(module.color || '#135bec') + '15'"
+                         [style.color]="module.color || '#135bec'">
+                      <span class="material-symbols-outlined text-[36px] font-light">{{ getIconName(module) }}</span>
+                    </div>
+                    <span class="px-3 py-1.5 rounded-xl bg-[#111318] text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-800">
+                      {{ module.category }}
+                    </span>
+                  </div>
 
-                  <!-- Icon Container -->
-                  <div class="relative w-24 h-24 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-110 shadow-2xl"
-                       [style.background-color]="(module.color || '#6366F1') + '15'">
-                    
-                    <!-- Decorative Ring -->
-                    <div class="absolute inset-0 rounded-2xl border-2 border-white/20 dark:border-slate-700/50"></div>
-                    
-                    <ng-icon 
-                      [name]="getIconName(module)" 
-                      class="w-12 h-12 relative z-10" 
-                      [color]="module.color || '#6366F1'">
-                    </ng-icon>
+                  <h3 class="text-xl font-black text-white mb-3 tracking-tighter group-hover:text-primary transition-colors">{{ module.name }}</h3>
+                  <p class="text-sm text-slate-400 mb-8 line-clamp-3 leading-relaxed font-medium">{{ module.description }}</p>
 
-                    <!-- Status Indicator Mini Badge -->
-                    <div *ngIf="isInstalled(module.id)" class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg transform scale-110">
-                      <ng-icon name="heroCheckSolid" class="w-5 h-5"></ng-icon>
+                  <div class="mt-auto pt-7 border-t border-slate-800/50 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-yellow-400 text-[20px] fill-current">star</span>
+                      <span class="text-sm font-black text-white">4.9</span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+			<button (click)="goToModuleDefinition(module)"
+                            class="p-3 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all border border-slate-700"
+                            title="Ver detalles">
+                      <span class="material-symbols-outlined text-[18px]">info</span>
+                    </button>
+                    <button (click)="toggleModule(module)"
+                            [disabled]="isProcessing()"
+                            [class]="isInstalled(module.id) ? 'bg-slate-800 text-slate-400 hover:text-red-500 hover:bg-red-950/20 border-slate-700' : 'bg-primary hover:bg-primary-hover text-white shadow-2xl shadow-primary/30 active:scale-95'"
+                            class="px-6 py-3 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 border border-transparent hover:-translate-y-1 disabled:opacity-50">
+                      <span class="material-symbols-outlined text-[18px] font-bold">{{ isInstalled(module.id) ? 'done_all' : 'add' }}</span>
+                      {{ isInstalled(module.id) ? 'Instalado' : 'Instalar' }}
+                    </button>
+		    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- SUPPLIES GRID -->
+            <ng-container *ngIf="currentTab() === 'SUPPLIES'">
+              <div *ngIf="externalMarketplace.isLoading()" class="flex flex-col items-center justify-center py-40 animate-siac-in">
+                <div class="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin mb-8 shadow-xl"></div>
+                <p class="text-sm text-slate-500 font-black uppercase tracking-widest animate-pulse">Consultando Red de Proveedores SIAC...</p>
+              </div>
+
+              <div *ngIf="!externalMarketplace.isLoading()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <div *ngFor="let prod of externalProducts()" 
+                     class="flex flex-col bg-[#1c212c] rounded-3xl border border-[#2d3648] overflow-hidden hover:border-primary transition-all group h-full shadow-lg hover:shadow-2xl">
+                  <div class="aspect-video bg-slate-900/50 relative overflow-hidden border-b border-white/5">
+                    <img *ngIf="prod.image_url" [src]="prod.image_url" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000">
+                    <div *ngIf="!prod.image_url" class="absolute inset-0 flex items-center justify-center text-slate-800">
+                      <span class="material-symbols-outlined text-8xl">inventory_2</span>
+                    </div>
+                    <div class="absolute top-5 right-5 px-4 py-2 bg-[#1c212c]/90 backdrop-blur-xl rounded-2xl text-sm font-black text-primary shadow-2xl border border-white/20">
+                      {{ prod.price | currency:'USD' }}
                     </div>
                   </div>
-
-                  <!-- Text Content -->
-                  <div class="relative z-10 px-2">
-                    <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ module.name }}</h4>
-                    <p class="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">{{ module.code }}</p>
-                    <p class="text-sm text-gray-500 dark:text-slate-400 line-clamp-2 mb-6 font-medium leading-relaxed">{{ module.description }}</p>
-                  </div>
-
-                  <!-- Action Button -->
-                  <div class="mt-auto w-full relative z-10">
-                    <button 
-                      class="w-full py-3 rounded-2xl text-sm font-bold transition-all duration-300 transform group-active:scale-95"
-                      [ngClass]="{
-                        'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30': isInstalled(module.id),
-                        'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700': !isInstalled(module.id) && !isProcessing(),
-                        'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed': isProcessing()
-                      }">
-                      
-                      <span *ngIf="isProcessing()" class="flex items-center justify-center gap-2">
-                        <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                        Procesando...
-                      </span>
-
-                      <ng-container *ngIf="!isProcessing()">
-                        <span *ngIf="isInstalled(module.id)">Desinstalar</span>
-                        <span *ngIf="!isInstalled(module.id)">
-                          Instalar ({{ module.price_monthly | currency:'USD':'symbol':'1.0-0' }}/mes)
-                        </span>
-                      </ng-container>
+                  <div class="p-8 flex flex-col flex-1">
+                    <span class="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-4">{{ prod.vendor }}</span>
+                    <h3 class="text-xl font-black text-white mb-3 line-clamp-1 tracking-tight group-hover:text-primary transition-colors">{{ prod.title }}</h3>
+                    <p class="text-sm text-slate-400 mb-10 line-clamp-2 leading-relaxed font-medium">{{ prod.description }}</p>
+                    <button class="mt-auto w-full py-4.5 siac-gradient-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-2xl hover:-translate-y-1.5 active:scale-95 shadow-primary/40">
+                      Solicitar Suministro
                     </button>
                   </div>
                 </div>
               </div>
+            </ng-container>
 
+            <!-- Unified Empty State -->
+            <div *ngIf="!isLoading() && ((currentTab() === 'APPS' && filteredModules().length === 0) || (currentTab() === 'SUPPLIES' && externalProducts().length === 0))" 
+                 class="flex flex-col items-center justify-center py-40 text-center animate-siac-in">
+              <div class="h-28 w-28 rounded-full bg-[#111318] flex items-center justify-center mb-8 border border-[#2d3648] shadow-inner group">
+                <span class="material-symbols-outlined text-6xl text-slate-700 group-hover:text-primary transition-colors duration-500">search_off</span>
+              </div>
+              <h3 class="text-2xl font-black text-white tracking-tighter uppercase">Sin coincidencias</h3>
+              <p class="text-slate-400 mt-3 max-w-sm text-base font-medium">No hay resultados para su búsqueda actual. Intente con términos más generales.</p>
+              <button (click)="searchTerm.set(''); selectedCategory.set('')" class="mt-10 px-8 py-3 bg-slate-800 rounded-xl text-primary font-black uppercase tracking-widest text-xs hover:bg-primary hover:text-white transition-all shadow-sm">Restablecer filtros</button>
             </div>
           </div>
+        </div>
 
+        <!-- Premium Footer -->
+        <div class="px-8 py-7 border-t border-[#2d3648] bg-[#1c212c] flex flex-col sm:flex-row justify-between items-center gap-6 z-10 shrink-0 shadow-2xl">
+          <div class="flex items-center gap-5">
+             <div class="flex items-center gap-2 text-primary">
+                <span class="material-symbols-outlined text-xl">verified</span>
+                <p class="font-black uppercase tracking-tighter text-[11px] text-slate-400">SIAC Marketplace Enterprise</p>
+             </div>
+             <span class="h-1.5 w-1.5 rounded-full bg-slate-800"></span>
+             <p class="font-bold text-xs text-slate-500">Versión 4.2.0-STABLE</p>
+          </div>
+          <div class="flex gap-4">
+            <button class="px-7 py-3 rounded-xl border border-[#2d3648] hover:bg-slate-800 transition-all disabled:opacity-30 font-black text-[10px] uppercase tracking-widest" disabled>Anterior</button>
+            <button class="px-7 py-3 rounded-xl border border-[#2d3648] hover:bg-slate-800 transition-all text-white font-black text-[10px] uppercase tracking-widest">Siguiente</button>
+          </div>
         </div>
       </div>
     </div>
@@ -144,7 +190,7 @@ interface ModuleCategoryMap {
     :host {
       display: block;
       position: relative;
-      z-index: 50;
+      z-index: 100;
     }
   `]
 })
@@ -155,20 +201,65 @@ export class MarketplaceModalComponent implements OnInit {
   @Output() closeModal = new EventEmitter<void>();
 
   private moduleRepo = inject(ModuleRepository);
+  public externalMarketplace = inject(ExternalMarketplaceService);
   private session = inject(SessionService);
   private notification = inject(NotificationService);
+  private router = inject(Router);
 
-  moduleCategories = signal<Map<string, Module[]>>(new Map());
+  allModules = signal<Module[]>([]);
   isLoading = signal(true);
   isProcessing = signal(false);
   error = signal<string | null>(null);
+
+  searchTerm = signal<string>('');
+  selectedCategory = signal<string>('');
+  currentTab = signal<'APPS' | 'SUPPLIES'>('APPS');
+
+  externalProducts = signal<ExternalProduct[]>([]);
+
+  // Derived signals
+  allCategories = computed(() => {
+    const cats = new Set(this.allModules().map(m => m.category));
+    return Array.from(cats).sort();
+  });
+
+  filteredModules = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const category = this.selectedCategory();
+
+    return this.allModules().filter(m => {
+      const matchTerm = !term ||
+        m.name.toLowerCase().includes(term) ||
+        m.description.toLowerCase().includes(term);
+      const matchCat = !category || m.category === category;
+      return matchTerm && matchCat;
+    });
+  });
+
+  constructor() {
+    effect(() => {
+      if (this.currentTab() === 'SUPPLIES') {
+        this.searchExternal();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadMarketplace();
   }
 
+  async searchExternal() {
+    const products = await this.externalMarketplace.searchProducts(this.searchTerm());
+    this.externalProducts.set(products.slice(0, 20));
+  }
+
   close() {
     this.closeModal.emit();
+  }
+
+  goToModuleDefinition(module: Module) {
+    this.close();
+    this.router.navigate(['/modules/definition', module.id]);
   }
 
   isInstalled(moduleId: string): boolean {
@@ -178,14 +269,8 @@ export class MarketplaceModalComponent implements OnInit {
   async loadMarketplace(): Promise<void> {
     this.isLoading.set(true);
     try {
-      const allModules = await this.moduleRepo.getAllAvailable();
-      const grouped = allModules.reduce((acc: ModuleCategoryMap, module) => {
-        const category = module.category.replace(/_/g, ' ').toUpperCase();
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(module);
-        return acc;
-      }, {});
-      this.moduleCategories.set(new Map(Object.entries(grouped)));
+      const available = await this.moduleRepo.getAllAvailable();
+      this.allModules.set(available);
     } catch (error: any) {
       this.error.set(error.message || 'Error al cargar el catálogo.');
     } finally {
@@ -193,32 +278,21 @@ export class MarketplaceModalComponent implements OnInit {
     }
   }
 
-  getCategoryKeys(map: Map<string, Module[]>): string[] {
-    return Array.from(map.keys());
-  }
-
   getIconName(module: Module): string {
-    if (module.icon === 'edit-3') return 'heroPencilSquareSolid';
-    if (module.icon && module.icon.startsWith('hero')) return module.icon;
+    // Map existing icon names or types to Material Symbols
+    const icon = module.icon?.toLowerCase() || '';
+    if (icon.includes('calculate') || icon.includes('count')) return 'calculate';
+    if (icon.includes('user') || icon.includes('group')) return 'groups';
+    if (icon.includes('inventory') || icon.includes('box') || icon.includes('package')) return 'inventory_2';
+    if (icon.includes('sales') || icon.includes('chart') || icon.includes('monitoring')) return 'monitoring';
+    if (icon.includes('rocket') || icon.includes('project')) return 'rocket_launch';
+    if (icon.includes('analytics') || icon.includes('insights')) return 'insights';
+    if (icon.includes('payments') || icon.includes('money')) return 'payments';
+    if (icon.includes('hub') || icon.includes('settings')) return 'hub';
+    if (icon.includes('cloud')) return 'cloud_sync';
+    if (icon.includes('store') || icon.includes('shopping')) return 'storefront';
 
-    // Fallback names
-    if (module.icon === 'calculator') return 'heroCalculatorSolid';
-    if (module.icon === 'users') return 'heroUsersSolid';
-    if (module.icon === 'trending-up') return 'heroArrowTrendingUpSolid';
-    if (module.icon === 'package') return 'heroArchiveBoxSolid';
-    if (module.icon === 'megaphone') return 'heroMegaphoneSolid';
-    if (module.icon === 'clipboard-check') return 'heroClipboardDocumentCheckSolid';
-    if (module.icon === 'box') return 'heroCubeSolid';
-
-    if (module.icon) return 'heroCubeSolid';
-
-    const code = module.code || '';
-    if (code.includes('FIN')) return 'heroCalculatorSolid';
-    if (code.includes('HR')) return 'heroUsersSolid';
-    if (code.includes('SALES')) return 'heroArrowTrendingUpSolid';
-    if (code.includes('SC')) return 'heroArchiveBoxSolid';
-
-    return 'heroCubeSolid';
+    return 'grid_view';
   }
 
   async toggleModule(module: Module): Promise<void> {
@@ -246,7 +320,7 @@ export class MarketplaceModalComponent implements OnInit {
       this.notification.success(`${module.name} instalado exitosamente.`);
       this.moduleInstalled.emit(module);
     } catch (error: any) {
-      this.notification.error(`Fallo la instalación: ${error.message}`);
+      this.notification.error(`Falló la instalación: ${error.message}`);
     } finally {
       this.isProcessing.set(false);
     }

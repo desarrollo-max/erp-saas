@@ -1,0 +1,345 @@
+<div
+    class="min-h-screen bg-[#111418] font-display flex flex-col overflow-x-hidden text-white transition-colors duration-200">
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#283039] bg-[#111418] px-4 py-3 md:px-10 h-16">
+        <div class="flex items-center gap-4 text-white">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary">
+                <span class="material-symbols-outlined text-2xl">inventory_2</span>
+            </div>
+            <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">SIAC ERP</h2>
+        </div>
+        <div class="flex gap-3">
+            <button
+                class="flex h-10 items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#283039] px-3 text-white transition hover:bg-[#3b4754]">
+                <span class="material-symbols-outlined text-[20px]">notifications</span>
+            </button>
+            <button (click)="cycleThemeColor()"
+                class="flex h-10 items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#283039] px-3 text-white transition hover:bg-[#3b4754]">
+                <div class="w-4 h-4 rounded-full border border-current flex items-center justify-center">
+                    <div class="w-2 h-2 rounded-full" [style.background-color]="themeService.getCurrentPrimaryColor()">
+                    </div>
+                </div>
+            </button>
+            <div class="flex h-10 items-center gap-3 rounded-lg bg-[#283039] pl-2 pr-4 border border-[#3b4754]">
+                <div
+                    class="h-8 w-8 overflow-hidden rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
+                    U
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex justify-center py-6 px-4 md:px-8">
+        <div class="flex w-full max-w-[1400px] flex-col gap-6">
+
+            <!-- Breadcrumbs -->
+            <nav class="flex items-center gap-2 text-sm text-[#9dabb9]">
+                <a routerLink="/launcher" class="font-medium hover:text-white transition-colors">Home</a>
+                <span class="material-symbols-outlined text-base">chevron_right</span>
+                <span class="font-medium text-white">Inventario</span>
+            </nav>
+
+            <!-- Page Heading & Actions -->
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div class="flex flex-col gap-2">
+                    <h1 class="text-3xl font-black leading-tight tracking-[-0.033em] text-white md:text-4xl">Inventario
+                        de Productos</h1>
+                    <p class="text-[#9dabb9] text-base font-normal">Gestiona el stock, precios y categorías de tus
+                        productos.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button routerLink="/inventory/movements/history"
+                        class="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#3b4754] bg-[#111418] px-4 text-sm font-bold text-white transition hover:bg-[#283039]">
+                        <span class="material-symbols-outlined text-[20px]">history</span>
+                        Historial
+                    </button>
+                    <button routerLink="/inventory/movements/new"
+                        class="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#3b4754] bg-[#111418] px-4 text-sm font-bold text-white transition hover:bg-[#283039]">
+                        <span class="material-symbols-outlined text-[20px]">sync_alt</span>
+                        Movimiento
+                    </button>
+                    <button routerLink="/inventory/import"
+                        class="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#3b4754] bg-[#111418] px-4 text-sm font-bold text-white transition hover:bg-[#283039]">
+                        <span class="material-symbols-outlined text-[20px]">upload</span>
+                        Importar
+                    </button>
+                    <button (click)="exportToPdf()" [disabled]="isLoading() || products().length === 0"
+                        class="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#3b4754] bg-[#111418] px-4 text-sm font-bold text-white transition hover:bg-[#283039] disabled:opacity-50">
+                        <span class="material-symbols-outlined text-[20px]">file_download</span>
+                        Exportar
+                    </button>
+                    <button routerLink="/inventory/new"
+                        class="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white shadow-lg shadow-blue-900/20 transition hover:bg-blue-600">
+                        <span class="material-symbols-outlined text-[20px]">add</span>
+                        Agregar Producto
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in slide-in-from-top duration-500">
+                <div
+                    class="flex flex-col gap-1 rounded-xl border border-[#3b4754] bg-[#1C242C] p-5 shadow-sm hover:border-primary transition-all">
+                    <div class="flex items-center gap-2 text-[#9dabb9]">
+                        <span class="material-symbols-outlined text-xl">inventory</span>
+                        <p class="text-sm font-medium">Total Productos</p>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <p class="text-2xl font-bold text-white">{{ totalProducts() }}</p>
+                        <span
+                            class="mb-1 text-xs font-medium text-[#0bda5b] bg-[#0bda5b]/10 px-1.5 py-0.5 rounded">Activos</span>
+                    </div>
+                </div>
+
+                <div
+                    class="flex flex-col gap-1 rounded-xl border border-[#3b4754] bg-[#1C242C] p-5 shadow-sm hover:border-orange-500 transition-all">
+                    <div class="flex items-center gap-2 text-[#9dabb9]">
+                        <span class="material-symbols-outlined text-xl">warning</span>
+                        <p class="text-sm font-medium">Alertas Stock</p>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <p class="text-2xl font-bold text-white">0</p>
+                        <span
+                            class="mb-1 text-xs font-medium text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded">Revisión</span>
+                    </div>
+                </div>
+
+                <div
+                    class="flex flex-col gap-1 rounded-xl border border-[#3b4754] bg-[#1C242C] p-5 shadow-sm hover:border-emerald-500 transition-all">
+                    <div class="flex items-center gap-2 text-[#9dabb9]">
+                        <span class="material-symbols-outlined text-xl">check_circle</span>
+                        <p class="text-sm font-medium">Sincronización</p>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <p class="text-2xl font-bold text-white">Ok</p>
+                        <span class="mb-1 text-xs font-medium text-[#0bda5b] bg-[#0bda5b]/10 px-1.5 py-0.5 rounded">En
+                            línea</span>
+                    </div>
+                </div>
+
+                <div
+                    class="flex flex-col gap-1 rounded-xl border border-[#3b4754] bg-[#1C242C] p-5 shadow-sm border-l-4 border-l-primary transition-all">
+                    <div class="flex items-center gap-2 text-[#9dabb9]">
+                        <span class="material-symbols-outlined text-xl">attach_money</span>
+                        <p class="text-sm font-medium">Valor Inventario</p>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <p class="text-2xl font-bold text-white">{{ totalValue() | currency }}</p>
+                        <span
+                            class="mb-1 text-xs font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">Ref</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div
+                class="flex flex-col gap-4 rounded-xl border border-[#3b4754] bg-[#1C242C] p-4 lg:flex-row lg:items-center">
+                <div class="relative flex-1">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <span class="material-symbols-outlined text-[#9dabb9]">search</span>
+                    </div>
+                    <input [formControl]="searchControl"
+                        class="block w-full rounded-lg border border-[#3b4754] bg-[#283039] p-2.5 pl-10 text-sm text-white placeholder-[#9dabb9] focus:border-primary focus:ring-primary outline-none"
+                        placeholder="Buscar por nombre, SKU o categoría..." type="search" />
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <div class="relative min-w-[160px]">
+                        <select [formControl]="statusFilterControl"
+                            class="block w-full appearance-none rounded-lg border border-[#3b4754] bg-[#283039] p-2.5 pr-8 text-sm text-white focus:border-primary focus:ring-primary outline-none">
+                            <option value="all">Todos los Estados</option>
+                            <option value="active">Activos</option>
+                            <option value="inactive">Inactivos</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                        </div>
+                    </div>
+                    <button
+                        class="flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-[#3b4754] bg-[#283039] text-white hover:bg-[#3b4754] transition-colors">
+                        <span class="material-symbols-outlined">filter_list</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div id="inventory-table-container"
+                class="overflow-hidden rounded-xl border border-[#3b4754] bg-[#1C242C] min-h-[400px]">
+
+                <div *ngIf="isLoading()" class="h-64 flex flex-col items-center justify-center">
+                    <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4">
+                    </div>
+                    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase">Cargando Inventario...</p>
+                </div>
+
+                <div *ngIf="!isLoading() && products().length === 0"
+                    class="h-64 flex flex-col items-center justify-center text-center p-10">
+                    <span class="material-symbols-outlined text-[48px] text-[#283039] mb-4">search_off</span>
+                    <h3 class="text-lg font-bold text-white">No se encontraron productos</h3>
+                    <p class="text-sm text-[#9dabb9] mt-2">Intenta ajustar tus filtros de búsqueda.</p>
+                </div>
+
+                <div class="overflow-x-auto" *ngIf="!isLoading() && products().length > 0">
+                    <table class="w-full min-w-[800px] text-left text-sm text-[#9dabb9]">
+                        <thead class="bg-[#283039] text-xs uppercase text-white">
+                            <tr>
+                                <th class="px-6 py-4 font-semibold" scope="col">Producto</th>
+                                <th class="px-6 py-4 font-semibold" scope="col">SKU</th>
+                                <th class="px-6 py-4 font-semibold text-center" scope="col">Stock</th>
+                                <th class="px-6 py-4 font-semibold" scope="col">Precio (Venta / Costo)</th>
+                                <th class="px-6 py-4 font-semibold" scope="col">Estado</th>
+                                <th class="px-6 py-4 text-right font-semibold" scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#3b4754]">
+                            <tr *ngFor="let product of products()" class="hover:bg-[#283039]/50 transition-all group">
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-white group-hover:text-primary transition-colors">{{
+                                        product.name }}</div>
+                                    <div class="text-[10px] text-[#9dabb9] mt-0.5">{{ product.category_id || 'General'
+                                        }}</div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs uppercase">{{ product.sku }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <button (click)="openStockDetail(product)"
+                                        class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-all">
+                                        {{ calculateTotalStock(product) }}
+                                        <span class="material-symbols-outlined text-sm opacity-50">visibility</span>
+                                    </button>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-white font-bold italic">{{ product.sale_price | currency }}</div>
+                                    <div class="text-[10px] text-[#9dabb9]">Costo: {{ product.cost_price | currency }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        [ngClass]="product.is_active ? 'bg-[#0bda5b]/10 text-[#0bda5b]' : 'bg-red-400/10 text-red-400'"
+                                        class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium">
+                                        <span [ngClass]="product.is_active ? 'bg-[#0bda5b]' : 'bg-red-400'"
+                                            class="h-1.5 w-1.5 rounded-full"></span>
+                                        {{ product.is_active ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div
+                                        class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button (click)="registerStockMovement(product)"
+                                            class="text-primary hover:text-blue-300 transition-colors"
+                                            title="Registrar Movimiento">
+                                            <span class="material-symbols-outlined text-[20px]">sync_alt</span>
+                                        </button>
+                                        <button (click)="createPurchaseOrder(product)"
+                                            class="text-orange-400 hover:text-orange-300 transition-colors"
+                                            title="Comprar">
+                                            <span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+                                        </button>
+                                        <button (click)="editProduct(product.id)"
+                                            class="text-primary hover:text-blue-300 transition-colors" title="Editar">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button (click)="deleteProduct(product.id)"
+                                            class="text-red-400 hover:text-red-300 transition-colors" title="Eliminar">
+                                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div *ngIf="!isLoading() && totalCount() > 0"
+                    class="flex items-center justify-between border-t border-[#3b4754] bg-[#283039] px-6 py-3">
+                    <div class="hidden text-sm text-[#9dabb9] sm:block">
+                        Mostrando <span class="font-medium text-white">{{ (currentPage() - 1) * pageSize() + 1 }}-{{
+                            Math.min(currentPage() * pageSize(), totalCount()) }}</span> de <span
+                            class="font-medium text-white">{{ totalCount() }}</span> productos
+                    </div>
+                    <div class="flex flex-1 justify-between sm:justify-end sm:gap-2">
+                        <button (click)="prevPage()" [disabled]="currentPage() === 1"
+                            class="inline-flex items-center rounded-lg border border-[#3b4754] bg-[#111418] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#3b4754] disabled:opacity-50 transition-all">
+                            <span class="material-symbols-outlined mr-1 text-base">chevron_left</span>
+                            Anterior
+                        </button>
+                        <button (click)="nextPage()" [disabled]="currentPage() * pageSize() >= totalCount()"
+                            class="inline-flex items-center rounded-lg border border-[#3b4754] bg-[#111418] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#3b4754] disabled:opacity-50 transition-all">
+                            Siguiente
+                            <span class="material-symbols-outlined ml-1 text-base">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Stock Details Modal -->
+    <div *ngIf="showStockDetails()" class="relative z-[100]" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity animate-in fade-in"
+            (click)="closeStockDetail()"></div>
+        <div class="fixed inset-0 z-[100] w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div
+                    class="relative transform overflow-hidden rounded-2xl bg-[#1C242C] p-8 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-[#3b4754] animate-in zoom-in-95 duration-300">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 bg-primary/20 text-primary rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-2xl">inventory_2</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white uppercase tracking-tight">Detalle de Existencias
+                            </h3>
+                            <p class="text-xs text-[#9dabb9] font-medium">{{ selectedStockProduct()?.name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="rounded-xl overflow-hidden border border-[#3b4754] bg-[#283039]/30">
+                            <table class="min-w-full divide-y divide-[#3b4754]">
+                                <thead class="bg-[#283039]">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-[10px] font-bold text-[#9dabb9] uppercase tracking-widest">
+                                            Almacén</th>
+                                        <th
+                                            class="px-6 py-3 text-right text-[10px] font-bold text-[#9dabb9] uppercase tracking-widest">
+                                            Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#3b4754]">
+                                    <tr *ngFor="let item of stockBreakdown()">
+                                        <td class="px-6 py-4 text-sm font-medium text-white">{{ item.name }}</td>
+                                        <td class="px-6 py-4 text-sm font-bold text-primary text-right">{{ item.qty }}
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="stockBreakdown().length === 0">
+                                        <td colspan="2"
+                                            class="px-6 py-8 text-center text-xs font-bold text-[#9dabb9] uppercase tracking-widest italic">
+                                            Sin inventario físico</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="bg-[#283039]/50">
+                                    <tr>
+                                        <td
+                                            class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-[#9dabb9]">
+                                            Total Disponible</td>
+                                        <td class="px-6 py-4 text-lg font-black text-primary text-right italic">{{
+                                            calculateTotalStock(selectedStockProduct()) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button (click)="closeStockDetail()"
+                            class="w-full py-3 bg-[#283039] text-white hover:bg-[#3b4754] rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+                            Cerrar Panel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

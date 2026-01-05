@@ -23,58 +23,85 @@ interface SearchResult {
     imports: [CommonModule, FormsModule, NgIconsModule],
     viewProviders: [provideIcons(heroIcons)],
     template: `
-    <div class="fixed inset-0 z-[100] overflow-y-auto p-4 sm:p-6 md:p-20" role="dialog" aria-modal="true">
-      <!-- Backdrop -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-25 transition-opacity" aria-hidden="true" (click)="close()"></div>
+    <div class="fixed inset-0 z-[100] overflow-y-auto p-4 sm:p-6 md:p-20 animate-fade-in" role="dialog" aria-modal="true">
+      <!-- Backdrop with heavy blur -->
+      <div class="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-md transition-opacity" aria-hidden="true" (click)="close()"></div>
 
-      <!-- Modal Panel -->
-      <div class="mx-auto max-w-xl transform divide-y divide-gray-100 overflow-hidden rounded-xl bg-white dark:bg-slate-800 shadow-2xl ring-1 ring-black ring-opacity-5 transition-all">
-        <div class="relative">
-          <ng-icon name="heroMagnifyingGlassSolid" class="pointer-events-none absolute top-3.5 left-4 h-5 w-5 text-gray-400"></ng-icon>
+      <!-- Modal Panel: Glassmorphism -->
+      <div class="mx-auto max-w-2xl transform overflow-hidden rounded-[2.5rem] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 transition-all relative z-10 border border-white dark:border-slate-800">
+        
+        <!-- Search Input Header -->
+        <div class="relative p-6 border-b border-slate-100 dark:border-slate-800">
+          <ng-icon name="heroMagnifyingGlassSolid" class="pointer-events-none absolute top-10 left-10 h-6 w-6 text-indigo-500"></ng-icon>
           <input 
             #searchInput
             type="text" 
             [(ngModel)]="query" 
             (ngModelChange)="onSearch()"
-            class="h-12 w-full border-0 bg-transparent pl-11 pr-4 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-0 sm:text-sm" 
-            placeholder="Buscar productos, almacenes, variantes..."
+            class="h-14 w-full border-2 border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 pl-14 pr-6 rounded-2xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-bold text-lg" 
+            placeholder="Buscar inteligencia de negocio..."
             role="combobox" 
             aria-expanded="false" 
-            aria-controls="options"
             autofocus>
+          
+          <div class="absolute right-10 top-10 flex gap-1 items-center pointer-events-none">
+             <span class="px-2 py-1 bg-slate-200 dark:bg-slate-800 rounded-md text-[9px] font-black text-slate-500 uppercase tracking-tighter">CMD</span>
+             <span class="px-2 py-1 bg-slate-200 dark:bg-slate-800 rounded-md text-[9px] font-black text-slate-500 uppercase tracking-tighter">K</span>
+          </div>
         </div>
 
         <!-- Results -->
-        <ul *ngIf="results().length > 0" class="max-h-96 scroll-py-3 overflow-y-auto p-3" id="options" role="listbox">
-          <li *ngFor="let result of results()" (click)="select(result)" class="group flex cursor-default select-none rounded-xl p-3 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-colors">
-            <div class="flex h-10 w-10 flex-none items-center justify-center rounded-lg"
-                 [class.bg-indigo-500]="result.type === 'PRODUCT'"
-                 [class.bg-purple-500]="result.type === 'VARIANT'"
-                 [class.bg-blue-500]="result.type === 'WAREHOUSE'">
-              <ng-icon [name]="getIcon(result.type)" class="h-6 w-6 text-white"></ng-icon>
-            </div>
-            <div class="ml-4 flex-auto">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ result.title }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ result.subtitle }}</p>
-            </div>
-          </li>
-        </ul>
+        <div class="overflow-y-auto max-h-[60vh] custom-scrollbar">
+            <ul *ngIf="results().length > 0" class="p-6 space-y-3" id="options" role="listbox">
+              <li *ngFor="let result of results()" (click)="select(result)" 
+                  class="group flex items-center select-none rounded-[1.5rem] p-4 hover:bg-slate-100 dark:hover:bg-indigo-500/10 cursor-pointer transition-all border border-transparent hover:border-indigo-500/20 active:scale-[0.98]">
+                
+                <div class="flex h-14 w-14 flex-none items-center justify-center rounded-2xl shadow-lg group-hover:scale-110 transition-transform"
+                     [class.bg-indigo-600]="result.type === 'PRODUCT'"
+                     [class.bg-purple-600]="result.type === 'VARIANT'"
+                     [class.bg-blue-600]="result.type === 'WAREHOUSE'">
+                  <ng-icon [name]="getIcon(result.type)" class="h-7 w-7 text-white"></ng-icon>
+                </div>
+                
+                <div class="ml-5 flex-auto">
+                  <div class="flex items-center justify-between gap-4">
+                    <p class="text-base font-black text-slate-900 dark:text-white uppercase italic tracking-tight">{{ result.title }}</p>
+                    <span class="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-400 group-hover:text-indigo-400 transition-colors">
+                        {{ result.type }}
+                    </span>
+                  </div>
+                  <p class="text-xs font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-tighter">{{ result.subtitle }}</p>
+                </div>
+                
+                <div class="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <ng-icon name="heroArrowRightSolid" class="w-5 h-5 text-indigo-500"></ng-icon>
+                </div>
+              </li>
+            </ul>
 
-        <!-- Empty State -->
-        <div *ngIf="query() && results().length === 0 && !isLoading()" class="py-14 px-6 text-center text-sm sm:px-14">
-          <ng-icon name="heroExclamationCircleSolid" class="mx-auto h-6 w-6 text-gray-400"></ng-icon>
-          <p class="mt-4 font-semibold text-gray-900 dark:text-gray-100">No se encontraron resultados</p>
-          <p class="mt-2 text-gray-500">No pudimos encontrar nada con ese término. Intenta de nuevo.</p>
-        </div>
+            <!-- Empty State -->
+            <div *ngIf="query() && results().length === 0 && !isLoading()" class="py-20 px-10 text-center">
+              <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-700">
+                <ng-icon name="heroFaceFrownSolid" class="h-10 w-10"></ng-icon>
+              </div>
+              <p class="text-xl font-black text-slate-900 dark:text-white uppercase italic">Sin coincidencias</p>
+              <p class="mt-2 text-xs font-black uppercase tracking-widest text-slate-400">Prueba con términos técnicos o códigos SKU</p>
+            </div>
 
-        <div *ngIf="isLoading()" class="py-14 px-6 text-center text-sm sm:px-14">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p class="mt-4 text-gray-500">Buscando...</p>
+            <!-- Loading -->
+            <div *ngIf="isLoading()" class="py-20 text-center">
+                <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 animate-pulse">Indexando Datos...</p>
+            </div>
         </div>
 
         <!-- Footer Help -->
-        <div class="flex flex-wrap items-center bg-gray-50 dark:bg-slate-900 py-2.5 px-4 text-xs text-gray-700 dark:text-gray-400">
-           Type <kbd (click)="close()" class="mx-1 flex h-5 w-5 items-center justify-center rounded border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold text-gray-900 dark:text-gray-100 sm:mx-2 cursor-pointer">ESC</kbd> to close.
+        <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 py-4 px-8 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-950/50">
+           <div class="flex items-center gap-6">
+              <span class="flex items-center gap-2"><kbd class="bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-sm border border-slate-200 dark:border-slate-700">ESC</kbd> Cerrar</span>
+              <span class="flex items-center gap-2"><kbd class="bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-sm border border-slate-200 dark:border-slate-700">↵</kbd> Seleccionar</span>
+           </div>
+           <div class="hidden sm:block italic opacity-50">SIAC Global Search v2.0</div>
         </div>
       </div>
     </div>

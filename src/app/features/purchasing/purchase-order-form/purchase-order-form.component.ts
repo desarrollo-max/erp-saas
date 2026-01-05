@@ -14,6 +14,12 @@ import { WarehouseRepository } from '@core/repositories/warehouse.repository';
 import { SessionService } from '@core/services/session.service';
 import { Supplier, ScmProduct, ScmProductVariant, PurchaseOrder, Warehouse } from '@core/models/erp.types';
 
+/**
+ * @component PurchaseOrderFormComponent
+ * @description Formulario completo para la creación y edición de Órdenes de Compra.
+ * Permite la gestión de cabecera (proveedor, fechas, almacén) y líneas detalladas de productos y variantes.
+ */
+
 @Component({
   selector: 'app-purchase-order-form',
   standalone: true,
@@ -376,64 +382,55 @@ export class PurchaseOrderFormComponent implements OnInit {
 
   private totalAmount = signal(0);
 
+  /**
+   * Ciclo de vida inicial: Carga los recursos necesarios para el formulario.
+   * Obtiene la lista de proveedores, productos, variantes y almacenes.
+   * @async
+   */
   async ngOnInit() {
     const tenantId = this.session.currentTenantId();
     if (!tenantId) {
-      console.error('No Tenant ID in session');
+      this.router.navigate(['/companies']);
       return;
     }
 
     this.isLoading.set(true);
 
     try {
-      // DEBUG: Log start of fetch
-      console.log('Fetching PO Resources for Tenant:', tenantId);
-
-      // Auto-fix: Ensure variants exist for configured products
+      // Sincronización automática de variantes faltantes para asegurar integridad de datos
       try {
         await this.productRepo.syncMissingVariants();
       } catch (err) {
-        console.warn('Sync variants warning:', err); // Don't block main UI
+        // Warning no bloqueante para la UI
       }
 
-      // Parallel Data Fetching for Agility
-      // Use checks to avoid one failure killing all
-      const suppliersPromise = this.supplierRepo.getAll(tenantId).catch(err => { console.error('Suppliers failed', err); return []; });
-      const productsPromise = this.productRepo.getLightweightList(tenantId).catch(err => { console.error('Products failed', err); return []; });
-      const variantsPromise = this.productRepo.getAllVariants(tenantId).catch(err => { console.error('Variants failed', err); return []; });
-      const warehousesPromise = this.warehouseRepo.getAll(tenantId).catch(err => { console.error('Warehouses failed', err); return []; });
-
+      // Carga paralela de recursos para optimizar el tiempo de respuesta
       const [suppliers, products, variants, warehouses] = await Promise.all([
-        suppliersPromise,
-        productsPromise,
-        variantsPromise,
-        warehousesPromise
+        this.supplierRepo.getAll(tenantId).catch(() => []),
+        this.productRepo.getLightweightList(tenantId).catch(() => []),
+        this.productRepo.getAllVariants(tenantId).catch(() => []),
+        this.warehouseRepo.getAll(tenantId).catch(() => [])
       ]);
-
-      console.log('Resources Loaded:', {
-        suppliersCount: suppliers.length,
-        productsCount: products.length,
-        warehousesCount: warehouses.length
-      });
 
       this.suppliers.set(suppliers);
       this.products.set(products);
       this.warehouses.set(warehouses);
 
-      // Index variants by product
+      // Indexación de variantes por producto para búsquedas rápidas (O(1))
       variants.forEach(v => {
         const list = this.variantMap.get(v.product_id) || [];
         list.push(v);
         this.variantMap.set(v.product_id, list);
       });
 
-      // Handle Edit Mode or Pre-fill from Query Params
+      // Gestión de parámetros de consulta para pre-carga de productos
       this.route.queryParams.subscribe(params => {
         if (params['product_id']) {
-          // Force user to confirm variant in modal before adding
           this.openAddItemModal(params['product_id']);
         }
       });
+
+      // Carga de orden existente en modo edición
       const id = this.route.snapshot.paramMap.get('id');
       if (id) {
         this.isEditMode.set(true);
@@ -441,37 +438,45 @@ export class PurchaseOrderFormComponent implements OnInit {
       }
 
     } catch (error) {
-      console.error('CRITICAL Error loading data in PurchaseOrderForm', error);
-      alert('Error cargando datos. Revise la consola.');
+      alert('Error crítico al cargar los datos del formulario. Por favor, contacte a soporte.');
     } finally {
       this.isLoading.set(false);
     }
 
-    // Subscribe to changes for totals
+    // Suscripción reactiva para la actualización de totales
     this.lines.valueChanges.subscribe(() => {
       this.updateTotal();
     });
   }
 
+  /**
+   * Carga los datos de una orden de compra existente para su edición.
+   * @param id ID de la orden de compra.
+   * @async
+   */
   async loadOrder(id: string) {
-    const po = await this.poRepo.getById(id);
-    if (!po) return;
+    try {
+      const po = await this.poRepo.getById(id);
+      if (!po) return;
 
-    this.form.patchValue({
-      supplier_id: po.supplier_id,
-      warehouse_id: po.warehouse_id, // Load warehouse
-      po_date: po.po_date,
-      expected_delivery_date: po.expected_delivery_date,
-      status: po.status,
-      notes: po.notes
-    });
+      this.form.patchValue({
+        supplier_id: po.supplier_id,
+        warehouse_id: po.warehouse_id,
+        po_date: po.po_date,
+        expected_delivery_date: po.expected_delivery_date,
+        status: po.status,
+        notes: po.notes
+      });
 
-    const lines = await this.poRepo.getLines(id);
-    lines.forEach(l => {
-      this.addLine(l);
-    });
-    // Recalc
-    this.updateTotal();
+      const lines = await this.poRepo.getLines(id);
+      lines.forEach(l => {
+        this.addLine(l);
+      });
+
+      this.updateTotal();
+    } catch (error) {
+      // Manejo silencioso de error en carga individual
+    }
   }
 
   // --- Add Item Modal Logic ---
@@ -662,6 +667,11 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.totalAmount.set(sum);
   }
 
+  /**
+   * Procesa el envío del formulario para crear o actualizar la orden de compra.
+   * Realiza la persistencia de cabecera y líneas secuencialmente.
+   * @async
+   */
   async onSubmit() {
     if (this.form.invalid) return;
     this.isSaving.set(true);
@@ -670,18 +680,17 @@ export class PurchaseOrderFormComponent implements OnInit {
       const formValue = this.form.value;
       const poData: Partial<PurchaseOrder> = {
         supplier_id: formValue.supplier_id,
-        warehouse_id: formValue.warehouse_id, // Save warehouse
+        warehouse_id: formValue.warehouse_id,
         po_date: formValue.po_date,
         expected_delivery_date: formValue.expected_delivery_date,
         status: formValue.status,
         notes: formValue.notes,
-        // Calculate amounts
         total_amount: this.totalAmount(),
-        net_amount: this.totalAmount(), // Simplified (no tax yet)
+        net_amount: this.totalAmount(),
         tax_amount: 0,
         freight_amount: 0,
-        // po_number: generated by backend or trigger usually
-        po_number: `PO-${Date.now().toString().slice(-6)}` // Temporary client-side ID
+        // Generación de número de orden foliado (simplificado cliente)
+        po_number: `PO-${Date.now().toString().slice(-6)}`
       };
 
       let order: PurchaseOrder;
@@ -689,17 +698,14 @@ export class PurchaseOrderFormComponent implements OnInit {
         const id = this.route.snapshot.paramMap.get('id')!;
         order = await this.poRepo.update(id, poData);
 
-        // Basic Line Sync Strategy: Delete all and recreate (Easiest for MVP)
-        // Or diffing? For agility and MVP, usually delete/rewrite is acceptable for small orders.
-        // BUT `SupabasePurchaseOrderRepository` doesn't have `deleteAllLines` method. 
-        // I should add one or loop delete. looping `deleteLine` is okay.
+        // Estrategia de sincronización de líneas: Eliminar y recrear
         const oldLines = await this.poRepo.getLines(id);
         await Promise.all(oldLines.map(l => this.poRepo.deleteLine(l.id)));
       } else {
         order = await this.poRepo.create(poData);
       }
 
-      // Save Lines
+      // Persistencia masiva de líneas de la orden
       const lines = this.form.value.lines;
       await Promise.all(lines.map((l: any, idx: number) => {
         return this.poRepo.addLine({
@@ -718,13 +724,15 @@ export class PurchaseOrderFormComponent implements OnInit {
       this.router.navigate(['/cadena-suministro/compras']);
 
     } catch (e) {
-      console.error('Error saving PO', e);
-      alert('Error al guardar la orden de compra');
+      alert('Error al guardar la orden de compra. Por favor, verifique los datos.');
     } finally {
       this.isSaving.set(false);
     }
   }
 
+  /**
+   * Cancela la operación actual y regresa a la lista de órdenes.
+   */
   cancel() {
     this.router.navigate(['/cadena-suministro/compras']);
   }

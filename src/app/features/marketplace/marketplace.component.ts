@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ModuleRepository } from '@core/repositories/module.repository';
 import { Module } from '@core/models/module.model';
 import { LucideAngularModule } from 'lucide-angular';
+import { SessionService } from '@core/services/session.service';
 
 interface GroupedModules {
   [category: string]: Module[];
@@ -18,6 +19,7 @@ interface GroupedModules {
 })
 export class MarketplaceComponent implements OnInit {
   private moduleRepo = inject(ModuleRepository);
+  private session = inject(SessionService);
   private router = inject(Router);
 
   modulesByCategory = signal<GroupedModules>({});
@@ -26,8 +28,18 @@ export class MarketplaceComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.isLoading.set(true);
     try {
-      const modules = await this.moduleRepo.getAllAvailable();
-      this.modulesByCategory.set(this.groupModulesByCategory(modules));
+      const [allModules, installedModules] = await Promise.all([
+        this.moduleRepo.getAllAvailable(),
+        this.moduleRepo.getInstalledModules(this.session.currentTenantId() || '')
+      ]);
+
+      const installedIds = new Set(installedModules.map(m => m.id));
+      const modulesWithStatus = allModules.map(m => ({
+        ...m,
+        is_installed: installedIds.has(m.id)
+      }));
+
+      this.modulesByCategory.set(this.groupModulesByCategory(modulesWithStatus));
     } catch (error) {
       console.error('Error loading modules:', error);
     } finally {

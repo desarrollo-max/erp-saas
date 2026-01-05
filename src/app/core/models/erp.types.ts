@@ -95,6 +95,7 @@ export interface Module {
   requires_storage_mb: number;
   sort_order: number;
   metadata: any;
+  is_installed?: boolean;
   created_at: string;
 }
 
