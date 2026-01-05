@@ -4,6 +4,18 @@ Sistema Integral de Administración Empresarial (ERP) de clase mundial, diseñad
 
 ## 🚀 Estado del Sistema: PRODUCTO TERMINADO (Senior Grade)
 
+Sistema 100% optimizado con arquitectura **Premium Dark** y motor de definiciones dinámicas.
+
+## 📖 Documentación y Wiki
+
+Para una comprensión profunda del sistema, consulte nuestra [Wiki del Proyecto](file:///c:/Users/gela6/Downloads/stitch_siac_erpredis/WIKI/Home.md):
+
+* [Arquitectura del Sistema](file:///c:/Users/gela6/Downloads/stitch_siac_erpredis/WIKI/Arquitectura.md)
+* [Guía de Desarrollo y Estilos](file:///c:/Users/gela6/Downloads/stitch_siac_erpredis/WIKI/Guia-de-Desarrollo.md)
+* [Manual del Módulo de Inventarios](file:///c:/Users/gela6/Downloads/stitch_siac_erpredis/WIKI/Inventarios.md)
+
+---
+
 Este repositorio contiene la suite completa de módulos operativos, financieros y estratégicos, totalmente integrados mediante una arquitectura basada en repositorios y micro-servicios de frontend.
 
 ### 📦 Módulos Principales (100% Funcionales)
@@ -150,6 +162,14 @@ src/
 Este proyecto está licenciado bajo la Licencia MIT - mira el archivo [LICENSE](LICENSE) para más detalles.
 
 ## 🔄 Actualizaciones Recientes
+
+### Enero 2026 - Restauración Operativa & Definición de Módulos (Premium Upgrade)
+
+* **Inventario Maestro**: Restauración total de flujos de **Historial de Movimientos** y **Movimiento Directo**. Inclusión de acciones rápidas por producto con pre-selección inteligente.
+* **Definición de Módulos**: Lanzamiento del `ModuleDefinitionComponent`, una interfaz dinámica que permite visualizar detalles técnicos, versiones y precios de cada aplicación instalada o por instalar.
+* **Diseño Unificado**: Consolidación de la estética **Premium Dark** eliminando infraestructura de temas duales para reducir el peso del CSS y mejorar el contraste.
+* **Filtros de Seguridad**: Reforzamiento de los filtros de inquilino (`tenant_id`) en la capa de repositorios para el nuevo motor de definiciones.
+* **Documentación**: Creación de la Wiki interactiva para desarrolladores y usuarios finales.
 
 ### Diciembre 2025 - Seguridad, Aislamiento & Neutralidad de Marca (Nano Banana)
 
