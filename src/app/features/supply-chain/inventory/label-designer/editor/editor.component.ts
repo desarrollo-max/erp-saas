@@ -8,7 +8,7 @@ import { SessionService } from '@core/services/session.service';
 import QRCode from 'qrcode';
 
 @Component({
-  selector: 'app-label-editor',
+  selector: 'app-label-editor', 
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './editor.component.html'
