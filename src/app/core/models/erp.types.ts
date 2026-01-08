@@ -391,6 +391,7 @@ export interface ScmPurchaseOrder {
   po_number: string;
   po_date: string;
   supplier_id: string;
+  warehouse_id?: string; // Target warehouse for reception
   expected_delivery_date: string | null;
   status: string;
   total_amount: number;
@@ -411,6 +412,7 @@ export interface ScmPoLine {
   purchase_order_id: string;
   line_number: number;
   product_id: string;
+  variant_id?: string; // Variant ID if applicable
   quantity_ordered: number;
   quantity_received: number;
   unit_price: number;

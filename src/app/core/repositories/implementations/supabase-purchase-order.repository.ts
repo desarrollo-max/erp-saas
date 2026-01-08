@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { PurchaseOrderRepository } from '../purchase-order.repository';
 import { SupabaseService } from '@core/services/supabase.service';
 import { SessionService } from '@core/services/session.service';
-import { PurchaseOrder, PurchaseOrderLine } from '@core/models/erp.types';
+import { PurchaseOrder, PurchaseOrderLine, ScmStockMovement } from '@core/models/erp.types';
 
 @Injectable({
     providedIn: 'root'
@@ -163,21 +163,58 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
     async updateLineQuantity(lineId: string, receivedNow: number): Promise<void> {
         const tenantId = this.session.currentTenantId();
         const companyId = this.getCompanyId();
+        const userId = this.session.user()?.id;
 
-        // 1. Fetch current received quantity
+        // 1. Fetch current received quantity and line details
         const { data: line, error: fetchError } = await this.supabase.client
             .from('scm_po_lines')
-            .select('quantity_received')
+            .select('id, quantity_received, quantity_ordered, product_id, variant_id, purchase_order_id')
             .eq('id', lineId)
             .eq('tenant_id', tenantId)
             .eq('company_id', companyId)
             .single();
 
         if (fetchError) throw fetchError;
+        if (!line) throw new Error('Línea de orden de compra no encontrada');
+
+        // 2. Fetch PO details for warehouse
+        const { data: po, error: poError } = await this.supabase.client
+            .from('scm_purchase_orders')
+            .select('warehouse_id, po_number')
+            .eq('id', line.purchase_order_id)
+            .single();
+
+        if (poError) throw poError;
+        if (!po?.warehouse_id) throw new Error('La orden no tiene un almacén asignado.');
 
         const newReceived = (line.quantity_received || 0) + receivedNow;
+        const now = new Date().toISOString();
 
-        // 2. Update with the new total
+        // 3. Insert Stock Movement (IN)
+        const movement: ScmStockMovement = {
+             id: crypto.randomUUID(),
+             tenant_id: tenantId,
+             company_id: companyId,
+             warehouse_id: po.warehouse_id,
+             product_id: line.product_id,
+             variant_id: line.variant_id || line.product_id,
+             movement_type: 'IN',
+             quantity: receivedNow,
+             movement_date: now,
+             reference_type: 'purchase_order',
+             reference_id: line.purchase_order_id,
+             notes: `Recepción Parcial PO ${po.po_number}`,
+             created_by: userId!,
+             created_at: now
+        } as any;
+
+        const { error: moveError } = await this.supabase.client
+             .from('scm_stock_movements')
+             .insert(movement);
+
+        if (moveError) throw moveError;
+
+        // 4. Update with the new total
         const { error: updateError } = await this.supabase.client
             .from('scm_po_lines')
             .update({ quantity_received: newReceived })
@@ -186,6 +223,105 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
             .eq('company_id', companyId);
 
         if (updateError) throw updateError;
+    }
+
+    async receiveAll(poId: string): Promise<void> {
+        const tenantId = this.session.currentTenantId();
+        const companyId = this.getCompanyId();
+        const userId = this.session.user()?.id;
+
+        // 1. Get PO Header to find warehouse
+        const { data: po, error: poError } = await this.supabase.client
+            .from('scm_purchase_orders')
+            .select('warehouse_id, status, po_number')
+            .eq('id', poId)
+            .single();
+
+        if (poError || !po) throw new Error('Orden de compra no encontrada');
+        if (!po.warehouse_id) throw new Error('La orden no tiene un almacén de destino asignado. Edite la orden para asignar uno.');
+        if (po.status === 'COMPLETED' || po.status === 'RECEIVED') throw new Error('La orden ya ha sido recibida.');
+
+        // 2. Get Lines
+        const { data: lines, error: linesError } = await this.supabase.client
+            .from('scm_po_lines')
+            .select('*')
+            .eq('purchase_order_id', poId);
+
+        if (linesError) throw linesError;
+
+        const movements: ScmStockMovement[] = [];
+        const now = new Date().toISOString();
+        const updates: PromiseLike<any>[] = [];
+
+        // 3. Process Lines
+        for (const line of lines) {
+            const received = line.quantity_received || 0;
+            const pending = line.quantity_ordered - received;
+
+            if (pending > 0) {
+                 // Create Stock Movement (IN)
+                 // Note: We use product_id as variant_id fallback. Ensure DB supports this or all products have variants.
+                 movements.push({
+                     id: crypto.randomUUID(), // Client-side ID generation if needed, or let DB handle it (but we are inserting) -> usually DB handles ID if omitted, but interface requires it?
+                     // Interface ScmStockMovement has 'id'. If DB auto-generates, we might need to omit it or use partial.
+                     // Since we use strict typing, let's see if we can use Partial or if we need to generate UUID.
+                     // Supabase usually handles UUID default. Let's cast to any to avoid TS error on ID if we don't generate it, 
+                     // OR generate it. Let's generate it to be safe if we are sending it.
+                     // Actually, better to use Omit<ScmStockMovement, 'id'> if inserting.
+                     // But let's check the code I read. It pushed an object.
+                     // The object didn't have 'id'. So likely the DB handles it.
+                     // I will type it as Partial<ScmStockMovement> or similar.
+                     tenant_id: tenantId,
+                     company_id: companyId,
+                     warehouse_id: po.warehouse_id,
+                     product_id: line.product_id,
+                     variant_id: line.variant_id || line.product_id, 
+                     movement_type: 'IN', 
+                     quantity: pending,
+                     movement_date: now,
+                     reference_type: 'purchase_order',
+                     reference_id: poId,
+                     // reference_number: po.po_number, // ScmStockMovement interface does NOT have reference_number in the version I read!
+                     // I need to check ScmStockMovement interface again. It has reference_type, reference_id, notes. No reference_number.
+                     // So the previous code had a bug or extra field 'reference_number'.
+                     notes: `Recepción Completa PO ${po.po_number}`,
+                     created_by: userId,
+                     created_at: now
+                 } as any); // Casting to any to avoid strict ID/field checks for now, but keeping the structure clean.
+
+                // Prepare update for Line Quantity Received (execute later)
+                updates.push(
+                    this.supabase.client
+
+                       .from('scm_po_lines')
+                       .update({ quantity_received: line.quantity_ordered })
+                       .eq('id', line.id)
+                       .then(() => null)
+                );
+            }
+        }
+
+        if (movements.length > 0) {
+            // Insert movements
+             const { error: movError } = await this.supabase.client
+                .from('scm_stock_movements')
+                .insert(movements);
+            
+             if (movError) throw movError;
+
+            // Apply line updates
+            for (const u of updates) {
+                await u;
+            }
+        }
+
+        // 4. Update PO Status to COMPLETED
+        const { error: statusError } = await this.supabase.client
+            .from('scm_purchase_orders')
+            .update({ status: 'COMPLETED', updated_at: now })
+            .eq('id', poId);
+
+        if (statusError) throw statusError;
     }
 
     async receivePo(poId: string): Promise<void> {
@@ -212,7 +348,7 @@ export class SupabasePurchaseOrderRepository extends PurchaseOrderRepository {
             const { error: poError } = await this.supabase.client
                 .from('scm_purchase_orders')
                 .update({
-                    status: 'RECEIVED',
+                    status: 'COMPLETED',
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', poId)

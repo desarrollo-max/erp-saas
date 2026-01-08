@@ -15,25 +15,6 @@ import { OnboardingTourComponent } from '../../shared/components/onboarding-tour
     AssistantSphereComponent,
     OnboardingTourComponent
   ],
-  template: `
-    <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-      
-      <!-- Top Navigation Header -->
-      <app-header></app-header>
-      
-      <!-- Main Content Area -->
-      <!-- Added pt-4 to ensure content doesn't butt up strictly against the header if it has no internal padding -->
-      <main class="flex-1 w-full relative">
-        <router-outlet></router-outlet>
-      </main>
-
-      <!-- Floating Assistant -->
-      <app-assistant-sphere></app-assistant-sphere>
-
-      <!-- Global Onboarding Tour Overlay -->
-      <app-onboarding-tour></app-onboarding-tour>
-      
-    </div>
-  `
+  templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent { }

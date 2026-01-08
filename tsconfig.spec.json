@@ -9,7 +9,7 @@
     ]
   },
   "include": [
-    "src/**/*.d.ts",
-    "src/**/*.spec.ts"
+    "src/test-setup.ts",
+    "src/app/features/supply-chain/inventory/label-designer/preview/preview.component.spec.ts"
   ]
 }

@@ -85,7 +85,17 @@ export const routes: Routes = [
             path: 'inventario',
             children: [
               { path: '', loadComponent: () => import('./features/supply-chain/inventory/inventory.component').then(m => m.InventoryComponent) },
-              { path: 'etiquetas', loadComponent: () => import('./features/supply-chain/inventory/label-printing/label-printing.component').then(m => m.LabelPrintingComponent) }
+              { path: 'etiquetas', loadComponent: () => import('./features/supply-chain/inventory/label-printing/label-printing.component').then(m => m.LabelPrintingComponent) },
+              {
+                path: 'disenador',
+                children: [
+                  { path: '', loadComponent: () => import('./features/supply-chain/inventory/label-designer/home/home.component').then(m => m.LabelDesignerHomeComponent) },
+                  { path: 'new', loadComponent: () => import('./features/supply-chain/inventory/label-designer/editor/editor.component').then(m => m.LabelEditorComponent) },
+                  { path: 'edit/:id', loadComponent: () => import('./features/supply-chain/inventory/label-designer/editor/editor.component').then(m => m.LabelEditorComponent) },
+                  { path: 'history', loadComponent: () => import('./features/supply-chain/inventory/label-designer/history/history.component').then(m => m.LabelDesignerHistoryComponent) },
+                  { path: 'preview', loadComponent: () => import('./features/supply-chain/inventory/label-designer/preview/preview.component').then(m => m.LabelDesignerPreviewComponent) }
+                ]
+              }
             ]
           },
           {

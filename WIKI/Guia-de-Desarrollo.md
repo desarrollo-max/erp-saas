@@ -38,3 +38,6 @@ Utilizar `routerLink` para navegación simple y el servicio `Router` para lógic
 - `npm start`: Inicia el servidor de desarrollo.
 - `npm run build`: Genera el bundle de producción para validación.
 - `ng generate component path/to/comp`: Crea un nuevo componente.
+
+---
+© 2026 **DevBajio**. Desarrollado por **Mario Felipe Luevano Villagomez**.

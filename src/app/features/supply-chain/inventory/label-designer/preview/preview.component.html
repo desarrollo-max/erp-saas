@@ -1,0 +1,58 @@
+<div class="p-6 bg-[#111418] min-h-full text-white">
+  <div class="flex items-center gap-4 mb-6">
+    <button routerLink="../" class="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-[#283039] transition-colors">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <div>
+      <h1 class="text-2xl font-bold">Vista Previa de Impresión</h1>
+      <p class="text-[#9dabb9]">Verificación final antes de imprimir.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="rounded-xl border border-[#3b4754] bg-white p-8 flex items-center justify-center min-h-[400px]">
+      <div class="border-2 border-dashed border-gray-300 rounded p-4 w-64 h-40 flex flex-col items-center justify-center text-gray-400">
+        <span class="material-symbols-outlined text-4xl mb-2">qr_code_2</span>
+        <span>Vista Previa de Etiqueta</span>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div class="rounded-xl border border-[#3b4754] bg-[#1C242C] p-5">
+        <h3 class="font-bold mb-4">Configuración de Impresión</h3>
+        <form [formGroup]="form" class="flex flex-col gap-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-sm text-[#9dabb9]">Modelo</label>
+            <select formControlName="modelId" class="h-10 rounded-lg bg-[#111418] border border-[#3b4754] text-white px-3">
+              <option [ngValue]="null">Seleccione un modelo...</option>
+              <option *ngFor="let t of templates()" [ngValue]="t.id">{{ t.name }} ({{ t.width }}x{{ t.height }}mm)</option>
+            </select>
+            <div class="text-xs text-red-400 mt-1" *ngIf="form.controls.modelId.invalid && (form.controls.modelId.dirty || form.controls.modelId.touched)">Seleccione un modelo válido</div>
+            <div class="text-xs text-[#9dabb9]" *ngIf="selectedTemplate()">Seleccionado: {{ selectedTemplate()?.name }}</div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-sm text-[#9dabb9]">Punto de Impresión</label>
+            <select formControlName="pointId" class="h-10 rounded-lg bg-[#111418] border border-[#3b4754] text-white px-3">
+              <option [ngValue]="null">Seleccione un punto...</option>
+              <option *ngFor="let p of availablePoints()" [ngValue]="p.id">{{ p.name }}</option>
+            </select>
+            <div class="text-xs text-red-400 mt-1" *ngIf="form.controls.pointId.invalid && (form.controls.pointId.dirty || form.controls.pointId.touched)">Seleccione un punto válido</div>
+            <div class="text-xs text-[#9dabb9]" *ngIf="selectedPoint()">Seleccionado: {{ selectedPoint()?.name }}</div>
+          </div>
+
+          <div class="rounded-md p-3" [class.bg-red-900]="!isCompatible() && form.controls.modelId.value && form.controls.pointId.value" [class.bg-[#111418]]="isCompatible()">
+            <div class="text-xs" [class.text-red-200]="!isCompatible()" [class.text-[#9dabb9]]="isCompatible()">
+              {{ isCompatible() ? 'Compatibilidad OK' : 'El modelo y el punto no son compatibles' }}
+            </div>
+          </div>
+
+          <button type="button" (click)="print()" [disabled]="!canPrint()" class="w-full mt-2 h-10 bg-primary rounded-lg font-bold text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ canPrint() ? 'Imprimir' : 'Seleccione modelo y punto válidos' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

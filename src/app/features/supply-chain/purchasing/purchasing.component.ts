@@ -3,6 +3,7 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { NgIconsModule, provideIcons } from '@ng-icons/core';
 import * as heroIcons from '@ng-icons/heroicons/solid';
+import { heroArchiveBoxArrowDownSolid } from '@ng-icons/heroicons/solid';
 
 import { PurchaseOrderRepository } from '@core/repositories/purchase-order.repository';
 import { ManufacturingRepository } from '@core/repositories/manufacturing.repository';
@@ -166,9 +167,17 @@ import { SessionService } from '@core/services/session.service';
                                 </span>
                               </td>
                               <td class="px-8 py-6 text-right">
-                                <button (click)="editOrder(order)" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-primary-600 hover:text-white transition-all">
-                                    <ng-icon name="heroPencilSquareSolid" class="w-5 h-5"></ng-icon>
-                                </button>
+                                <div class="flex gap-2 justify-end">
+                                     <button *ngIf="order.status !== 'COMPLETED' && order.status !== 'CANCELLED'"
+                                             (click)="receiveOrder(order)" 
+                                             class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center"
+                                             title="Recepcionar Orden Completa">
+                                         <ng-icon name="heroArchiveBoxArrowDownSolid" class="w-5 h-5"></ng-icon>
+                                     </button>
+                                    <button (click)="editOrder(order)" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-primary-600 hover:text-white transition-all flex items-center justify-center">
+                                        <ng-icon name="heroPencilSquareSolid" class="w-5 h-5"></ng-icon>
+                                    </button>
+                                </div>
                               </td>
                             </tr>
                           </tbody>
@@ -261,6 +270,27 @@ export class PurchasingComponent implements OnInit {
 
   createOrder() {
     this.router.navigate(['/purchasing/orders/new']);
+  }
+
+  async receiveOrder(order: PurchaseOrder) {
+      if (!confirm(`¿Está seguro de recepcionar COMPLETAMENTE la orden ${order.po_number}? Esto generará movimientos de inventario.`)) return;
+      
+      this.isLoading.set(true);
+      try {
+          await this.poRepo.receiveAll(order.id);
+          // Refresh
+          const tenantId = this.session.currentTenantId();
+          if (tenantId) {
+             const data = await this.poRepo.getAll(tenantId);
+             this.orders.set(data);
+             this.updateStats(data);
+          }
+      } catch (error) {
+          console.error(error);
+          alert('Error al recepcionar la orden: ' + (error as any).message);
+      } finally {
+          this.isLoading.set(false);
+      }
   }
 
   manageSuppliers() {

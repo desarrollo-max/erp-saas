@@ -21,71 +21,105 @@ import * as heroIcons from '@ng-icons/heroicons/solid';
   imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, NgIconsModule],
   viewProviders: [provideIcons(heroIcons)],
   template: `
-    <div class="min-h-screen flex items-center justify-center p-4 transition-all duration-500 relative overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div class="relative flex min-h-screen w-full flex-row overflow-hidden bg-[#101922] font-display text-white transition-colors duration-200">
       
-      <!-- Premium Background Elements -->
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(79,70,229,0.05)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_30%,rgba(79,70,229,0.1)_0%,transparent_50%)]"></div>
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(139,92,246,0.05)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_70%_70%,rgba(139,92,246,0.1)_0%,transparent_50%)]"></div>
-      <div class="absolute -top-48 -left-48 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] animate-pulse"></div>
-      <div class="absolute -bottom-48 -right-48 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] animate-pulse" style="animation-delay: 2s;"></div>
-
-      <!-- Theme Switcher -->
-      <div class="absolute top-6 right-6 z-20">
-         <button (click)="cycleThemeColor()" class="p-3 rounded-2xl text-slate-500 hover:bg-white dark:text-slate-400 dark:hover:bg-slate-900 transition-all focus:outline-none bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl shadow-sm border border-slate-200/50 dark:border-slate-800/50">
-            <div class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">
-              <div class="w-4 h-4 rounded-full" [style.background-color]="themeService.getCurrentPrimaryColor()"></div>
-            </div>
-         </button>
-      </div>
-
-      <div class="w-full max-w-md p-10 glass-panel shadow-2xl rounded-[2.5rem] animate-fade-in relative z-10 border border-white/50 dark:border-slate-800/50">
+      <!-- Left Panel: Visual Impact (Hidden on Mobile) -->
+      <div class="hidden lg:flex lg:w-1/2 relative bg-[#1c242d] overflow-hidden">
+        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] hover:scale-110" 
+             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDEN15JQcxKPvsgPpeA7rAN3Lw_RpyAbkwwLnfGbECj_3M-9gCEkr7XSLYhaC6BfAphOD7kmeL9ON7puu3pzedtPRLR0tt3crI25IRnNoeMx71x1zyBTjsfIRkuyQrJF7JWPDdZlsuvxReT66bFmBqMvYhrNp5w-mAJgQ7uhuEM3Jd5T-lu_H72bTn1qGtjqOo6nHg1UivVDrxh-t5K47cUEQOfwkXoFs6kHzR4G4O-objcRT9OkZTO_rTdSEy1PCBXJU2Q4fTWVRA');">
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#101922]/95 via-[#101922]/60 to-primary/20 mix-blend-multiply"></div>
+        <div class="absolute inset-0 bg-gradient-to-tr from-black/60 to-transparent"></div>
         
-        <div class="text-center mb-10">
-          <div class="flex flex-col items-center gap-4">
-            <div class="p-6 bg-white dark:bg-slate-900 rounded-3xl shadow-xl mb-2 flex items-center justify-center border border-slate-100 dark:border-slate-800">
-                <span class="text-5xl font-black tracking-tighter text-indigo-600 dark:text-indigo-400 drop-shadow-sm">SIAC</span>
-                <span class="text-xl font-black text-slate-400 dark:text-slate-500 ml-3 tracking-[0.3em] uppercase opacity-70">ERP</span>
-            </div>
-            <div class="space-y-2">
-                <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Acceso al Sistema</h1>
-                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Premium Management Solution</p>
+        <div class="relative z-10 flex flex-col justify-end p-16 w-full animate-siac-in">
+          <div class="mb-6 h-14 w-14 rounded-full bg-gradient-to-br from-[#1e3a8a] via-[#0ea5e9] to-emerald-500 flex items-center justify-center shadow-lg shadow-primary/30 border border-white/10">
+            <span class="material-symbols-outlined text-white text-3xl font-bold">arrow_upward</span>
+          </div>
+          <h2 class="text-4xl font-bold text-white mb-4 leading-tight tracking-tight">Gestión empresarial <br/>inteligente y conectada.</h2>
+          <p class="text-[#9dabb9] text-lg max-w-md font-medium">Optimice sus recursos y tome decisiones informadas con la potencia de SIAC ERP.</p>
+          <div class="mt-12 flex gap-4 w-full max-w-md">
+            <div class="h-1 flex-1 rounded-full bg-[#1e293b] overflow-hidden">
+              <div class="h-full w-1/3 rounded-full bg-gradient-to-r from-emerald-500 to-primary animate-[shimmer_2s_infinite]"></div>
             </div>
           </div>
         </div>
+      </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
-          
-          <!-- Correo Electrónico -->
-          <div>
-            <label for="email" class="block text-[10px] font-black uppercase tracking-widest mb-2 ml-4 text-slate-500 dark:text-slate-400">Correo Electrónico</label>
-            <input type="email" id="email" formControlName="email" 
-                   class="app-input !rounded-2xl !bg-slate-50/50 dark:!bg-slate-900/50 !border-slate-200 dark:!border-slate-800 focus:!border-indigo-500"
-                   placeholder="admin@siac-erp.com">
-          </div>
-
-          <!-- Contraseña -->
-          <div>
-            <label for="password" class="block text-[10px] font-black uppercase tracking-widest mb-2 ml-4 text-slate-500 dark:text-slate-400">Contraseña</label>
-            <input type="password" id="password" formControlName="password"
-                   class="app-input !rounded-2xl !bg-slate-50/50 dark:!bg-slate-900/50 !border-slate-200 dark:!border-slate-800 focus:!border-indigo-500"
-                   placeholder="••••••••">
-          </div>
-
-          <!-- Botón de Envío -->
-          <button type="submit" [disabled]="loginForm.invalid || isLoading()"
-                  class="app-button-primary w-full !rounded-2xl !py-4 glow-effect shadow-indigo-500/25">
-            
-            <span *ngIf="!isLoading()" class="text-sm font-black uppercase tracking-widest">Entrar al Sistema</span>
-            <div *ngIf="isLoading()" class="flex items-center justify-center">
-              <lucide-icon name="loader-2" class="w-5 h-5 mr-3 animate-spin"></lucide-icon>
-              <span class="text-sm font-black uppercase tracking-widest">Verificando...</span>
-            </div>
-          </button>
-        </form>
+      <!-- Right Panel: Login Form -->
+      <div class="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-12 relative bg-[#101922]">
+        <div class="absolute inset-0 lg:hidden z-0 opacity-10 pointer-events-none" 
+             style="background-image: radial-gradient(#137fec 1px, transparent 1px); background-size: 24px 24px;">
+        </div>
         
-        <p class="mt-10 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">
-          &copy; 2026 SIAC ERP &bull; Advanced Digital Core
-        </p>
+        <div class="w-full max-w-[440px] flex flex-col z-10 animate-siac-in">
+          
+          <!-- Header -->
+          <div class="mb-10 text-center sm:text-left">
+            <div class="flex items-center justify-center sm:justify-start gap-4 mb-8">
+              <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-emerald-500 flex items-center justify-center shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-white text-3xl">arrow_upward</span>
+              </div>
+              <h1 class="text-3xl font-black tracking-tighter text-white flex items-center gap-2">
+                SIAC <span class="text-primary">ERP</span>
+              </h1>
+            </div>
+            <h2 class="text-3xl font-bold text-white mb-2 italic">Bienvenido de nuevo</h2>
+            <p class="text-[#9dabb9] font-medium">Acceda a su cuenta para continuar al centro de mando.</p>
+          </div>
+
+          <!-- Form -->
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+            
+            <div class="flex flex-col gap-2.5">
+              <label class="text-[11px] font-black uppercase tracking-[0.2em] text-[#9dabb9] ml-1" for="email">
+                Correo Electrónico
+              </label>
+              <div class="relative flex items-center group">
+                <input class="w-full rounded-xl border border-[#2d3748] bg-[#1c242d] px-5 py-4 pl-12 text-base text-white placeholder-slate-500 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all group-hover:border-slate-600" 
+                       id="email" formControlName="email" placeholder="usuario@empresa.com" type="email"/>
+                <div class="absolute left-4.5 text-slate-500 group-focus-within:text-primary transition-colors flex items-center pointer-events-none">
+                  <span class="material-symbols-outlined text-[22px]">mail</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-2.5">
+              <label class="text-[11px] font-black uppercase tracking-[0.2em] text-[#9dabb9] ml-1" for="password">
+                Contraseña
+              </label>
+              <div class="relative flex items-center group">
+                <input class="w-full rounded-xl border border-[#2d3748] bg-[#1c242d] px-5 py-4 pl-12 text-base text-white placeholder-slate-500 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all group-hover:border-slate-600" 
+                       id="password" formControlName="password" placeholder="••••••••••••" type="password"/>
+                <div class="absolute left-4.5 text-slate-500 group-focus-within:text-primary transition-colors flex items-center pointer-events-none">
+                  <span class="material-symbols-outlined text-[22px]">lock</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-1">
+              <label class="flex items-center gap-2.5 cursor-pointer group">
+                <input class="size-4 rounded border-[#3b4754] bg-[#1c242d] text-primary focus:ring-offset-0 focus:ring-primary/20 transition-all cursor-pointer" type="checkbox"/>
+                <span class="text-sm text-[#9dabb9] group-hover:text-white transition-colors">Mantener sesión iniciada</span>
+              </label>
+              <a class="text-sm font-bold text-primary hover:text-emerald-400 transition-colors" href="#">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <button type="submit" [disabled]="loginForm.invalid || isLoading()"
+                    class="mt-4 w-full rounded-xl bg-primary hover:bg-blue-600 text-white font-black text-sm uppercase tracking-widest h-14 shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50">
+              <span *ngIf="!isLoading()">Iniciar Sesión</span>
+              <span *ngIf="isLoading()">Verificando...</span>
+              <span *ngIf="!isLoading()" class="material-symbols-outlined text-[20px]">arrow_forward</span>
+            </button>
+          </form>
+
+          <!-- Footer -->
+          <div class="mt-16 pt-8 border-t border-[#2d3748]/50 flex flex-col items-center gap-4">
+            <p class="text-[10px] font-black uppercase tracking-[0.25em] text-[#637588] text-center">
+              © 2026 **DevBajio** &bull; Desarrollado por **Mario Felipe Luevano Villagomez**
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   `,

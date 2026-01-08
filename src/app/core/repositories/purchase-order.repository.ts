@@ -15,5 +15,6 @@ export abstract class PurchaseOrderRepository {
     abstract deleteLine(id: string): Promise<void>;
     abstract updateLineQuantity(lineId: string, receivedNow: number): Promise<void>;
     abstract receivePo(poId: string): Promise<void>;
+    abstract receiveAll(poId: string): Promise<void>;
     abstract getPendingOrdersCount(): Promise<number>;
 }

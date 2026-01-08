@@ -5,11 +5,6 @@ import { CommonModule } from '@angular/common';
   selector: 'app-plm',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="p-6">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Plm</h2>
-      <p class="text-gray-600">Module under construction.</p>
-    </div>
-  `
+  templateUrl: './plm.component.html'
 })
 export class PlmComponent {}

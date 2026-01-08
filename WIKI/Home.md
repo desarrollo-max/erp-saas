@@ -14,4 +14,4 @@ SIAC ERP es un sistema de gestión empresarial de última generación, diseñado
 El objetivo de este proyecto es proporcionar una plataforma robusta y visualmente impactante para la gestión de recursos empresariales, optimizada para rendimiento y facilidad de uso.
 
 ---
-© 2026 SIAC ERP Systems Group.
+© 2026 **DevBajio**. Desarrollado por **Mario Felipe Luevano Villagomez**.

@@ -1,0 +1,32 @@
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .label-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 4cm);
+    grid-auto-rows: 6cm;
+    gap: 0.2cm;
+  }
+  .label-container {
+    width: 4cm;
+    height: 6cm;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+.grayscale img {
+  filter: grayscale(100%);
+}
+
