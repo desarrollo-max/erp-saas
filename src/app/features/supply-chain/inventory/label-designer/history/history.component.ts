@@ -6,23 +6,6 @@ import { RouterLink } from '@angular/router';
   selector: 'app-label-designer-history',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <div class="p-6 bg-[#111418] min-h-full text-white">
-       <div class="flex items-center gap-4 mb-6">
-            <button routerLink="../" class="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-[#283039] transition-colors">
-                <span class="material-symbols-outlined">arrow_back</span>
-            </button>
-            <div>
-                <h1 class="text-2xl font-bold">Historial de Movimientos de Etiquetas</h1>
-                <p class="text-[#9dabb9]">Registro de etiquetas generadas e impresas.</p>
-            </div>
-       </div>
-
-       <div class="rounded-xl border border-[#3b4754] bg-[#1C242C] p-8 text-center text-[#9dabb9]">
-           <span class="material-symbols-outlined text-4xl mb-2 opacity-50">history_edu</span>
-           <p>No hay historial de impresiones registrado recientemente.</p>
-       </div>
-    </div>
-  `
+  templateUrl: './history.component.html'
 })
 export class LabelDesignerHistoryComponent {}

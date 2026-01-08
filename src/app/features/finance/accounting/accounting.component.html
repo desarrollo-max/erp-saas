@@ -1,0 +1,343 @@
+<div class="flex flex-col h-full bg-[var(--app-bg)] text-[var(--app-text)]">
+  
+  <!-- HEADER -->
+  <div class="flex items-center justify-between p-6 border-b border-[var(--border-color)] bg-[var(--card-bg)]">
+    <div>
+      <h1 class="text-2xl font-bold flex items-center gap-2">
+        <ng-icon name="heroCalculatorSolid" class="text-indigo-600 w-8 h-8"></ng-icon>
+        Contabilidad y Finanzas
+      </h1>
+      <p class="text-[var(--app-text-muted)] mt-1">Gestión del PGC, asientos y facturación interna.</p>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="border-b border-[var(--border-color)] bg-[var(--card-bg)] px-6">
+    <nav class="-mb-px flex space-x-8 overflow-x-auto">
+      <button (click)="activeTab = 'accounts'" 
+         [class.border-indigo-500]="activeTab === 'accounts'" 
+         [class.text-indigo-600]="activeTab === 'accounts'"
+         class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:border-[var(--border-color)] transition-colors">
+         Catálogo de Cuentas
+      </button>
+      <button (click)="activeTab = 'journal'"
+         [class.border-indigo-500]="activeTab === 'journal'" 
+         [class.text-indigo-600]="activeTab === 'journal'"
+         class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:border-[var(--border-color)] transition-colors">
+         Asientos Contables
+      </button>
+      <button (click)="activeTab = 'invoices'"
+         [class.border-indigo-500]="activeTab === 'invoices'" 
+         [class.text-indigo-600]="activeTab === 'invoices'"
+         class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:border-[var(--border-color)] transition-colors">
+         Facturación Interna
+      </button>
+    </nav>
+  </div>
+  
+  <div class="flex-grow p-6 overflow-y-auto bg-[var(--subtle-bg)]">
+
+    <!-- LOADING -->
+    <div *ngIf="isLoading()" class="flex flex-col items-center justify-center h-64 opacity-50">
+      <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p>Cargando datos contables...</p>
+    </div>
+
+    <!-- TAB: ACCOUNTS -->
+    <div *ngIf="!isLoading() && activeTab === 'accounts'" class="space-y-4">
+      <div class="flex justify-between items-center">
+         <div class="relative max-w-xs w-full">
+            <ng-icon name="heroMagnifyingGlassSolid" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></ng-icon>
+            <input type="text" placeholder="Buscar cuenta..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--input-bg)] focus:ring-2 focus:ring-indigo-500 outline-none">
+         </div>
+         <button (click)="openAccountModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
+            <ng-icon name="heroPlusSolid"></ng-icon> Nueva Cuenta
+         </button>
+      </div>
+
+      <div class="bg-[var(--card-bg)] shadow rounded-xl overflow-hidden border border-[var(--border-color)]">
+        <table class="min-w-full divide-y divide-[var(--border-color)]">
+          <thead class="bg-[var(--subtle-bg)]">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-[var(--app-text-muted)] uppercase tracking-wider">Código</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-[var(--app-text-muted)] uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-[var(--app-text-muted)] uppercase tracking-wider">Tipo</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-[var(--app-text-muted)] uppercase tracking-wider">Nivel</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border-color)] bg-[var(--card-bg)]">
+             <tr *ngFor="let acc of accounts()" class="hover:bg-[var(--subtle-bg)] transition-colors">
+              <td class="px-6 py-3 whitespace-nowrap text-sm font-mono font-medium text-[var(--app-text)]">{{ acc.code }}</td>
+              <td class="px-6 py-3 whitespace-nowrap text-sm text-[var(--app-text)]">
+                <span [style.padding-left.px]="getLevel(acc.code)*20">{{ acc.name }}</span>
+              </td>
+              <td class="px-6 py-3 whitespace-nowrap text-sm text-[var(--app-text-muted)]">
+                  {{ getAccountCategory(acc.code) }}
+              </td>
+              <td class="px-6 py-3 whitespace-nowrap text-sm text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                  {{ acc.is_detail ? 'Detalle' : 'Acumulativa' }}
+                </span>
+              </td>
+            </tr>
+             <tr *ngIf="accounts().length === 0">
+                <td colspan="4" class="px-6 py-12 text-center text-[var(--app-text-muted)]">
+                    No hay cuentas registradas. Comienza agregando una.
+                </td>
+             </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: JOURNAL -->
+    <div *ngIf="!isLoading() && activeTab === 'journal'" class="space-y-4">
+       <div class="flex justify-between items-center">
+         <h3 class="text-lg font-bold">Libro Diario</h3>
+         <button (click)="openJournalModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-2">
+            <ng-icon name="heroPlusSolid"></ng-icon> Nuevo Asiento
+         </button>
+       </div>
+       
+       <div class="bg-[var(--card-bg)] shadow rounded-xl overflow-hidden border border-[var(--border-color)]">
+            <!-- Simple Journal List -->
+            <div *ngFor="let entry of journalEntries()" class="border-b border-[var(--border-color)] last:border-0 p-4 hover:bg-[var(--subtle-bg)] transition-colors cursor-pointer">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="font-mono text-xs font-bold bg-indigo-100 text-indigo-800 px-2 py-1 rounded">#{{ entry.entry_number }}</span>
+                        <span class="ml-3 font-semibold">{{ entry.description || 'Sin descripción' }}</span>
+                    </div>
+                    <span class="text-sm text-[var(--app-text-muted)]">{{ entry.entry_date | date }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                     <span class="text-[var(--app-text-muted)]">Ref: {{ entry.reference || '-' }}</span>
+                     <div class="space-x-4">
+                        <span class="text-green-600 font-medium">Debe: {{ entry.total_debit | currency }}</span>
+                        <span class="text-red-600 font-medium">Haber: {{ entry.total_credit | currency }}</span>
+                     </div>
+                </div>
+            </div>
+            <div *ngIf="journalEntries().length === 0" class="p-12 text-center text-[var(--app-text-muted)]">
+                No hay asientos contables registrados.
+            </div>
+       </div>
+    </div>
+
+    <!-- TAB: INVOICES (Legacy Mock) -->
+    <div *ngIf="!isLoading() && activeTab === 'invoices'">
+      <div class="flex justify-end mb-4">
+          <button (click)="openInvoiceModal()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 flex gap-2 items-center">
+               <ng-icon name="heroDocumentPlusSolid"></ng-icon> Nueva Factura
+          </button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let inv of invoices()" class="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-start mb-4">
+                  <div>
+                      <h4 class="text-lg font-bold">{{ inv.clientName }}</h4>
+                      <p class="text-sm text-[var(--app-text-muted)]">Factura #{{ inv.number }}</p>
+                  </div>
+                  <span class="text-xs font-mono bg-gray-100 text-gray-800 px-2 py-1 rounded">{{ inv.date }}</span>
+              </div>
+              <div class="border-t border-[var(--border-color)] pt-4 mt-2">
+                  <div class="flex justify-between items-center mb-4">
+                      <span class="text-[var(--app-text-muted)] font-medium">Total:</span>
+                      <span class="text-xl font-bold text-green-600">\${{ inv.total | number:'1.2-2' }}</span>
+                  </div>
+                  <button (click)="printInvoice(inv)" class="w-full border border-[var(--border-color)] text-[var(--app-text)] py-2 rounded flex justify-center items-center gap-2 hover:bg-[var(--subtle-bg)] transition-colors">
+                     <ng-icon name="heroPrinterSolid" class="w-4 h-4"></ng-icon>
+                     Imprimir PDF
+                  </button>
+              </div>
+          </div>
+      </div>
+      
+      <div *ngIf="invoices().length === 0" class="text-center py-12 bg-[var(--card-bg)] rounded-lg shadow border border-[var(--border-color)]">
+          <p class="text-[var(--app-text-muted)]">No hay facturas internas generadas.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- MODAL: NEW ACCOUNT -->
+  <div *ngIf="showAccountModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50 p-4">
+     <div class="bg-[var(--card-bg)] rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-[var(--border-color)] transform transition-all">
+         <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--subtle-bg)]">
+             <h3 class="text-lg font-bold">Nueva Cuenta Contable</h3>
+             <button (click)="showAccountModal = false" class="text-[var(--app-text-muted)] hover:text-red-500"><ng-icon name="heroXMarkSolid" class="w-6 h-6"></ng-icon></button>
+         </div>
+         <form [formGroup]="accountForm" (ngSubmit)="saveAccount()" class="p-6 space-y-4">
+             <div>
+                 <label class="block text-sm font-medium mb-1">Código *</label>
+                 <input formControlName="code" type="text" placeholder="Ej. 1000" class="w-full p-2 rounded border border-[var(--border-color)] bg-[var(--input-bg)] focus:ring-2 focus:ring-indigo-500">
+                 <p *ngIf="accountForm.get('code')?.invalid && accountForm.get('code')?.touched" class="text-xs text-red-500 mt-1">Este campo es requerido.</p>
+             </div>
+             <div>
+                 <label class="block text-sm font-medium mb-1">Nombre *</label>
+                 <input formControlName="name" type="text" placeholder="Ej. Activo Circulante" class="w-full p-2 rounded border border-[var(--border-color)] bg-[var(--input-bg)] focus:ring-2 focus:ring-indigo-500">
+             </div>
+             <div>
+               <label class="block text-sm font-medium mb-1">Tipo de Cuenta</label>
+               <select formControlName="account_type_id" class="w-full p-2 rounded border border-[var(--border-color)] bg-[var(--input-bg)]">
+                  <!-- Assuming we fetched these or hardcoding some IDs if types aren't dynamic enough yet -->
+                  <option *ngFor="let type of accountTypes" [value]="type.id">{{ type.name }} ({{ type.code }})</option>
+               </select>
+             </div>
+             <div class="flex items-center gap-2">
+                 <input formControlName="is_detail" type="checkbox" id="is_detail" class="h-4 w-4 text-indigo-600 rounded">
+                 <label for="is_detail" class="text-sm">Es cuenta de detalle (imputable)</label>
+             </div>
+
+             <div class="pt-4 flex justify-end gap-3">
+                 <button type="button" (click)="showAccountModal = false" class="px-4 py-2 rounded text-sm bg-gray-200 text-gray-800 hover:bg-gray-300">Cancelar</button>
+                 <button type="submit" [disabled]="accountForm.invalid || isSubmitting" class="px-4 py-2 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">Guardar</button>
+             </div>
+         </form>
+     </div>
+  </div>
+
+  <!-- MODAL: NEW JOURNAL ENTRY -->
+  <div *ngIf="showJournalModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50 p-4">
+     <div class="bg-[var(--card-bg)] rounded-xl shadow-xl w-full max-w-4xl overflow-hidden border border-[var(--border-color)] flex flex-col max-h-[90vh]">
+         <div class="p-6 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--subtle-bg)]">
+             <h3 class="text-lg font-bold">Nuevo Asiento Contable</h3>
+             <button (click)="showJournalModal = false" class="text-[var(--app-text-muted)] hover:text-red-500"><ng-icon name="heroXMarkSolid" class="w-6 h-6"></ng-icon></button>
+         </div>
+         
+         <div class="flex-grow overflow-y-auto p-6">
+             <form [formGroup]="journalForm" class="space-y-6">
+                 <!-- Header -->
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[var(--subtle-bg)] p-4 rounded-lg">
+                     <div>
+                         <label class="block text-sm font-medium mb-1">Fecha Contable</label>
+                         <input formControlName="entry_date" type="date" class="w-full p-2 rounded border border-[var(--border-color)] bg-[var(--input-bg)]">
+                     </div>
+                     <div>
+                         <label class="block text-sm font-medium mb-1">Referencia / Folio</label>
+                         <input formControlName="reference" type="text" class="w-full p-2 rounded border border-[var(--border-color)] bg-[var(--input-bg)]">
+                     </div>
+                     <div class="md:col-span-2">
+                         <label class="block text-sm font-medium mb-1">Descripción / Concepto</label>
+                         <input formControlName="description" type="text" class="w-full p-2 rounded border border-[var(--border-color)] bg-[var(--input-bg)]">
+                     </div>
+                 </div>
+
+                 <!-- Lines -->
+                 <div>
+                    <div class="flex justify-between items-center mb-2">
+                         <h4 class="font-bold text-sm text-[var(--app-text-muted)] uppercase">Movimientos</h4>
+                         <button type="button" (click)="addJournalLine()" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">+ Agregar Línea</button>
+                    </div>
+                    <table class="min-w-full text-sm divide-y divide-[var(--border-color)]">
+                        <thead>
+                            <tr class="bg-[var(--subtle-bg)]">
+                                <th class="p-2 text-left">Cuenta</th>
+                                <th class="p-2 text-left">Descripción (Opcional)</th>
+                                <th class="p-2 w-32 text-right">Debe</th>
+                                <th class="p-2 w-32 text-right">Haber</th>
+                                <th class="p-2 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="lines" class="divide-y divide-[var(--border-color)]">
+                            <tr *ngFor="let line of journalLines.controls; let i = index" [formGroupName]="i">
+                                <td class="p-2">
+                                    <select formControlName="account_id" class="w-full p-1 border rounded bg-[var(--input-bg)]">
+                                        <option [ngValue]="null">Seleccionar...</option>
+                                        <option *ngFor="let acc of detailAccounts()" [value]="acc.id">{{ acc.code }} - {{ acc.name }}</option>
+                                    </select>
+                                </td>
+                                <td class="p-2">
+                                    <input formControlName="description" class="w-full p-1 border rounded bg-[var(--input-bg)]">
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" formControlName="debit" (change)="calculateJournalTotals()" class="w-full p-1 border rounded text-right bg-[var(--input-bg)]">
+                                </td>
+                                <td class="p-2">
+                                    <input type="number" formControlName="credit" (change)="calculateJournalTotals()" class="w-full p-1 border rounded text-right bg-[var(--input-bg)]">
+                                </td>
+                                <td class="p-2 text-center">
+                                    <button type="button" (click)="removeJournalLine(i)" class="text-red-500 hover:text-red-700"><ng-icon name="heroTrashSolid" class="w-4 h-4"></ng-icon></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-[var(--subtle-bg)] font-bold">
+                            <tr>
+                                <td colspan="2" class="p-2 text-right">Totales:</td>
+                                <td class="p-2 text-right" [class.text-red-500]="totals.debit !== totals.credit">{{ totals.debit | currency }}</td>
+                                <td class="p-2 text-right" [class.text-red-500]="totals.debit !== totals.credit">{{ totals.credit | currency }}</td>
+                                <td></td>
+                            </tr>
+                            <tr *ngIf="totals.debit !== totals.credit">
+                                <td colspan="5" class="p-2 text-center text-red-500 text-sm font-medium">
+                                    El asiento está descuadrado por {{ Math.abs(totals.debit - totals.credit) | currency }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                 </div>
+             </form>
+         </div>
+
+         <div class="p-4 border-t border-[var(--border-color)] bg-[var(--subtle-bg)] flex justify-end gap-3">
+             <button (click)="showJournalModal = false" class="px-4 py-2 rounded text-sm bg-gray-200 text-gray-800 hover:bg-gray-300">Cancelar</button>
+             <button (click)="saveJournalEntry()" [disabled]="journalForm.invalid || totals.debit !== totals.credit || totals.debit === 0 || isSubmitting" 
+                     class="px-4 py-2 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                 Registrar Asiento
+             </button>
+         </div>
+     </div>
+  </div>
+
+   <!-- INVOICE MODAL -->
+   <div *ngIf="showInvoiceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+      <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
+          <h2 class="text-xl font-bold mb-6">Nueva Factura Interna</h2>
+          <form (ngSubmit)="saveInvoice()">
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700">Cliente</label>
+                      <input [(ngModel)]="newInvoice.clientName" name="client" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" required>
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700">Fecha</label>
+                      <input [(ngModel)]="newInvoice.date" name="date" type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" required>
+                  </div>
+              </div>
+
+              <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Ítems</label>
+                  <table class="w-full text-sm">
+                      <thead class="bg-gray-50">
+                          <tr>
+                              <th class="p-2 text-left">Descripción</th>
+                              <th class="p-2 w-20">Cant</th>
+                              <th class="p-2 w-24">Precio</th>
+                              <th class="p-2 w-24">Total</th>
+                              <th class="p-2 w-10"></th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr *ngFor="let item of newInvoice.items; let i = index">
+                              <td class="p-1"><input [(ngModel)]="item.description" [name]="'desc'+i" class="w-full border rounded p-1"></td>
+                              <td class="p-1"><input [(ngModel)]="item.quantity" [name]="'qty'+i" type="number" class="w-full border rounded p-1" (change)="calculateTotal()"></td>
+                              <td class="p-1"><input [(ngModel)]="item.price" [name]="'price'+i" type="number" class="w-full border rounded p-1" (change)="calculateTotal()"></td>
+                              <td class="p-1 text-right">\${{ item.quantity * item.price }}</td>
+                              <td class="p-1 text-center"><button type="button" (click)="removeItem(i)" class="text-red-500">x</button></td>
+                          </tr>
+                      </tbody>
+                  </table>
+                  <button type="button" (click)="addItem()" class="mt-2 text-sm text-blue-600 hover:text-blue-800">+ Agregar Ítem</button>
+              </div>
+
+              <div class="flex justify-end items-center gap-4 border-t pt-4">
+                  <div class="text-lg font-bold">Total: \${{ newInvoice.total | number:'1.2-2' }}</div>
+                  <div class="flex gap-2">
+                      <button type="button" (click)="showInvoiceModal = false" class="bg-gray-200 text-gray-800 px-4 py-2 rounded">Cancelar</button>
+                      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Guardar</button>
+                  </div>
+              </div>
+          </form>
+      </div>
+   </div>
+
+</div>
